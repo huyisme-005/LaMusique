@@ -15,6 +15,7 @@ import ExportControls from '@/components/features/export-share/ExportControls';
 import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
 import MusicVideoControls from '@/components/features/output/MusicVideoControls';
+import EmotionAnalyzer from '@/components/features/analysis/EmotionAnalyzer'; // New import
 
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 import { Separator } from '@/components/ui/separator';
@@ -37,7 +38,7 @@ const HarmonicAiPage: FC = () => {
   };
   
   const handleSuggestionSelected = (suggestion: string) => {
-    setLyrics(prevLyrics => prevLyrics ? prevLyrics + "\n\n" + suggestion : suggestion);
+    setLyrics(prevLyrics => prevLyrics ? prevLyrics + "\\n\\n" + suggestion : suggestion);
     setActiveTab("edit"); // Switch to edit tab to see the appended suggestion
   };
 
@@ -48,9 +49,10 @@ const HarmonicAiPage: FC = () => {
         {/* Left Panel (Controls) */}
         <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 rounded-none rounded-t-xl border-b">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 rounded-none rounded-t-xl border-b"> {/* Changed grid-cols-5 to grid-cols-6 */}
               <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
               <TabsTrigger value="melody">Melody</TabsTrigger>
+              <TabsTrigger value="emotion">Emotion</TabsTrigger> {/* New Tab */}
               <TabsTrigger value="refine">Refine</TabsTrigger>
               <TabsTrigger value="edit">Edit</TabsTrigger>
               <TabsTrigger value="export">Export</TabsTrigger>
@@ -61,6 +63,9 @@ const HarmonicAiPage: FC = () => {
               </TabsContent>
               <TabsContent value="melody">
                 <MelodyGenerator lyrics={lyrics} onMelodyGenerated={handleMelodyGenerated} />
+              </TabsContent>
+              <TabsContent value="emotion"> {/* New Tab Content */}
+                <EmotionAnalyzer />
               </TabsContent>
               <TabsContent value="refine">
                 <CompletionSuggester currentLyrics={lyrics} onSuggestionSelected={handleSuggestionSelected} />
