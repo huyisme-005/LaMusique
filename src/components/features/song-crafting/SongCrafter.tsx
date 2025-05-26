@@ -510,4 +510,3 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
-
