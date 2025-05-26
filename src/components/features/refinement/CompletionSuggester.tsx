@@ -42,10 +42,12 @@ const CompletionSuggester: FC<CompletionSuggesterProps> = ({ currentLyrics, onSu
       genre: "",
       artist: "",
     },
-    values: { // Keep form in sync with currentLyrics prop
+    // Keep form in sync with currentLyrics prop for the initialLyrics field.
+    // Genre and artist are initialized by defaultValues and then managed by RHF.
+    values: { 
       initialLyrics: currentLyrics,
-      genre: form.getValues("genre"),
-      artist: form.getValues("artist"),
+      // genre: form.getValues("genre"), // Removed: Caused "form not initialized" error
+      // artist: form.getValues("artist"), // Removed: Caused "form not initialized" error
     }
   });
 
