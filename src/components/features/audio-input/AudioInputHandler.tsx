@@ -13,6 +13,8 @@ import { Loader2, Mic, UploadCloud, FileAudio, ShieldAlert, ShieldCheck, AlertTr
 import { checkAudioPlagiarism, type CheckAudioPlagiarismInput, type CheckAudioPlagiarismOutput } from '@/ai/flows/check-audio-plagiarism';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+// A very short, silent WAV audio data URI to be used as a default
+const DEFAULT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAA";
 
 interface AudioInputHandlerProps {
   onAudioPrepared: (audioDataUri: string, lyrics?: string) => void;
@@ -37,6 +39,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           variant: "destructive",
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
+        setAudioFile(null);
+        setAudioDataUri(null);
+        // Potentially call onAudioPrepared with null or don't call if invalid
         return;
       }
       setAudioFile(file);
@@ -60,27 +65,33 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
   
   const handlePlagiarismCheck = async () => {
-    if (!audioDataUri) {
-      toast({
-        title: "No Audio Uploaded",
-        description: "Please upload an audio file before checking for plagiarism.",
-        variant: "destructive",
-      });
-      return;
-    }
     setIsLoading(true);
     setPlagiarismResult(null);
+
+    const currentAudioDataUri = audioDataUri || DEFAULT_AUDIO_DATA_URI;
+    let isDefaultAudioUsed = !audioDataUri;
+
     try {
-      const input: CheckAudioPlagiarismInput = { audioDataUri };
+      const input: CheckAudioPlagiarismInput = { audioDataUri: currentAudioDataUri };
       if (lyrics.trim()) {
         input.lyrics = lyrics.trim();
       }
+      
       const result = await checkAudioPlagiarism(input);
       setPlagiarismResult(result);
+      
+      let toastDescription = result.isHighConcern ? "Potential concerns identified." : "Preliminary check found no major concerns.";
+      if (isDefaultAudioUsed && !lyrics.trim()) {
+        toastDescription += " (Used default silent audio as no input was provided).";
+      } else if (isDefaultAudioUsed) {
+        toastDescription += " (Used default silent audio alongside provided lyrics).";
+      }
+
       toast({
         title: "Plagiarism Check Complete",
-        description: result.isHighConcern ? "Potential concerns identified." : "Preliminary check found no major concerns.",
+        description: toastDescription,
       });
+
     } catch (error) {
       console.error("Error checking plagiarism:", error);
       toast({
@@ -98,7 +109,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input & Analysis</CardTitle>
-          <CardDescription>Upload or record audio, provide optional lyrics, and perform a preliminary plagiarism scan.</CardDescription>
+          <CardDescription>Upload audio or provide lyrics. If no audio is uploaded, a default silent placeholder will be used for analysis.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -134,7 +145,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handlePlagiarismCheck} disabled={isLoading || !audioDataUri} className="w-full">
+          <Button onClick={handlePlagiarismCheck} disabled={isLoading} className="w-full">
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <ShieldAlert className="mr-2" />} 
             Scan for Potential Plagiarism
           </Button>

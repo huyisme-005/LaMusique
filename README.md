@@ -8,8 +8,8 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 *   **AI Song & Melody Crafter**: Generate original song lyrics and melodies by specifying themes, keywords, genre, key, and tempo.
     *   Lyrics generation includes an automatic switch to the "Edit" tab for immediate refinement.
     *   Melody generation offers an expanded list of music genres.
-*   **Audio Input & Analysis (New!)**:
-    *   Upload audio files (e.g., song ideas, vocal snippets).
+*   **Audio Input & Analysis (Enhanced!)**:
+    *   Upload audio files (e.g., song ideas, vocal snippets). If no audio is uploaded, a default silent placeholder is used for analysis.
     *   (Planned) Record audio directly using a microphone.
     *   Provide optional lyrics associated with the uploaded audio.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works. (Note: This is a preliminary check with limitations).
@@ -37,13 +37,13 @@ This is a Next.js application. To get started:
     The application will typically be available at `http://localhost:9002`.
 
 3.  **Explore the UI**:
-    *   Use the "Lyrics" tab to generate song lyrics. You will be automatically switched to the "Edit" tab.
-    *   Use the "Melody" tab to compose a melody for your lyrics, selecting from a wide range of genres.
-    *   The "Audio Input" tab allows uploading audio and performing a basic plagiarism scan.
-    *   The "Emotion" tab lets you analyze the emotional tone of text.
-    *   The "Refine" tab offers AI suggestions for song completion.
-    *   The "Edit" tab allows manual modification of lyrics.
-    *   The "Export" tab shows planned options for exporting, sharing, and managing music video assets.
+    *   Use the "Lyrics" section in the left panel to generate song lyrics.
+    *   Use the "Melody" section to compose a melody for your lyrics.
+    *   The "Audio Input" section allows uploading audio (or uses a default) and performing a basic plagiarism scan.
+    *   The "Emotion" section lets you analyze the emotional tone of text.
+    *   The "Refine" section offers AI suggestions for song completion.
+    *   The "Edit" section allows manual modification of lyrics.
+    *   The "Export" section shows planned options for exporting, sharing, and managing music video assets.
 
 ## Tech Stack
 
@@ -55,12 +55,12 @@ This is a Next.js application. To get started:
 
 ## Current MVPs (Minimum Viable Products)
 
-*   Generation of song lyrics based on user input (theme, keywords), with direct navigation to editor.
+*   Generation of song lyrics based on user input (theme, keywords).
 *   Generation of melody data (MusicXML format and description) based on lyrics and musical parameters (genre, key, tempo) with expanded genre options.
-*   UI for audio file upload and an experimental AI flow for basic plagiarism concern flagging.
+*   UI for audio file upload (with default placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
 *   AI-powered text emotion analysis.
 *   AI-powered suggestions for song completion.
-*   A responsive split-screen user interface for inputting parameters and viewing generated content, with horizontally scrollable tabs for controls.
+*   A responsive split-screen user interface with a vertically scrollable left panel for controls and a right panel for viewing generated content.
 *   Basic manual editing capability for lyrics.
 *   UI for uploading image/video assets for future music video generation.
 *   Placeholders for export, social sharing, and full music video generation features.
