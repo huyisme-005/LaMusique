@@ -8,13 +8,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateMelody, type GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Piano } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 const melodySchema = z.object({
   genre: z.string().min(1, "Genre is required."),
@@ -29,8 +30,39 @@ interface MelodyGeneratorProps {
   onMelodyGenerated: (melody: GenerateMelodyOutput) => void;
 }
 
-const musicKeys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const genres = ["Pop", "Rock", "Jazz", "Electronic", "Folk", "Classical", "Hip Hop", "Blues"];
+const musicKeys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", 
+                   "Am", "A#m", "Bm", "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m"];
+
+const genres = [
+  // Electronic
+  "Electronic", "Techno", "House", "Trance", "Dubstep", "Drum and Bass", "Synthwave", "Ambient", "IDM", "Chillwave", "Hardstyle", "UK Garage", "Progressive House", "Minimal Techno",
+  // Pop
+  "Pop", "Indie Pop", "Synth-Pop", "Electropop", "Power Pop", "K-Pop", "J-Pop", "Art Pop", "Bubblegum Pop", "Dance Pop",
+  // Rock
+  "Rock", "Alternative Rock", "Indie Rock", "Hard Rock", "Punk Rock", "Metal (Heavy Metal, Death Metal, Black Metal, etc.)", "Progressive Rock", "Psychedelic Rock", "Grunge", "Post-Rock", "Shoegaze", "Classic Rock",
+  // Hip Hop / Rap
+  "Hip Hop", "Rap", "Trap", "Boom Bap", "Conscious Hip Hop", "Cloud Rap", "Drill", "Mumble Rap", "Alternative Hip Hop",
+  // Jazz
+  "Jazz", "Smooth Jazz", "Bebop", "Fusion", "Swing", "Cool Jazz", "Acid Jazz", "Modal Jazz",
+  // Folk / Acoustic
+  "Folk", "Acoustic", "Singer-Songwriter", "Folk Rock", "Indie Folk", "Traditional Folk", "Americana",
+  // Classical
+  "Classical", "Orchestral", "Chamber Music", "Opera", "Baroque", "Romantic", "Modern Classical",
+  // Blues
+  "Blues", "Electric Blues", "Delta Blues", "Chicago Blues", "Soul Blues",
+  // R&B / Soul
+  "R&B", "Soul", "Neo-Soul", "Contemporary R&B", "Funk", "Motown",
+  // Country
+  "Country", "Country Pop", "Bluegrass", "Outlaw Country", "Honky Tonk",
+  // Reggae / Ska
+  "Reggae", "Ska", "Dancehall", "Dub", "Rocksteady",
+  // Latin
+  "Latin", "Salsa", "Reggaeton", "Bossa Nova", "Cumbia", "Tango", "Mariachi",
+  // World / Global
+  "World Music", "Afrobeat", "Celtic", "Bollywood", "Flamenco", "Klezmer",
+  // Other
+  "Experimental", "Avant-Garde", "Noise", "Video Game Music", "Film Score", "Musical Theatre", "Spoken Word"
+];
 
 
 const MelodyGenerator: FC<MelodyGeneratorProps> = ({ lyrics, onMelodyGenerated }) => {
@@ -67,7 +99,7 @@ const MelodyGenerator: FC<MelodyGeneratorProps> = ({ lyrics, onMelodyGenerated }
       console.error("Error generating melody:", error);
       toast({
         title: "Error Composing Melody",
-        description: "Something went wrong. Please try again.",
+        description: (error as Error).message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -97,7 +129,9 @@ const MelodyGenerator: FC<MelodyGeneratorProps> = ({ lyrics, onMelodyGenerated }
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {genres.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                      <ScrollArea className="h-[200px]"> {/* Makes the dropdown scrollable if many items */}
+                        {genres.sort().map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -117,7 +151,9 @@ const MelodyGenerator: FC<MelodyGeneratorProps> = ({ lyrics, onMelodyGenerated }
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {musicKeys.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+                      <ScrollArea className="h-[200px]">
+                        {musicKeys.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   <FormMessage />

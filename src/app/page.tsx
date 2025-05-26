@@ -15,7 +15,8 @@ import ExportControls from '@/components/features/export-share/ExportControls';
 import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
 import MusicVideoControls from '@/components/features/output/MusicVideoControls';
-import EmotionAnalyzer from '@/components/features/analysis/EmotionAnalyzer'; // New import
+import EmotionAnalyzer from '@/components/features/analysis/EmotionAnalyzer';
+import AudioInputHandler from '@/components/features/audio-input/AudioInputHandler'; // New import
 
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 import { Separator } from '@/components/ui/separator';
@@ -24,9 +25,12 @@ const HarmonicAiPage: FC = () => {
   const [activeTab, setActiveTab] = useState<string>("lyrics");
   const [lyrics, setLyrics] = useState<string>("");
   const [melody, setMelody] = useState<GenerateMelodyOutput | null>(null);
+  const [audioForPlagiarismCheck, setAudioForPlagiarismCheck] = useState<{ audioDataUri: string; lyrics?: string } | null>(null);
+
 
   const handleLyricsGenerated = (newLyrics: string) => {
     setLyrics(newLyrics);
+    setActiveTab("edit"); // Switch to edit tab after lyrics generation
   };
 
   const handleMelodyGenerated = (newMelody: GenerateMelodyOutput) => {
@@ -42,6 +46,12 @@ const HarmonicAiPage: FC = () => {
     setActiveTab("edit"); // Switch to edit tab to see the appended suggestion
   };
 
+  const handleAudioPreparedForCheck = (audioDataUri: string, associatedLyrics?: string) => {
+    setAudioForPlagiarismCheck({ audioDataUri, lyrics: associatedLyrics });
+    // Optionally, switch to a tab or trigger something else
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -49,14 +59,17 @@ const HarmonicAiPage: FC = () => {
         {/* Left Panel (Controls) */}
         <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 rounded-none rounded-t-xl border-b"> {/* Changed grid-cols-5 to grid-cols-6 */}
-              <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
-              <TabsTrigger value="melody">Melody</TabsTrigger>
-              <TabsTrigger value="emotion">Emotion</TabsTrigger> {/* New Tab */}
-              <TabsTrigger value="refine">Refine</TabsTrigger>
-              <TabsTrigger value="edit">Edit</TabsTrigger>
-              <TabsTrigger value="export">Export</TabsTrigger>
-            </TabsList>
+            <ScrollArea orientation="horizontal" className="whitespace-nowrap border-b rounded-t-xl">
+              <TabsList className="rounded-none"> {/* Removed grid classes, will flow naturally */}
+                <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
+                <TabsTrigger value="melody">Melody</TabsTrigger>
+                <TabsTrigger value="audio">Audio Input</TabsTrigger> {/* New Tab */}
+                <TabsTrigger value="emotion">Emotion</TabsTrigger>
+                <TabsTrigger value="refine">Refine</TabsTrigger>
+                <TabsTrigger value="edit">Edit</TabsTrigger>
+                <TabsTrigger value="export">Export</TabsTrigger>
+              </TabsList>
+            </ScrollArea>
             <ScrollArea className="flex-1 p-4 md:p-6 bg-background/30 rounded-b-xl">
               <TabsContent value="lyrics">
                 <LyricsGenerator onLyricsGenerated={handleLyricsGenerated} currentLyrics={lyrics} />
@@ -64,7 +77,10 @@ const HarmonicAiPage: FC = () => {
               <TabsContent value="melody">
                 <MelodyGenerator lyrics={lyrics} onMelodyGenerated={handleMelodyGenerated} />
               </TabsContent>
-              <TabsContent value="emotion"> {/* New Tab Content */}
+              <TabsContent value="audio"> {/* New Tab Content */}
+                <AudioInputHandler onAudioPrepared={handleAudioPreparedForCheck} />
+              </TabsContent>
+              <TabsContent value="emotion">
                 <EmotionAnalyzer />
               </TabsContent>
               <TabsContent value="refine">
