@@ -2,7 +2,7 @@
 "use client";
 
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,23 +11,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription as FormDescUI, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"; // Renamed FormDescription to FormDescUI
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { generateSongLyrics, type GenerateSongLyricsInput } from '@/ai/flows/generate-song-lyrics';
 import { generateMelody, type GenerateMelodyOutput, type GenerateMelodyInput } from '@/ai/flows/generate-melody';
-// analyzeEmotion import removed
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Music, ScrollText, Info, Smile } from 'lucide-react'; // Brain icon removed
+import { Loader2, Music, ScrollText, Info, Smile, Blend } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-// Progress import removed
 
 const songCrafterSchema = z.object({
   theme: z.string().min(3, "Theme must be at least 3 characters long."),
   keywords: z.string().min(3, "Keywords must be at least 3 characters long."),
   genre: z.string().min(1, "Genre is required."),
-  emotion: z.string().optional().describe("The desired emotion for the song."), // Added emotion field
+  emotion: z.string().optional().describe("The desired emotion for the song."),
   key: z.string().min(1, "Key is required."),
   tempo: z.coerce.number().min(40, "Tempo must be at least 40 BPM.").max(220, "Tempo must be at most 220 BPM."),
 });
@@ -79,12 +78,10 @@ const songEmotions = [
   "Excitement", "Calmness", "Nostalgia", "Melancholy", "Bittersweet", "Reflective", "Energetic", "Mixed Emotion"
 ];
 
-
 const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, onMelodyGenerated }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedMixedEmotions, setSelectedMixedEmotions] = useState<string[]>([]);
   const { toast } = useToast();
-
-  // Emotion analysis state and handler removed
 
   const form = useForm<SongCrafterFormValues>({
     resolver: zodResolver(songCrafterSchema),
@@ -92,21 +89,69 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       theme: "",
       keywords: "",
       genre: "",
-      emotion: "None", // Default emotion
+      emotion: "None",
       key: "C",
       tempo: 120,
     },
   });
 
+  const watchedEmotion = form.watch("emotion");
+
+  useEffect(() => {
+    if (watchedEmotion !== "Mixed Emotion") {
+      setSelectedMixedEmotions([]);
+    }
+  }, [watchedEmotion]);
+
+  const handleMixedEmotionChange = (emotionValue: string) => {
+    setSelectedMixedEmotions(prev => {
+      const isAlreadySelected = prev.includes(emotionValue);
+      if (isAlreadySelected) {
+        return prev.filter(e => e !== emotionValue);
+      } else {
+        if (prev.length < 3) {
+          return [...prev, emotionValue];
+        }
+        toast({ 
+          title: "Maximum 3 Emotions", 
+          description: "You can select up to 3 emotions for a mix.", 
+          variant: "default",
+          duration: 3000, 
+        });
+        return prev;
+      }
+    });
+  };
+
   const onSubmit: SubmitHandler<SongCrafterFormValues> = async (data) => {
     setIsLoading(true);
     let generatedLyrics = "";
     try {
-      // Step 1: Generate Lyrics
+      let emotionInputForLyrics: string | undefined;
+      if (data.emotion === "None") {
+        emotionInputForLyrics = undefined;
+      } else if (data.emotion === "Mixed Emotion") {
+        if (selectedMixedEmotions.length > 0) {
+          emotionInputForLyrics = selectedMixedEmotions.join(', ');
+        } else {
+          // If "Mixed Emotion" is selected but no sub-emotions are picked, treat as "None" or a default.
+          // For now, let's treat it as if no specific emotion guidance is given.
+          emotionInputForLyrics = undefined; 
+          toast({
+            title: "Mixed Emotions Not Specified",
+            description: "You selected 'Mixed Emotion' but didn't choose any specific emotions. Proceeding without specific emotional guidance for lyrics.",
+            variant: "default",
+            duration: 4000,
+          });
+        }
+      } else {
+        emotionInputForLyrics = data.emotion;
+      }
+
       const lyricsInput: GenerateSongLyricsInput = { 
         theme: data.theme, 
         keywords: data.keywords,
-        emotion: data.emotion === "None" ? undefined : data.emotion // Pass emotion to lyrics generation
+        emotion: emotionInputForLyrics
       };
       const lyricsResult = await generateSongLyrics(lyricsInput);
       generatedLyrics = lyricsResult.lyrics;
@@ -116,7 +161,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
         description: "Your song lyrics have been successfully crafted.",
       });
 
-      // Step 2: Generate Melody with the new lyrics
       if (generatedLyrics) {
         const melodyInput: GenerateMelodyInput = { 
           lyrics: generatedLyrics, 
@@ -128,7 +172,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
         onMelodyGenerated(melodyResult);
         toast({
           title: "Melody Composed!",
-          description: "A melody has been generated for your lyrics.",
+          description: "A melody has been generated, including singing instructions in its description.",
         });
       } else {
          toast({
@@ -164,7 +208,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     }
   };
 
-  // handleEmotionAnalysis function removed
+  const mixedEmotionOptions = songEmotions.filter(e => e !== "None" && e !== "Mixed Emotion");
 
   return (
     <Card>
@@ -179,12 +223,12 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">Enter song parameters to generate lyrics and melody. You can select an emotion to influence the lyrical content.</p>
+                <p className="text-sm">Enter song parameters to generate lyrics and melody. You can select an emotion (or mix up to 3) to influence the lyrical content. Melody output includes singing instructions.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardDescription>Craft your song's foundation by providing details below.</CardDescription>
+        <CardDescription>Craft your song's foundation. Melody output will include singing instructions.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -238,7 +282,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               )}
             />
             
-            {/* New Emotion Select Field */}
             <FormField
               control={form.control}
               name="emotion"
@@ -254,7 +297,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Select an emotion to guide the lyrical content. "None" will not add specific emotional guidance.</p>
+                          <p className="text-xs">Select an emotion for lyrical guidance. Choose "Mixed Emotion" to select up to 3 specific emotions.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -275,6 +318,31 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 </FormItem>
               )}
             />
+
+            {watchedEmotion === "Mixed Emotion" && (
+              <Card className="p-4 bg-muted/50">
+                <Label className="flex items-center gap-1 mb-3 text-sm font-medium"><Blend className="text-primary inline-block h-4 w-4" /> Select up to 3 emotions to mix:</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {mixedEmotionOptions.map(emotionItem => (
+                    <FormItem key={emotionItem} className="flex flex-row items-start space-x-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={selectedMixedEmotions.includes(emotionItem)}
+                          onCheckedChange={() => handleMixedEmotionChange(emotionItem)}
+                          disabled={selectedMixedEmotions.length >= 3 && !selectedMixedEmotions.includes(emotionItem)}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal">
+                        {emotionItem}
+                      </FormLabel>
+                    </FormItem>
+                  ))}
+                </div>
+                <FormDescUI className="text-xs text-muted-foreground mt-3">
+                  Selected: {selectedMixedEmotions.join(', ') || "None"} (Max 3)
+                </FormDescUI>
+              </Card>
+            )}
 
             <FormField
               control={form.control}
@@ -313,8 +381,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
             />
 
             <Separator className="my-6" />
-
-            {/* Emotion Analysis Section Removed */}
             
             <div className="space-y-1 pt-2">
               <Label htmlFor="generated-lyrics-display" className="flex items-center gap-1">
@@ -341,4 +407,3 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
-

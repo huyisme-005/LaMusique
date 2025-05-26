@@ -15,7 +15,7 @@ import {z} from 'genkit';
 const GenerateSongLyricsInputSchema = z.object({
   theme: z.string().describe('The theme of the song.'),
   keywords: z.string().describe('Keywords to include in the lyrics.'),
-  emotion: z.string().optional().describe('The desired emotion for the song lyrics (e.g., Joy, Sadness, Hope, Mixed Emotion).'),
+  emotion: z.string().optional().describe('The desired emotion(s) for the song lyrics (e.g., "Joy", or "Sadness, Hope, Reflective" if mixed).'),
 });
 export type GenerateSongLyricsInput = z.infer<typeof GenerateSongLyricsInputSchema>;
 
@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateSongLyricsOutputSchema},
   prompt: `You are a songwriter. Generate song lyrics based on the following theme and keywords.
 {{#if emotion}}
-The lyrics should try to convey a sense of "{{emotion}}".
+The lyrics should try to convey emotions related to: {{emotion}}. If multiple emotions are listed (e.g., "Joy, Sadness, Hope"), try to weave them together, create a blend, or show a progression of these emotions throughout the lyrics.
 {{/if}}
 
 Theme: {{{theme}}}

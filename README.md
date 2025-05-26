@@ -6,9 +6,10 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 ## Core Features
 
 *   **AI Song & Melody Crafter with User-Selected Emotion**: A unified section to:
-    *   Generate original song lyrics and melodies by specifying themes, keywords, genre, a desired emotion, key, and tempo. Lyrics generation is followed by automatic melody composition.
+    *   Generate original song lyrics and melodies by specifying themes, keywords, genre, a desired emotion (including "Mixed Emotion" with up to 3 selectable sub-emotions), key, and tempo. Lyrics generation is followed by automatic melody composition.
+    *   The generated melody description includes **instructions on how to manually sing the song**.
     *   Generated lyrics are immediately available for refinement in the "Edit" section.
-    *   Includes an expanded list of music genres and a selection of emotions (including "Mixed Emotion") to guide lyrical content.
+    *   Includes an expanded list of music genres.
 *   **Audio Input & Analysis**:
     *   Upload audio files (e.g., song ideas, vocal snippets). If no audio is uploaded, a default silent placeholder is used for analysis.
     *   (Planned) Record audio directly using a microphone.
@@ -37,7 +38,7 @@ This is a Next.js application. To get started:
 
 3.  **Explore the UI**:
     *   The left panel contains all song creation tools (including emotion selection for lyrics), audio input, editing features, and export/share controls, organized into a single vertically scrollable view with sections. Integrated AI Copilot hints (info icons) provide guidance within each section.
-    *   The right panel displays generated lyrics, melody information, and music video asset controls.
+    *   The right panel displays generated lyrics, melody information (including singing instructions), and music video asset controls.
 
 ## Tech Stack
 
@@ -50,7 +51,7 @@ This is a Next.js application. To get started:
 
 ## Current MVPs (Minimum Viable Products)
 
-*   Unified generation of song lyrics and melody data (MusicXML format and description) based on user input (theme, keywords, selected emotion, genre, key, tempo) with expanded genre options.
+*   Unified generation of song lyrics and melody data (MusicXML format and description with singing instructions) based on user input (theme, keywords, selected emotion including "Mixed Emotion", genre, key, tempo) with expanded genre options.
 *   UI for audio file upload (with default silent placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
 *   Integrated AI Copilot hints via tooltips within each major feature component.
 *   A responsive split-screen user interface with a vertically scrollable left panel for controls and a right panel for viewing generated content.
@@ -74,4 +75,3 @@ This is a Next.js application. To get started:
 *   **Dark Mode Theme**: The current focus is on the light theme; a polished dark mode could be added.
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
-
