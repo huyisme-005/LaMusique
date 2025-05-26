@@ -5,26 +5,27 @@ import type { FC } from 'react';
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+// Textarea removed as Associated Lyrics is gone
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mic, UploadCloud, FileAudio, ShieldAlert, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Loader2, Mic, UploadCloud, FileAudio, ShieldAlert, ShieldCheck, AlertTriangle, Info } from 'lucide-react';
 import { checkAudioPlagiarism, type CheckAudioPlagiarismInput, type CheckAudioPlagiarismOutput } from '@/ai/flows/check-audio-plagiarism';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // A very short, silent WAV audio data URI to be used as a default
 const DEFAULT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAA";
 
 interface AudioInputHandlerProps {
-  onAudioPrepared: (audioDataUri: string, lyrics?: string) => void;
+  onAudioPrepared: (audioDataUri: string) => void; // Lyrics parameter removed
 }
 
 const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
-  const [lyrics, setLyrics] = useState<string>("");
+  // lyrics state removed
   const [plagiarismResult, setPlagiarismResult] = useState<CheckAudioPlagiarismOutput | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,7 +42,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         if (fileInputRef.current) fileInputRef.current.value = "";
         setAudioFile(null);
         setAudioDataUri(null);
-        // Potentially call onAudioPrepared with null or don't call if invalid
         return;
       }
       setAudioFile(file);
@@ -49,10 +49,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       reader.onload = (e) => {
         const result = e.target?.result as string;
         setAudioDataUri(result);
-        onAudioPrepared(result, lyrics || undefined);
+        onAudioPrepared(result); // lyrics removed from call
       };
       reader.readAsDataURL(file);
-      setPlagiarismResult(null); // Reset plagiarism result when new file is uploaded
+      setPlagiarismResult(null); 
     }
   };
 
@@ -72,19 +72,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     let isDefaultAudioUsed = !audioDataUri;
 
     try {
+      // Input only contains audioDataUri, lyrics are no longer sourced from this component.
+      // The checkAudioPlagiarism flow itself has lyrics as optional.
       const input: CheckAudioPlagiarismInput = { audioDataUri: currentAudioDataUri };
-      if (lyrics.trim()) {
-        input.lyrics = lyrics.trim();
-      }
       
       const result = await checkAudioPlagiarism(input);
       setPlagiarismResult(result);
       
       let toastDescription = result.isHighConcern ? "Potential concerns identified." : "Preliminary check found no major concerns.";
-      if (isDefaultAudioUsed && !lyrics.trim()) {
+      if (isDefaultAudioUsed) {
         toastDescription += " (Used default silent audio as no input was provided).";
-      } else if (isDefaultAudioUsed) {
-        toastDescription += " (Used default silent audio alongside provided lyrics).";
       }
 
       toast({
@@ -108,8 +105,22 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input & Analysis</CardTitle>
-          <CardDescription>Upload audio or provide lyrics. If no audio is uploaded, a default silent placeholder will be used for analysis.</CardDescription>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-sm">Upload audio or use the mic (future) to analyze. If no audio is provided, a silent default is used for scans. The scan is a basic check.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <CardDescription>Upload an audio file. If no audio is uploaded, a default silent placeholder will be used for analysis.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -129,20 +140,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             <Mic className="mr-2" /> Record Audio (Future Feature)
           </Button>
 
-          <div>
-            <Label htmlFor="associated-lyrics">Associated Lyrics (Optional)</Label>
-            <Textarea 
-              id="associated-lyrics"
-              value={lyrics}
-              onChange={(e) => {
-                setLyrics(e.target.value);
-                if(audioDataUri) onAudioPrepared(audioDataUri, e.target.value || undefined);
-              }}
-              placeholder="If your audio contains lyrics, or if you want to check specific lyrics with this audio, paste them here..."
-              className="min-h-[100px] mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">Providing lyrics can improve the plagiarism scan accuracy.</p>
-          </div>
+          {/* Associated Lyrics section removed */}
         </CardContent>
         <CardFooter>
           <Button onClick={handlePlagiarismCheck} disabled={isLoading} className="w-full">

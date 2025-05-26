@@ -2,7 +2,9 @@
 import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Share2, Twitter, Facebook, Instagram } from 'lucide-react'; // Assuming Instagram is available or use a generic icon
+import { Share2, Twitter, Facebook, Instagram, Info } from 'lucide-react'; // Assuming Instagram is available or use a generic icon
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 const ShareControls: FC = () => {
   // Placeholder function for share logic
@@ -13,7 +15,21 @@ const ShareControls: FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Share2 className="text-primary" /> Share on Social Media</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><Share2 className="text-primary" /> Share on Social Media</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm">This section will enable direct sharing of your generated songs to various social media platforms. Integration is planned for a future update.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <CardDescription>Let the world hear your masterpiece!</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -13,8 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateMelody, type GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Piano } from 'lucide-react';
+import { Loader2, Piano, Info } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const melodySchema = z.object({
@@ -110,7 +111,21 @@ const MelodyGenerator: FC<MelodyGeneratorProps> = ({ lyrics, onMelodyGenerated }
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Piano className="text-primary" /> Compose Melody</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><Piano className="text-primary" /> Compose Melody</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm">Select a genre, key, and tempo (BPM) for your melody. Ensure you have lyrics first! The melody (MusicXML & description) will appear in the right panel.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <CardDescription>Set the genre, key, and tempo for your song's melody.</CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -129,7 +144,7 @@ const MelodyGenerator: FC<MelodyGeneratorProps> = ({ lyrics, onMelodyGenerated }
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <ScrollArea className="h-[200px]"> {/* Makes the dropdown scrollable if many items */}
+                      <ScrollArea className="h-[200px]">
                         {genres.sort().map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
                       </ScrollArea>
                     </SelectContent>

@@ -1,14 +1,16 @@
 
 "use client";
 
-import { useState, type FC, useEffect } from 'react';
+import { useState, type FC, useEffect, useRef } from 'react';
 import AppHeader from '@/components/layout/AppHeader';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import LyricsGenerator from '@/components/features/song-crafting/LyricsGenerator';
 import MelodyGenerator from '@/components/features/song-crafting/MelodyGenerator';
-import AiCopilot from '@/components/features/ai-copilot/AiCopilot'; // Changed from CompletionSuggester
+// AiCopilot component is removed
 import LyricsEditor from '@/components/features/editing/LyricsEditor';
 import MelodyEditorPlaceholder from '@/components/features/editing/MelodyEditorPlaceholder';
 import ExportControls from '@/components/features/export-share/ExportControls';
@@ -23,7 +25,6 @@ import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 const HarmonicAiPage: FC = () => {
   const [lyrics, setLyrics] = useState<string>("");
   const [melody, setMelody] = useState<GenerateMelodyOutput | null>(null);
-  // audioForPlagiarismCheck is managed within AudioInputHandler now
 
   const handleLyricsGenerated = (newLyrics: string) => {
     setLyrics(newLyrics);
@@ -37,10 +38,6 @@ const HarmonicAiPage: FC = () => {
     setLyrics(newLyrics);
   };
   
-  // onSuggestionSelected is no longer needed as CompletionSuggester is removed.
-
-  // onAudioPrepared is managed within AudioInputHandler
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -61,17 +58,17 @@ const HarmonicAiPage: FC = () => {
               </div>
               <Separator />
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Input & Analysis</h3>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Audio & Emotion Analysis</h3>
                 <div className="space-y-6">
-                  <AudioInputHandler onAudioPrepared={() => { /* No longer needs to update page state directly */ }} />
+                  <AudioInputHandler onAudioPrepared={() => { /* No longer needs to update page state directly or handle lyrics from here */ }} />
                   <EmotionAnalyzer />
                 </div>
               </div>
               <Separator />
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Guidance & Editing</h3>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Editing & Refinement</h3>
                 <div className="space-y-6">
-                  <AiCopilot /> 
+                  {/* AiCopilot component removed from here */}
                   <LyricsEditor lyrics={lyrics} onLyricsChange={handleLyricsChange} />
                   <MelodyEditorPlaceholder />
                 </div>

@@ -12,8 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { analyzeEmotion, type AnalyzeEmotionOutput, type AnalyzeEmotionInput } from '@/ai/flows/analyze-emotion';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Smile, Brain } from 'lucide-react';
+import { Loader2, Smile, Brain, Info } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label'; // Added Label import
 
 const emotionSchema = z.object({
   textToAnalyze: z.string().min(5, "Please enter at least 5 characters to analyze.").max(2000, "Text cannot exceed 2000 characters."),
@@ -61,7 +63,21 @@ const EmotionAnalyzer: FC<EmotionAnalyzerProps> = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Smile className="text-primary" /> Emotion Analyzer</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2"><Smile className="text-primary" /> Emotion Analyzer</CardTitle>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-sm">Paste text (e.g., lyrics, a poem) to analyze its emotional tone. The AI will detect the primary emotion, confidence, and provide an explanation.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <CardDescription>Enter text below to analyze its emotional content. Voice input coming soon!</CardDescription>
         </CardHeader>
         <Form {...form}>

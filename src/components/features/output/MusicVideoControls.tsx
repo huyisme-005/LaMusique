@@ -5,10 +5,11 @@ import type { FC } from 'react';
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Clapperboard, Film, Sparkles, Upload, Image as ImageIcon, Video, Trash2 } from 'lucide-react';
+import { Clapperboard, Film, Sparkles, Upload, Image as ImageIcon, Video, Trash2, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AssetFile {
   id: string;
@@ -65,7 +66,21 @@ const MusicVideoControls: FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Clapperboard className="text-primary" /> Music Video Assets</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><Clapperboard className="text-primary" /> Music Video Assets</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm">Upload images and video clips here. These assets can be used for an AI-generated music video (feature coming soon). Manage your uploaded assets below.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <CardDescription>Upload images and video clips to use in your AI-generated music video (Generation Coming Soon!).</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

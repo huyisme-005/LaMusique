@@ -2,7 +2,8 @@
 import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Download, FileAudio } from 'lucide-react';
+import { Download, FileAudio, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const ExportControls: FC = () => {
   // Placeholder function for export logic
@@ -13,7 +14,21 @@ const ExportControls: FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Download className="text-primary" /> Export Your Song</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><Download className="text-primary" /> Export Your Song</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm">This section will allow you to download your song in formats like MP3, WAV, or MIDI. Full export functionality is currently under development.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
         <CardDescription>Download your creation in various audio formats.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

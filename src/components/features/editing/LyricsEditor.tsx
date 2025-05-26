@@ -4,8 +4,11 @@
 import type { FC } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileEdit } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // Added CardDescription
+import { FileEdit, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+
 
 interface LyricsEditorProps {
   lyrics: string;
@@ -16,7 +19,22 @@ const LyricsEditor: FC<LyricsEditorProps> = ({ lyrics, onLyricsChange }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><FileEdit className="text-primary" /> Manual Lyrics Editor</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2"><FileEdit className="text-primary" /> Manual Lyrics Editor</CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <p className="text-sm">Directly edit your generated or existing lyrics here. Changes are reflected in real-time in other parts of the app.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <CardDescription>Refine your song's lyrics. Changes are saved as you type.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid w-full gap-1.5">
