@@ -42,7 +42,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
                   <p className="text-sm whitespace-pre-wrap mt-1">{melody.description}</p>
                 </div>
                 <div className="pt-2">
-                  <h4 className="font-semibold text-sm">Melody Data (MusicXML):</h4>
+                  <h4 className="font-semibold text-sm">Melody Structure (MusicXML Representation):</h4>
                   <p className="text-xs text-muted-foreground italic">(MusicXML data is generated for structural representation. Actual playback/visualization is a future feature.)</p>
                   <pre className="whitespace-pre-wrap text-xs overflow-auto max-h-[100px] bg-background p-2 rounded mt-1">
                     {melody.melody.substring(0, 300) + (melody.melody.length > 300 ? "..." : "")}
