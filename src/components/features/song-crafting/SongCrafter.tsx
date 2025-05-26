@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { generateSongLyrics, type GenerateSongLyricsInput } from '@/ai/flows/generate-song-lyrics';
 import { generateMelody, type GenerateMelodyOutput, type GenerateMelodyInput } from '@/ai/flows/generate-melody';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Music, ScrollText, Info, Smile, Blend, Edit3, ListChecks } from 'lucide-react';
+import { Loader2, Music, ScrollText, Info, Smile, Blend, Edit3, ListChecks, Eye, EyeOff } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
@@ -74,18 +74,22 @@ const PREDEFINED_THEMES = [
   "Party & Nightlife"
 ];
 
+const INITIAL_THEMES_TO_SHOW = 6;
+
+
 const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, onLyricsChange, onMelodyGenerated }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMixedEmotions, setSelectedMixedEmotions] = useState<string[]>([]);
   
   const [selectedPredefinedThemes, setSelectedPredefinedThemes] = useState<string[]>([]);
   const [customTheme, setCustomTheme] = useState<string>("");
+  const [showAllThemes, setShowAllThemes] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<SongCrafterFormValues>({
     resolver: zodResolver(songCrafterSchema),
     defaultValues: {
-      theme: "", // RHF theme will be updated by our custom logic
+      theme: "", 
       keywords: "",
       genre: "",
       emotion: "None",
@@ -142,10 +146,10 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     const prevHadCustomTheme = customTheme.trim() !== "";
     const newHasCustomTheme = value.trim() !== "";
 
-    if (!prevHadCustomTheme && newHasCustomTheme) { // Adding a custom theme
+    if (!prevHadCustomTheme && newHasCustomTheme) { 
       if (selectedPredefinedThemes.length >= 3) {
          toast({ title: "Max 3 themes", description: "Cannot add custom theme, 3 predefined themes already selected.", duration: 3000 });
-         return; // Don't update customTheme state
+         return; 
       }
     }
     setCustomTheme(value);
@@ -183,7 +187,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     const themeStringForAI = finalSelectedThemes.join(', ');
 
     try {
-      // Step 1: Generate lyrics from AI if themeStringForAI or keywords are provided
       if (themeStringForAI.trim() !== "" || (data.keywords && data.keywords.trim() !== "")) {
         let emotionInputForLyrics: string | undefined;
         if (data.emotion === "None") {
@@ -200,7 +203,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 
         const lyricsInput: GenerateSongLyricsInput = { 
           theme: themeStringForAI, 
-          keywords: data.keywords || "", // Use keywords from RHF data
+          keywords: data.keywords || "", 
           emotion: emotionInputForLyrics
         };
         const aiLyricsResult = await generateSongLyrics(lyricsInput);
@@ -262,6 +265,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     displayedSelectedThemes.push(`Custom: ${customTheme.trim()}`);
   }
 
+  const themesToRender = showAllThemes ? PREDEFINED_THEMES : PREDEFINED_THEMES.slice(0, INITIAL_THEMES_TO_SHOW);
 
   return (
     <Card>
@@ -313,22 +317,52 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               </div>
               <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
               <div className="space-y-2 pt-1">
-                <ScrollArea className="max-h-32 w-full rounded-md border p-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                    {PREDEFINED_THEMES.map(theme => (
+                {showAllThemes ? (
+                  <ScrollArea className="max-h-40 w-full rounded-md border p-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                      {PREDEFINED_THEMES.map(theme => (
+                        <FormItem key={theme} className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={selectedPredefinedThemes.includes(theme)}
+                              onCheckedChange={(checked) => handlePredefinedThemeChange(theme, !!checked)}
+                              disabled={!selectedPredefinedThemes.includes(theme) && totalSelectedThemes >= 3}
+                              id={`theme-${theme.replace(/\s/g, '-')}`}
+                            />
+                          </FormControl>
+                          <Label className="text-sm font-normal cursor-pointer" htmlFor={`theme-${theme.replace(/\s/g, '-')}`}>{theme}</Label>
+                        </FormItem>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 p-2 border rounded-md bg-muted/20">
+                    {themesToRender.map(theme => (
                       <FormItem key={theme} className="flex flex-row items-center space-x-2 space-y-0">
                         <FormControl>
                           <Checkbox
                             checked={selectedPredefinedThemes.includes(theme)}
                             onCheckedChange={(checked) => handlePredefinedThemeChange(theme, !!checked)}
                             disabled={!selectedPredefinedThemes.includes(theme) && totalSelectedThemes >= 3}
+                            id={`theme-${theme.replace(/\s/g, '-')}`}
                           />
                         </FormControl>
-                        <Label className="text-sm font-normal cursor-pointer" htmlFor={theme.replace(/\s/g, '-')}>{theme}</Label>
+                        <Label className="text-sm font-normal cursor-pointer" htmlFor={`theme-${theme.replace(/\s/g, '-')}`}>{theme}</Label>
                       </FormItem>
                     ))}
                   </div>
-                </ScrollArea>
+                )}
+                {PREDEFINED_THEMES.length > INITIAL_THEMES_TO_SHOW && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={() => setShowAllThemes(!showAllThemes)}
+                    className="p-0 h-auto text-primary mt-1 flex items-center gap-1"
+                  >
+                    {showAllThemes ? <><EyeOff size={14}/> Collapse</> : <><Eye size={14}/> View All</>}
+                  </Button>
+                )}
                 <div>
                   <Label htmlFor="customTheme" className="text-sm font-medium">Custom Theme</Label>
                   <Input
@@ -430,9 +464,10 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                           checked={selectedMixedEmotions.includes(emotionItem)}
                           onCheckedChange={() => handleMixedEmotionChange(emotionItem)}
                           disabled={selectedMixedEmotions.length >= 3 && !selectedMixedEmotions.includes(emotionItem)}
+                           id={`emotion-${emotionItem.replace(/\s/g, '-')}`}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal cursor-pointer" htmlFor={emotionItem.replace(/\s/g, '-')}>
+                      <FormLabel className="text-sm font-normal cursor-pointer" htmlFor={`emotion-${emotionItem.replace(/\s/g, '-')}`}>
                         {emotionItem}
                       </FormLabel>
                     </FormItem>
@@ -510,3 +545,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
+
+
+    
