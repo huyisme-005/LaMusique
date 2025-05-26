@@ -1,8 +1,9 @@
 
 "use client";
 
+import React from 'react'; // Ensure React is imported
 import type { FC } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,13 +18,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { generateSongLyrics, type GenerateSongLyricsInput } from '@/ai/flows/generate-song-lyrics';
 import { generateMelody, type GenerateMelodyOutput, type GenerateMelodyInput } from '@/ai/flows/generate-melody';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Music, ScrollText, Info, Smile, Blend, Edit3, ListChecks, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Music, ScrollText, Info, Smile, Blend, Edit3, ListChecks, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const songCrafterSchema = z.object({
-  theme: z.string().optional(), // This will store the combined theme string from UI selections
+  theme: z.string().optional(),
   keywords: z.string().optional(),
   genre: z.string().min(1, "Genre is required for melody generation."),
   emotion: z.string().optional().describe("The desired emotion for the song."),
@@ -84,6 +91,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   const [selectedPredefinedThemes, setSelectedPredefinedThemes] = useState<string[]>([]);
   const [customTheme, setCustomTheme] = useState<string>("");
   const [showAllThemes, setShowAllThemes] = useState(false);
+  const [lyricsManuallyEdited, setLyricsManuallyEdited] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<SongCrafterFormValues>({
@@ -163,40 +171,65 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     form.setValue('theme', themesForRHF.join(', '));
   }, [selectedPredefinedThemes, customTheme, form]);
 
+  const handleLyricsTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onLyricsChange(e.target.value);
+    setLyricsManuallyEdited(true);
+  };
 
-  const onSubmit: SubmitHandler<SongCrafterFormValues> = async (data) => {
-    setIsLoading(true);
-    let lyricsForMelody = currentLyrics;
-    let newLyricsWereGenerated = false;
-
-    const finalSelectedThemes: string[] = [...selectedPredefinedThemes];
-    if (customTheme.trim() !== "") {
-      finalSelectedThemes.push(`Custom: ${customTheme.trim()}`);
-    }
-
-    if (finalSelectedThemes.length > 3) {
+  const executeMelodyGeneration = async (lyricsForMelody: string, genre: string, key: string, tempo: number) => {
+    if (lyricsForMelody && lyricsForMelody.trim() !== "") {
+      const melodyInput: GenerateMelodyInput = { 
+        lyrics: lyricsForMelody, 
+        genre: genre, 
+        key: key, 
+        tempo: tempo 
+      };
+      const melodyResult = await generateMelody(melodyInput);
+      onMelodyGenerated(melodyResult);
       toast({
-        title: "Theme Selection Error",
-        description: "Please select a maximum of 3 themes in total.",
-        variant: "destructive",
+        title: "Melody Composed!",
+        description: `A melody has been generated.`,
       });
+    } else {
+       toast({
+        title: "Cannot Compose Melody",
+        description: "No lyrics available to compose a melody. Please generate or type lyrics first.",
+        variant: "default",
+      });
+    }
+  };
+  
+  const handleGenerateOrRegenerateAction = async () => {
+    setIsLoading(true);
+    const isValid = await form.trigger(); 
+    if (!isValid) {
+      toast({ title: "Validation Error", description: "Please check your inputs.", variant: "destructive" });
       setIsLoading(false);
       return;
     }
+    const data = form.getValues();
+    let lyricsForMelody = currentLyrics;
+
+    const finalSelectedThemes: string[] = [...selectedPredefinedThemes];
+    if (customTheme.trim() !== "") {
+      finalSelectedThemes.push(customTheme.trim()); // Use custom theme directly without "Custom:" prefix for AI
+    }
     
+    if (finalSelectedThemes.length > 3) {
+      toast({ title: "Theme Selection Error", description: "Please select a maximum of 3 themes in total.", variant: "destructive"});
+      setIsLoading(false);
+      return;
+    }
     const themeStringForAI = finalSelectedThemes.join(', ');
 
     try {
+      // Always attempt to generate lyrics in this action
       if (themeStringForAI.trim() !== "" || (data.keywords && data.keywords.trim() !== "")) {
         let emotionInputForLyrics: string | undefined;
         if (data.emotion === "None") {
           emotionInputForLyrics = undefined;
         } else if (data.emotion === "Mixed Emotion") {
-          if (selectedMixedEmotions.length > 0) {
-            emotionInputForLyrics = selectedMixedEmotions.join(', ');
-          } else {
-            emotionInputForLyrics = undefined; 
-          }
+          emotionInputForLyrics = selectedMixedEmotions.length > 0 ? selectedMixedEmotions.join(', ') : undefined;
         } else {
           emotionInputForLyrics = data.emotion;
         }
@@ -209,55 +242,51 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
         const aiLyricsResult = await generateSongLyrics(lyricsInput);
         onLyricsGenerated(aiLyricsResult.lyrics);
         lyricsForMelody = aiLyricsResult.lyrics;
-        newLyricsWereGenerated = true;
+        setLyricsManuallyEdited(false); 
         toast({
           title: "Lyrics Generated!",
-          description: "AI has crafted new lyrics based on your inputs. They are now in the lyrics area.",
+          description: "AI has crafted new lyrics. They are now in the lyrics area.",
         });
-      } else if (!currentLyrics || currentLyrics.trim() === "") {
-        toast({
-          title: "Missing Lyrics Source",
-          description: "Please provide Themes or Keywords to generate lyrics, or type/paste lyrics directly into the text area below.",
-          variant: "destructive",
-        });
+      } else { // No theme/keywords provided for AI generation
+        toast({ title: "Missing Lyrics Source", description: "Provide Themes/Keywords for AI lyrics regeneration.", variant: "destructive"});
         setIsLoading(false);
         return;
       }
 
-      if (lyricsForMelody && lyricsForMelody.trim() !== "") {
-        const melodyInput: GenerateMelodyInput = { 
-          lyrics: lyricsForMelody, 
-          genre: data.genre, 
-          key: data.key, 
-          tempo: data.tempo 
-        };
-        const melodyResult = await generateMelody(melodyInput);
-        onMelodyGenerated(melodyResult);
-        toast({
-          title: "Melody Composed!",
-          description: `A melody has been generated for the ${newLyricsWereGenerated ? "newly generated" : "provided/edited"} lyrics.`,
-        });
-      } else {
-         toast({
-          title: "Cannot Compose Melody",
-          description: "No lyrics available to compose a melody. Please generate or type lyrics first.",
-          variant: "default",
-        });
-      }
+      await executeMelodyGeneration(lyricsForMelody, data.genre, data.key, data.tempo);
+
     } catch (error) {
-      console.error("Error in song crafting process:", error);
-      const errorMessage = (error as Error).message || "Something went wrong.";
-      if (newLyricsWereGenerated && lyricsForMelody && errorMessage.toLowerCase().includes("melody")) {
-        toast({ title: "Error Composing Melody", description: errorMessage, variant: "destructive" });
-      } else if (errorMessage.toLowerCase().includes("lyrics")) {
-        toast({ title: "Error Generating Lyrics", description: errorMessage, variant: "destructive" });
-      } else {
-        toast({ title: "Error in Song Crafting", description: errorMessage, variant: "destructive" });
-      }
+      console.error("Error in song crafting (generate/regenerate lyrics & melody):", error);
+      toast({ title: "Error in Song Crafting", description: (error as Error).message || "Something went wrong.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleContinueWithLyricsAction = async () => {
+    setIsLoading(true);
+    const isValid = await form.trigger(["genre", "key", "tempo"]);
+    if (!isValid) {
+      toast({ title: "Validation Error", description: "Please ensure Genre, Key, and Tempo are set.", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
+    if (!currentLyrics || currentLyrics.trim() === "") {
+      toast({ title: "Missing Lyrics", description: "Please enter or edit lyrics before composing melody.", variant: "destructive"});
+      setIsLoading(false);
+      return;
+    }
+    const data = form.getValues();
+    try {
+      await executeMelodyGeneration(currentLyrics, data.genre, data.key, data.tempo);
+    } catch (error) {
+      console.error("Error in song crafting (continue with lyrics):", error);
+      toast({ title: "Error Composing Melody", description: (error as Error).message || "Something went wrong.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   const mixedEmotionOptions = songEmotions.filter(e => e !== "None" && e !== "Mixed Emotion");
   const displayedSelectedThemes = [...selectedPredefinedThemes];
@@ -266,9 +295,11 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   }
 
   const themesToRender = showAllThemes ? PREDEFINED_THEMES : PREDEFINED_THEMES.slice(0, INITIAL_THEMES_TO_SHOW);
+  
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics & Melody</CardTitle>
@@ -281,11 +312,11 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-lg">
                 <p className="text-sm">
-                  <strong>To generate lyrics:</strong> Select/enter Themes, Keywords, and optionally Emotion, Key, Tempo, Genre. Then click the button.
+                  <strong>To generate lyrics & melody:</strong> Fill Themes, Keywords, Emotion, Genre, Key, Tempo. Click "Generate Lyrics & Compose Melody".
                   <br />
-                  <strong>To use your own lyrics:</strong> Type or paste them into the "Lyrics for Melody Generation / Manual Editing" area below. Ensure Genre, Key, and Tempo are set. Then click the button.
+                  <strong>To use your own lyrics:</strong> Type or paste them into the "Lyrics for Melody Generation / Manual Editing" area. Set Genre, Key, Tempo. Then choose "Continue with these Lyrics" from the compose options.
                   <br />
-                  Melody output includes singing instructions.
+                  Melody output includes singing instructions and lyric feedback.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -295,134 +326,14 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
           Craft lyrics with AI or input manually. Then, compose a melody.
         </CardDescription>
       </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+      <ScrollArea orientation="horizontal" type="scroll">
+        <div className="min-w-max p-6 pt-0">
+          <Form {...form}>
+            <form className="min-w-max space-y-4" onSubmit={(e) => e.preventDefault()}>
             
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel className="flex items-center gap-1"><ListChecks className="text-primary inline-block h-4 w-4" /> Themes</FormLabel>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                          <Info className="h-3 w-3 text-muted-foreground" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p className="text-xs">Select up to 3 themes total (predefined or custom) to guide lyrical content. (Optional if typing lyrics manually)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-              </div>
-              <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
-              <div className="space-y-2 pt-1">
-                {showAllThemes ? (
-                  <ScrollArea className="max-h-60 w-full rounded-md border p-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                      {PREDEFINED_THEMES.map(theme => (
-                        <FormItem key={theme} className="flex flex-row items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={selectedPredefinedThemes.includes(theme)}
-                              onCheckedChange={(checked) => handlePredefinedThemeChange(theme, !!checked)}
-                              disabled={!selectedPredefinedThemes.includes(theme) && totalSelectedThemes >= 3}
-                              id={`theme-${theme.replace(/\s/g, '-')}`}
-                            />
-                          </FormControl>
-                          <Label className="text-sm font-normal cursor-pointer" htmlFor={`theme-${theme.replace(/\s/g, '-')}`}>{theme}</Label>
-                        </FormItem>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 p-2 border rounded-md bg-muted/20">
-                    {themesToRender.map(theme => (
-                      <FormItem key={theme} className="flex flex-row items-center space-x-2 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={selectedPredefinedThemes.includes(theme)}
-                            onCheckedChange={(checked) => handlePredefinedThemeChange(theme, !!checked)}
-                            disabled={!selectedPredefinedThemes.includes(theme) && totalSelectedThemes >= 3}
-                            id={`theme-${theme.replace(/\s/g, '-')}`}
-                          />
-                        </FormControl>
-                        <Label className="text-sm font-normal cursor-pointer" htmlFor={`theme-${theme.replace(/\s/g, '-')}`}>{theme}</Label>
-                      </FormItem>
-                    ))}
-                  </div>
-                )}
-                {PREDEFINED_THEMES.length > INITIAL_THEMES_TO_SHOW && (
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    onClick={() => setShowAllThemes(!showAllThemes)}
-                    className="p-0 h-auto text-primary mt-1 flex items-center gap-1"
-                  >
-                    {showAllThemes ? <><EyeOff size={14}/> Collapse</> : <><Eye size={14}/> View All</>}
-                  </Button>
-                )}
-                <div>
-                  <Label htmlFor="customTheme" className="text-sm font-medium">Custom Theme</Label>
-                  <Input
-                    id="customTheme"
-                    value={customTheme}
-                    onChange={(e) => handleCustomThemeChange(e.target.value)}
-                    placeholder="Type a custom theme (optional)"
-                    disabled={customTheme.trim() === "" && selectedPredefinedThemes.length >= 3 && totalSelectedThemes >=3}
-                    className="mt-1"
-                  />
-                </div>
-                <FormDescUI className="text-xs text-muted-foreground">
-                  Selected ({totalSelectedThemes}/3): {displayedSelectedThemes.join(', ') || "None"}
-                </FormDescUI>
-              </div>
-            </FormItem>
-
-            <FormField
-              control={form.control}
-              name="keywords"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Keywords</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Beach, stars, journey (Optional if typing lyrics manually)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="genre"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Genre</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a genre" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <ScrollArea className="h-[200px]">
-                        {genres.sort().map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                      </ScrollArea>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="emotion"
-              render={({ field }) => (
-                <FormItem>
-                   <div className="flex items-center justify-between">
-                    <FormLabel className="flex items-center gap-1"><Smile className="text-primary inline-block h-4 w-4" /> Desired Emotion</FormLabel>
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel className="flex items-center gap-1"><ListChecks className="text-primary inline-block h-4 w-4" /> Themes</FormLabel>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -431,117 +342,260 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Select an emotion to guide lyrical content. Choose "Mixed Emotion" to select up to 3 specific emotions. (Optional if typing lyrics manually)</p>
+                          <p className="text-xs">Select up to 3 themes total (predefined or custom) to guide lyrical content. (Optional if typing lyrics manually)</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  </div>
-                  <Select onValueChange={field.onChange} defaultValue={field.value || "None"}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an emotion (optional)" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <ScrollArea className="h-[200px]">
-                        {songEmotions.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
-                      </ScrollArea>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {watchedEmotion === "Mixed Emotion" && (
-              <Card className="p-4 bg-muted/50">
-                <Label className="flex items-center gap-1 mb-3 text-sm font-medium"><Blend className="text-primary inline-block h-4 w-4" /> Select up to 3 emotions to mix:</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {mixedEmotionOptions.map(emotionItem => (
-                    <FormItem key={emotionItem} className="flex flex-row items-start space-x-2 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={selectedMixedEmotions.includes(emotionItem)}
-                          onCheckedChange={() => handleMixedEmotionChange(emotionItem)}
-                          disabled={selectedMixedEmotions.length >= 3 && !selectedMixedEmotions.includes(emotionItem)}
-                           id={`emotion-${emotionItem.replace(/\s/g, '-')}`}
-                        />
-                      </FormControl>
-                      <FormLabel className="text-sm font-normal cursor-pointer" htmlFor={`emotion-${emotionItem.replace(/\s/g, '-')}`}>
-                        {emotionItem}
-                      </FormLabel>
-                    </FormItem>
-                  ))}
                 </div>
-                <FormDescUI className="text-xs text-muted-foreground mt-3">
-                  Selected: {selectedMixedEmotions.join(', ') || "None"} (Max 3)
-                </FormDescUI>
-              </Card>
-            )}
+                <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
+                <div className="space-y-2 pt-1">
+                  {showAllThemes ? (
+                    <ScrollArea className="max-h-60 w-full rounded-md border p-2">
+                      <div className="grid grid-cols-1 gap-y-2">
+                        {PREDEFINED_THEMES.map(theme => (
+                          <FormItem key={theme} className="flex flex-row items-start space-x-2 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={selectedPredefinedThemes.includes(theme)}
+                                onCheckedChange={(checked) => handlePredefinedThemeChange(theme, !!checked)}
+                                disabled={!selectedPredefinedThemes.includes(theme) && totalSelectedThemes >= 3}
+                                id={`theme-${theme.replace(/[^a-zA-Z0-9-_]/g, '')}`}
+                              />
+                            </FormControl>
+                            <Label className="text-sm font-normal cursor-pointer" htmlFor={`theme-${theme.replace(/[^a-zA-Z0-9-_]/g, '')}`}>{theme}</Label>
+                          </FormItem>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-y-2 p-2 border rounded-md bg-muted/20">
+                      {themesToRender.map(theme => (
+                        <FormItem key={theme} className="flex flex-row items-start space-x-2 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={selectedPredefinedThemes.includes(theme)}
+                              onCheckedChange={(checked) => handlePredefinedThemeChange(theme, !!checked)}
+                              disabled={!selectedPredefinedThemes.includes(theme) && totalSelectedThemes >= 3}
+                               id={`theme-${theme.replace(/[^a-zA-Z0-9-_]/g, '')}`}
+                            />
+                          </FormControl>
+                          <Label className="text-sm font-normal cursor-pointer" htmlFor={`theme-${theme.replace(/[^a-zA-Z0-9-_]/g, '')}`}>{theme}</Label>
+                        </FormItem>
+                      ))}
+                    </div>
+                  )}
+                  {PREDEFINED_THEMES.length > INITIAL_THEMES_TO_SHOW && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={() => setShowAllThemes(!showAllThemes)}
+                      className="p-0 h-auto text-primary mt-1 flex items-center gap-1"
+                    >
+                      {showAllThemes ? <><EyeOff size={14}/> Collapse</> : <><Eye size={14}/> View All</>}
+                    </Button>
+                  )}
+                  <div>
+                    <Label htmlFor="customTheme" className="text-sm font-medium">Custom Theme</Label>
+                    <Input
+                      id="customTheme"
+                      value={customTheme}
+                      onChange={(e) => handleCustomThemeChange(e.target.value)}
+                      placeholder="Type a custom theme (optional)"
+                      disabled={customTheme.trim() === "" && selectedPredefinedThemes.length >= 3 && totalSelectedThemes >=3}
+                      className="mt-1"
+                    />
+                  </div>
+                  <FormDescUI className="text-xs text-muted-foreground">
+                    Selected ({totalSelectedThemes}/3): {displayedSelectedThemes.join(', ') || "None"}
+                  </FormDescUI>
+                </div>
+              </FormItem>
 
-            <FormField
-              control={form.control}
-              name="key"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Key</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormField
+                control={form.control}
+                name="keywords"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Keywords</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a key" />
-                      </SelectTrigger>
+                      <Input placeholder="e.g., Beach, stars, journey (Optional if typing lyrics manually)" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <ScrollArea className="h-[200px]">
-                        {musicKeys.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}
-                      </ScrollArea>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="tempo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tempo</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 120 BPM" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Separator className="my-6" />
-            
-            <div className="space-y-1 pt-2">
-              <Label htmlFor="lyrics-input-area" className="flex items-center gap-1">
-                <Edit3 size={16} /> Lyrics for Melody Generation / Manual Editing
-              </Label>
-              <Textarea
-                id="lyrics-input-area"
-                value={currentLyrics}
-                onChange={(e) => onLyricsChange(e.target.value)}
-                placeholder="Type your lyrics here, or AI-generated lyrics will appear here. This content will be used for melody generation."
-                className="min-h-[180px] focus:ring-accent focus:border-accent text-sm"
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-               <FormDescUI className="text-xs text-muted-foreground">
-                If Themes & Keywords above are filled, AI will generate lyrics here. Otherwise, type your own.
-              </FormDescUI>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={isLoading} className="w-full">
+              <FormField
+                control={form.control}
+                name="genre"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Genre</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a genre" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <ScrollArea className="h-[200px]">
+                          {genres.sort().map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        </ScrollArea>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="emotion"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="flex items-center gap-1"><Smile className="text-primary inline-block h-4 w-4" /> Desired Emotion</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6">
+                              <Info className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p className="text-xs">Select an emotion to guide lyrical content. Choose "Mixed Emotion" to select up to 3 specific emotions. (Optional if typing lyrics manually)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value || "None"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an emotion (optional)" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <ScrollArea className="h-[200px]">
+                          {songEmotions.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                        </ScrollArea>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {watchedEmotion === "Mixed Emotion" && (
+                <Card className="p-4 bg-muted/50">
+                  <Label className="flex items-center gap-1 mb-3 text-sm font-medium"><Blend className="text-primary inline-block h-4 w-4" /> Select up to 3 emotions to mix:</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {mixedEmotionOptions.map(emotionItem => (
+                      <FormItem key={emotionItem} className="flex flex-row items-start space-x-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={selectedMixedEmotions.includes(emotionItem)}
+                            onCheckedChange={() => handleMixedEmotionChange(emotionItem)}
+                            disabled={selectedMixedEmotions.length >= 3 && !selectedMixedEmotions.includes(emotionItem)}
+                            id={`emotion-${emotionItem.replace(/\s/g, '-')}`}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm font-normal cursor-pointer" htmlFor={`emotion-${emotionItem.replace(/\s/g, '-')}`}>
+                          {emotionItem}
+                        </FormLabel>
+                      </FormItem>
+                    ))}
+                  </div>
+                  <FormDescUI className="text-xs text-muted-foreground mt-3">
+                    Selected: {selectedMixedEmotions.join(', ') || "None"} (Max 3)
+                  </FormDescUI>
+                </Card>
+              )}
+
+              <FormField
+                control={form.control}
+                name="key"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Key</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value || "C"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a key" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <ScrollArea className="h-[200px]">
+                          {musicKeys.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+                        </ScrollArea>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="tempo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tempo</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 120 BPM" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Separator className="my-6" />
+              
+              <div className="space-y-1 pt-2">
+                <Label htmlFor="lyrics-input-area" className="flex items-center gap-1">
+                  <Edit3 size={16} /> Lyrics for Melody Generation / Manual Editing
+                </Label>
+                <Textarea
+                  id="lyrics-input-area"
+                  value={currentLyrics}
+                  onChange={handleLyricsTextareaChange}
+                  placeholder="Type your lyrics here, or AI-generated lyrics will appear here. This content will be used for melody generation."
+                  className="min-h-[180px] focus:ring-accent focus:border-accent text-sm"
+                />
+                <FormDescUI className="text-xs text-muted-foreground">
+                  If Themes & Keywords above are filled, AI will generate lyrics here. Otherwise, type your own.
+                </FormDescUI>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </ScrollArea>
+      <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-2 pt-4 border-t">
+         {lyricsManuallyEdited ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button disabled={isLoading} className="w-full sm:w-auto">
+                  {isLoading ? <Loader2 className="animate-spin" /> : "Compose Options"}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center">
+                <DropdownMenuItem onSelect={handleGenerateOrRegenerateAction} disabled={isLoading}>
+                  Generate Lyrics & Compose Melody
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleContinueWithLyricsAction} disabled={isLoading || !currentLyrics.trim()}>
+                  Continue with these Lyrics
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button type="button" onClick={handleGenerateOrRegenerateAction} disabled={isLoading} className="w-full">
               {isLoading ? <Loader2 className="animate-spin" /> : "Generate Lyrics & Compose Melody"}
             </Button>
-          </CardFooter>
-        </form>
-      </Form>
+          )}
+      </CardFooter>
     </Card>
   );
 };
 
 export default SongCrafter;
+
+    
