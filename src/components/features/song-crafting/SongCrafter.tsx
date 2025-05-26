@@ -231,7 +231,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               name="theme"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Theme (for AI Lyrics)</FormLabel>
+                  <FormLabel>Theme</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Summer romance, Space adventure (Optional if typing lyrics manually)" {...field} />
                   </FormControl>
@@ -244,7 +244,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               name="keywords"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Keywords (for AI Lyrics)</FormLabel>
+                  <FormLabel>Keywords</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Beach, stars, journey (Optional if typing lyrics manually)" {...field} />
                   </FormControl>
@@ -257,7 +257,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               name="genre"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Genre (for Melody)</FormLabel>
+                  <FormLabel>Genre</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -281,7 +281,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               render={({ field }) => (
                 <FormItem>
                    <div className="flex items-center justify-between">
-                    <FormLabel className="flex items-center gap-1"><Smile className="text-primary inline-block h-4 w-4" /> Desired Emotion (for AI Lyrics)</FormLabel>
+                    <FormLabel className="flex items-center gap-1"><Smile className="text-primary inline-block h-4 w-4" /> Desired Emotion</FormLabel>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -290,7 +290,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Select an emotion for AI lyrical guidance. Choose "Mixed Emotion" to select up to 3 specific emotions. (Optional if typing lyrics manually)</p>
+                          <p className="text-xs">Select an emotion to guide lyrical content. Choose "Mixed Emotion" to select up to 3 specific emotions. (Optional if typing lyrics manually)</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -298,7 +298,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                   <Select onValueChange={field.onChange} defaultValue={field.value || "None"}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select an emotion (optional for AI lyrics)" />
+                        <SelectValue placeholder="Select an emotion (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -342,7 +342,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               name="key"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Key (for Melody)</FormLabel>
+                  <FormLabel>Key</FormLabel>
                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -364,9 +364,9 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               name="tempo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tempo (BPM, for Melody)</FormLabel>
+                  <FormLabel>Tempo</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="e.g., 120" {...field} />
+                    <Input type="number" placeholder="e.g., 120 BPM" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
