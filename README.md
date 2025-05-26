@@ -14,7 +14,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio (and any globally available lyrics, if applicable). (Note: This is a preliminary check with limitations).
 *   **Emotion Analysis**: Input text to analyze its emotional content, receiving insights on detected emotion, confidence, and an AI explanation. (Voice input planned for future).
 *   **AI Copilot (Integrated!)**: Contextual tips and instructions for various features are now available via "Info" icons and tooltips directly within each relevant component/section, replacing the previous dedicated "AI Copilot" panel.
-*   **Manual Edit Module**: Directly edit generated lyrics. Placeholder for future advanced melody editing.
+*   **Manual Edit Module**: Directly edit generated lyrics.
 *   **Music Video Asset Management**:
     *   Upload image and video files to be used as assets for a music video.
     *   (Planned) AI-powered music video generation using uploaded assets.
@@ -64,7 +64,7 @@ This is a Next.js application. To get started:
 
 *   **Full Audio Recording & Processing**: Implementing robust microphone recording, audio editing, and potential speech-to-text for the "Audio Input" section.
 *   **Advanced Plagiarism Detection**: The current plagiarism scan is very basic. A more sophisticated system would require advanced audio analysis and a comprehensive database.
-*   **Melody Playback & Advanced Editing**: Currently, melodies are generated as data (MusicXML) but not played back or visualized in detail. An advanced melody editor is a key future enhancement.
+*   **Melody Playback & Visualization**: Currently, melodies are generated as data (MusicXML) but not played back or visualized in detail. This is a key future enhancement. (Advanced melody editing has been removed as a separate section).
 *   **Music Video Generation**: The music video generation feature itself is a placeholder and requires significant development beyond asset uploading.
 *   **Dynamic/Elaborate AI Copilot**: Expanding the integrated Copilot hints, perhaps with more interactive elements or AI-generated dynamic tips, rather than static tooltips.
 *   **User Accounts & Work History**: Implementing user authentication (signup/login) and database functionality to save, load, and manage user projects and work history.

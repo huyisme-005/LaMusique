@@ -10,9 +10,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import LyricsGenerator from '@/components/features/song-crafting/LyricsGenerator';
 import MelodyGenerator from '@/components/features/song-crafting/MelodyGenerator';
-// AiCopilot component is removed
 import LyricsEditor from '@/components/features/editing/LyricsEditor';
-import MelodyEditorPlaceholder from '@/components/features/editing/MelodyEditorPlaceholder';
+// MelodyEditorPlaceholder removed
 import ExportControls from '@/components/features/export-share/ExportControls';
 import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
@@ -68,9 +67,8 @@ const HarmonicAiPage: FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Editing & Refinement</h3>
                 <div className="space-y-6">
-                  {/* AiCopilot component removed from here */}
                   <LyricsEditor lyrics={lyrics} onLyricsChange={handleLyricsChange} />
-                  <MelodyEditorPlaceholder />
+                  {/* MelodyEditorPlaceholder component removed from here */}
                 </div>
               </div>
               <Separator />
