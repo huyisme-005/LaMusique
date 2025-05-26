@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/layout/AppHeader';
-import { Button } from '@/components/layout-parts/Button'; // Assuming you might have a custom Button or use ShadCN
+import { Button } from '@/components/ui/button'; // Corrected import path
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
