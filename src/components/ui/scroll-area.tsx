@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -7,17 +8,31 @@ import { cn } from "@/lib/utils"
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref) => (
+  // Define viewportRef and onViewportScroll as optional props
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
+    viewportRef?: React.Ref<HTMLDivElement>;
+    onViewportScroll?: React.UIEventHandler<HTMLDivElement>;
+  }
+  // Destructure viewportRef and onViewportScroll so they are not in `...props`
+>(({ className, children, viewportRef, onViewportScroll, ...props }, ref) => (
   <ScrollAreaPrimitive.Root
     ref={ref}
     className={cn("relative overflow-hidden", className)}
+    // Only spread the remaining valid props for ScrollAreaPrimitive.Root
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    <ScrollAreaPrimitive.Viewport
+      // Apply the viewportRef and onViewportScroll to the Viewport component
+      ref={viewportRef}
+      onScroll={onViewportScroll}
+      className="h-full w-full rounded-[inherit]"
+    >
       {children}
     </ScrollAreaPrimitive.Viewport>
-    <ScrollBar />
+    {/* Default behavior is to show scrollbars when needed. Radix handles this. */}
+    {/* We render both, and Radix determines visibility based on content/props. */}
+    <ScrollBar /> 
+    <ScrollBar orientation="horizontal" />
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ))
@@ -35,7 +50,7 @@ const ScrollBar = React.forwardRef<
       orientation === "vertical" &&
         "h-full w-2.5 border-l border-l-transparent p-[1px]",
       orientation === "horizontal" &&
-        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+        "h-2.5 flex-col border-t border-t-transparent p-[1px]", // flex-col was added to ensure thumb orientation
       className
     )}
     {...props}
