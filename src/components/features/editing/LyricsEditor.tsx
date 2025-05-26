@@ -1,4 +1,9 @@
 
+// This file is no longer used and can be deleted.
+// The functionality has been integrated into the SongCrafter.tsx component
+// at src/components/features/song-crafting/SongCrafter.tsx.
+
+/*
 "use client";
 
 import type { FC } from 'react';
@@ -56,3 +61,4 @@ const LyricsEditor: FC<LyricsEditorProps> = ({ lyrics, onLyricsChange }) => {
 };
 
 export default LyricsEditor;
+*/

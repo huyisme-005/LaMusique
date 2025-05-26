@@ -5,17 +5,17 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 
 ## Core Features
 
-*   **AI Song & Melody Crafter with User-Selected Emotion**: A unified section to:
-    *   Generate original song lyrics and melodies by specifying themes, keywords, genre, a desired emotion (including "Mixed Emotion" with up to 3 selectable sub-emotions), key, and tempo. Lyrics generation is followed by automatic melody composition.
+*   **AI Song & Melody Crafter with User-Selected Emotion and Integrated Editing**: A unified section to:
+    *   Generate original song lyrics by specifying themes, keywords, genre, and a desired emotion (including "Mixed Emotion" with up to 3 selectable sub-emotions).
+    *   Manually type, paste, or edit lyrics directly in an integrated textarea.
+    *   Compose a melody based on the current lyrics (either AI-generated or manually entered/edited), selected key, and tempo.
     *   The generated melody description includes **instructions on how to manually sing the song**.
-    *   Generated lyrics are immediately available for refinement in the "Edit" section.
     *   Includes an expanded list of music genres.
 *   **Audio Input & Analysis**:
     *   Upload audio files (e.g., song ideas, vocal snippets). If no audio is uploaded, a default silent placeholder is used for analysis.
     *   (Planned) Record audio directly using a microphone.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio (and any globally available lyrics, if applicable). (Note: This is a preliminary check with limitations).
 *   **Integrated AI Copilot Hints**: Contextual tips and instructions for various features are available via "Info" icons and tooltips directly within each relevant component/section.
-*   **Manual Edit Module**: Directly edit generated lyrics.
 *   **Music Video Asset Management**:
     *   Upload image and video files to be used as assets for a music video.
     *   (Planned) AI-powered music video generation using uploaded assets.
@@ -37,7 +37,7 @@ This is a Next.js application. To get started:
     The application will typically be available at `http://localhost:9002`.
 
 3.  **Explore the UI**:
-    *   The left panel contains all song creation tools (including emotion selection for lyrics), audio input, editing features, and export/share controls, organized into a single vertically scrollable view with sections. Integrated AI Copilot hints (info icons) provide guidance within each section.
+    *   The left panel contains all song creation tools (including emotion selection, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. Integrated AI Copilot hints (info icons) provide guidance within each section.
     *   The right panel displays generated lyrics, melody information (including singing instructions), and music video asset controls.
 
 ## Tech Stack
@@ -51,11 +51,11 @@ This is a Next.js application. To get started:
 
 ## Current MVPs (Minimum Viable Products)
 
-*   Unified generation of song lyrics and melody data (MusicXML format and description with singing instructions) based on user input (theme, keywords, selected emotion including "Mixed Emotion", genre, key, tempo) with expanded genre options.
+*   Unified generation of song lyrics (from AI or manual input) and melody data (MusicXML format and description with singing instructions) based on user input (theme, keywords, selected emotion including "Mixed Emotion", genre, key, tempo) with expanded genre options.
+*   Integrated lyrics editing within the main song crafting component.
 *   UI for audio file upload (with default silent placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
 *   Integrated AI Copilot hints via tooltips within each major feature component.
 *   A responsive split-screen user interface with a vertically scrollable left panel for controls and a right panel for viewing generated content.
-*   Basic manual editing capability for lyrics.
 *   UI for uploading image/video assets for future music video generation.
 *   Placeholders for export, social sharing, and full music video generation features.
 

@@ -5,14 +5,11 @@ import { useState, type FC, useEffect, useRef } from 'react';
 import AppHeader from '@/components/layout/AppHeader';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from '@/components/ui/separator';
-// Button, ChevronLeft, ChevronRight imports removed as tabs are gone
-import SongCrafter from '@/components/features/song-crafting/SongCrafter'; // New combined component
-import LyricsEditor from '@/components/features/editing/LyricsEditor';
+import SongCrafter from '@/components/features/song-crafting/SongCrafter'; 
 import ExportControls from '@/components/features/export-share/ExportControls';
 import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
 import MusicVideoControls from '@/components/features/output/MusicVideoControls';
-// EmotionAnalyzer import removed
 import AudioInputHandler from '@/components/features/audio-input/AudioInputHandler';
 
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
@@ -29,8 +26,9 @@ const HarmonicAiPage: FC = () => {
     setMelody(newMelody);
   };
 
-  const handleLyricsChange = (newLyrics: string) => {
-    setLyrics(newLyrics);
+  // This function will be passed to SongCrafter for direct editing of lyrics
+  const handleLyricsEdited = (editedLyrics: string) => {
+    setLyrics(editedLyrics);
   };
   
   return (
@@ -45,11 +43,12 @@ const HarmonicAiPage: FC = () => {
           <ScrollArea className="flex-1 p-4 md:p-6 bg-background/30 rounded-b-xl">
             <div className="space-y-8">
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Generate Lyrics & Melody</h3>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Generate & Edit Lyrics / Compose Melody</h3>
                 <div className="space-y-6">
                   <SongCrafter 
                     currentLyrics={lyrics}
-                    onLyricsGenerated={handleLyricsGenerated}
+                    onLyricsGenerated={handleLyricsGenerated} 
+                    onLyricsChange={handleLyricsEdited} // For direct editing in SongCrafter's textarea
                     onMelodyGenerated={handleMelodyGenerated}
                   />
                 </div>
@@ -58,17 +57,10 @@ const HarmonicAiPage: FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Audio Input</h3>
                 <div className="space-y-6">
-                  <AudioInputHandler onAudioPrepared={() => { /* No longer needs to update page state directly or handle lyrics from here */ }} />
-                  {/* EmotionAnalyzer component removed from here */}
+                  <AudioInputHandler onAudioPrepared={() => { /* No action needed here now */ }} />
                 </div>
               </div>
-              <Separator />
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Editing & Refinement</h3>
-                <div className="space-y-6">
-                  <LyricsEditor lyrics={lyrics} onLyricsChange={handleLyricsChange} />
-                </div>
-              </div>
+              {/* Editing & Refinement section removed */}
               <Separator />
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Export & Share</h3>
