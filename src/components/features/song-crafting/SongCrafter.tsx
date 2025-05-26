@@ -15,18 +15,19 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateSongLyrics, type GenerateSongLyricsInput } from '@/ai/flows/generate-song-lyrics';
 import { generateMelody, type GenerateMelodyOutput, type GenerateMelodyInput } from '@/ai/flows/generate-melody';
-import { analyzeEmotion, type AnalyzeEmotionOutput, type AnalyzeEmotionInput } from '@/ai/flows/analyze-emotion';
+// analyzeEmotion import removed
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Music, ScrollText, Info, Smile, Brain } from 'lucide-react';
+import { Loader2, Music, ScrollText, Info, Smile } from 'lucide-react'; // Brain icon removed
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
+// Progress import removed
 
 const songCrafterSchema = z.object({
   theme: z.string().min(3, "Theme must be at least 3 characters long."),
   keywords: z.string().min(3, "Keywords must be at least 3 characters long."),
   genre: z.string().min(1, "Genre is required."),
+  emotion: z.string().optional().describe("The desired emotion for the song."), // Added emotion field
   key: z.string().min(1, "Key is required."),
   tempo: z.coerce.number().min(40, "Tempo must be at least 40 BPM.").max(220, "Tempo must be at most 220 BPM."),
 });
@@ -73,13 +74,17 @@ const genres = [
   "Experimental", "Avant-Garde", "Noise", "Video Game Music", "Film Score", "Musical Theatre", "Spoken Word"
 ];
 
+const songEmotions = [
+  "None", "Joy", "Sadness", "Anger", "Fear", "Surprise", "Love", "Hope", 
+  "Excitement", "Calmness", "Nostalgia", "Melancholy", "Bittersweet", "Reflective", "Energetic", "Mixed Emotion"
+];
+
+
 const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, onMelodyGenerated }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const [textToAnalyzeEmotion, setTextToAnalyzeEmotion] = useState<string>("");
-  const [isAnalyzingEmotion, setIsAnalyzingEmotion] = useState(false);
-  const [emotionAnalysisResult, setEmotionAnalysisResult] = useState<AnalyzeEmotionOutput | null>(null);
+  // Emotion analysis state and handler removed
 
   const form = useForm<SongCrafterFormValues>({
     resolver: zodResolver(songCrafterSchema),
@@ -87,6 +92,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       theme: "",
       keywords: "",
       genre: "",
+      emotion: "None", // Default emotion
       key: "C",
       tempo: 120,
     },
@@ -97,7 +103,11 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     let generatedLyrics = "";
     try {
       // Step 1: Generate Lyrics
-      const lyricsInput: GenerateSongLyricsInput = { theme: data.theme, keywords: data.keywords };
+      const lyricsInput: GenerateSongLyricsInput = { 
+        theme: data.theme, 
+        keywords: data.keywords,
+        emotion: data.emotion === "None" ? undefined : data.emotion // Pass emotion to lyrics generation
+      };
       const lyricsResult = await generateSongLyrics(lyricsInput);
       generatedLyrics = lyricsResult.lyrics;
       onLyricsGenerated(generatedLyrics);
@@ -131,14 +141,12 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       console.error("Error in song crafting process:", error);
       const errorMessage = (error as Error).message || "Something went wrong.";
       if (generatedLyrics && !errorMessage.includes("melody")) { 
-        // Lyrics were generated, but melody failed
         toast({
           title: "Error Composing Melody",
           description: errorMessage,
           variant: "destructive",
         });
       } else if (!generatedLyrics) { 
-        // Lyrics generation failed
          toast({
           title: "Error Generating Lyrics",
           description: errorMessage,
@@ -156,41 +164,13 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     }
   };
 
-  const handleEmotionAnalysis = async () => {
-    if (!textToAnalyzeEmotion.trim()) {
-      toast({
-        title: "Input Required",
-        description: "Please enter some text to analyze for emotion.",
-        variant: "default", // Changed to default as it's not an error
-      });
-      return;
-    }
-    setIsAnalyzingEmotion(true);
-    setEmotionAnalysisResult(null);
-    try {
-      const result = await analyzeEmotion({ textToAnalyze: textToAnalyzeEmotion });
-      setEmotionAnalysisResult(result);
-      toast({
-        title: "Emotion Analysis Complete!",
-        description: "The AI has analyzed the emotion in the provided text.",
-      });
-    } catch (error) {
-      console.error("Error analyzing emotion:", error);
-      toast({
-        title: "Error Analyzing Emotion",
-        description: (error as Error).message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzingEmotion(false);
-    }
-  };
+  // handleEmotionAnalysis function removed
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics, Melody & Emotion</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics & Melody</CardTitle>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -199,12 +179,12 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">Enter song parameters to generate lyrics and melody. You can also analyze the emotion of any text input below.</p>
+                <p className="text-sm">Enter song parameters to generate lyrics and melody. You can select an emotion to influence the lyrical content.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardDescription>Craft your song's foundation and analyze textual emotion.</CardDescription>
+        <CardDescription>Craft your song's foundation by providing details below.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -257,6 +237,45 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 </FormItem>
               )}
             />
+            
+            {/* New Emotion Select Field */}
+            <FormField
+              control={form.control}
+              name="emotion"
+              render={({ field }) => (
+                <FormItem>
+                   <div className="flex items-center justify-between">
+                    <FormLabel className="flex items-center gap-1"><Smile className="text-primary inline-block h-4 w-4" /> Desired Emotion</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <Info className="h-3 w-3 text-muted-foreground" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-xs">Select an emotion to guide the lyrical content. "None" will not add specific emotional guidance.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || "None"}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an emotion (optional)" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <ScrollArea className="h-[200px]">
+                        {songEmotions.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                      </ScrollArea>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="key"
@@ -295,64 +314,8 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 
             <Separator className="my-6" />
 
-            {/* Emotion Analysis Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="emotion-text-input" className="flex items-center gap-2 text-base font-medium"><Smile className="text-primary inline-block h-5 w-5" /> Text Emotion Analysis</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7">
-                        <Info className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs">
-                      <p className="text-sm">Enter any text (theme, keywords, lyrics fragment) to get an AI-powered emotion analysis.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <Textarea
-                id="emotion-text-input"
-                placeholder="Type or paste text here to analyze its emotional content..."
-                value={textToAnalyzeEmotion}
-                onChange={(e) => setTextToAnalyzeEmotion(e.target.value)}
-                className="min-h-[100px]"
-              />
-              <Button 
-                type="button" 
-                onClick={handleEmotionAnalysis} 
-                disabled={isAnalyzingEmotion || !textToAnalyzeEmotion.trim()} 
-                className="w-full"
-                variant="outline"
-              >
-                {isAnalyzingEmotion ? <Loader2 className="animate-spin" /> : <><Brain className="mr-2 h-4 w-4" /> Analyze Emotion of Text</>}
-              </Button>
-
-              {emotionAnalysisResult && (
-                <div className="space-y-2 pt-2 pb-2 px-3 border rounded-md bg-muted/30">
-                  <h4 className="text-sm font-semibold">Emotion Analysis Result:</h4>
-                  <div>
-                    <Label className="text-xs">Detected Emotion:</Label>
-                    <p className="text-md font-semibold text-primary">{emotionAnalysisResult.detectedEmotion}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Confidence Score:</Label>
-                    <div className="flex items-center gap-2">
-                      <Progress value={emotionAnalysisResult.confidence * 100} className="w-[calc(100%-45px)] h-2" />
-                      <span className="text-xs text-muted-foreground">{(emotionAnalysisResult.confidence * 100).toFixed(0)}%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Explanation:</Label>
-                    <p className="text-xs text-muted-foreground italic whitespace-pre-wrap">{emotionAnalysisResult.explanation}</p>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Emotion Analysis Section Removed */}
             
-            <Separator className="my-6" />
-
             <div className="space-y-1 pt-2">
               <Label htmlFor="generated-lyrics-display" className="flex items-center gap-1">
                 <ScrollText size={16} /> Current Lyrics for Melody Generation
@@ -378,3 +341,4 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
+

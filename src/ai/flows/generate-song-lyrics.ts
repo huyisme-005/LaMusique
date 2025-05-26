@@ -1,9 +1,10 @@
+
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating song lyrics based on a theme and keywords.
+ * @fileOverview This file defines a Genkit flow for generating song lyrics based on a theme, keywords, and an optional emotion.
  *
- * - generateSongLyrics - A function that takes a theme and keywords as input and generates song lyrics.
+ * - generateSongLyrics - A function that takes a theme, keywords, and an optional emotion as input and generates song lyrics.
  * - GenerateSongLyricsInput - The input type for the generateSongLyrics function.
  * - GenerateSongLyricsOutput - The return type for the generateSongLyrics function.
  */
@@ -14,6 +15,7 @@ import {z} from 'genkit';
 const GenerateSongLyricsInputSchema = z.object({
   theme: z.string().describe('The theme of the song.'),
   keywords: z.string().describe('Keywords to include in the lyrics.'),
+  emotion: z.string().optional().describe('The desired emotion for the song lyrics (e.g., Joy, Sadness, Hope, Mixed Emotion).'),
 });
 export type GenerateSongLyricsInput = z.infer<typeof GenerateSongLyricsInputSchema>;
 
@@ -31,6 +33,9 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateSongLyricsInputSchema},
   output: {schema: GenerateSongLyricsOutputSchema},
   prompt: `You are a songwriter. Generate song lyrics based on the following theme and keywords.
+{{#if emotion}}
+The lyrics should try to convey a sense of "{{emotion}}".
+{{/if}}
 
 Theme: {{{theme}}}
 Keywords: {{{keywords}}}
@@ -46,6 +51,10 @@ const generateSongLyricsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('The AI failed to generate song lyrics.');
+    }
+    return output;
   }
 );
+
