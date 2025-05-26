@@ -17,10 +17,10 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   (Planned) Record audio directly using a microphone.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio (and any globally available lyrics, if applicable). (Note: This is a preliminary check with limitations).
 *   **Integrated AI Copilot Hints**: Contextual tips and instructions for various features are available via "Info" icons and tooltips directly within each relevant component/section.
-*   **Music Video Asset Management**:
-    *   Upload image and video files to be used as assets for a music video.
+*   **Music Video Asset Management (Optional)**:
+    *   Optionally upload image and video files if you intend to use assets for a music video.
     *   (Planned) AI-powered music video generation using uploaded assets.
-*   **Exporting Feature (Placeholder)**: Functionality to export songs in common audio formats (e.g., MP3, WAV, MIDI) is planned.
+*   **Exporting Feature (Placeholder)**: Functionality to export songs in common audio formats (e.g., MP3, WAV, MIDI) and lyrics as PDF is planned.
 *   **Social Media Sharing (Placeholder)**: Easily share your generated songs on social media platforms (planned feature).
 
 ## Getting Started
@@ -57,8 +57,8 @@ This is a Next.js application. To get started:
 *   UI for audio file upload (optional, with default silent placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
 *   Integrated AI Copilot hints via tooltips within each major feature component.
 *   A responsive split-screen user interface with a vertically scrollable left panel for controls and a right panel for viewing generated content.
-*   UI for uploading image/video assets for future music video generation.
-*   Placeholders for export, social sharing, and full music video generation features.
+*   UI for optionally uploading image/video assets for future music video generation.
+*   Placeholders for export (including lyrics to PDF), social sharing, and full music video generation features.
 
 ## Known Issues & Future Enhancements
 
@@ -69,7 +69,7 @@ This is a Next.js application. To get started:
 *   **Dynamic/Elaborate AI Copilot**: Expanding the integrated Copilot hints, perhaps with more interactive elements or AI-generated dynamic tips, rather than static tooltips.
 *   **User Accounts & Work History**: Implementing user authentication (signup/login) and database functionality to save, load, and manage user projects and work history.
 *   **Tiered Plans & Subscriptions**: Adding different subscription levels with varied features.
-*   **Full Export Functionality**: Implementing actual file export in various audio formats.
+*   **Full Export Functionality**: Implementing actual file export in various audio formats and lyrics to PDF.
 *   **Social Media Integration**: Direct API integration for seamless sharing on social platforms.
 *   **Audio-Reactive Visualizations**: Implementing subtle audio-reactive visuals to enhance user engagement.
 *   **Custom Iconography**: While `lucide-react` is used, implementing custom-designed icons for musical elements could further enhance the UI.

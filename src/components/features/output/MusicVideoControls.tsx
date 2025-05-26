@@ -76,12 +76,12 @@ const MusicVideoControls: FC = () => {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">Upload images and video clips here. These assets can be used for an AI-generated music video (feature coming soon). Manage your uploaded assets below.</p>
+                <p className="text-sm">Optionally, upload images and video clips here if you plan to create an AI-generated music video (feature coming soon). Manage your uploaded assets below.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardDescription>Upload images and video clips to use in your AI-generated music video (Generation Coming Soon!).</CardDescription>
+        <CardDescription>Optionally, upload images/videos if you want to create an AI-generated music video (Generation Coming Soon!).</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Input 
@@ -94,7 +94,7 @@ const MusicVideoControls: FC = () => {
           id="music-video-asset-upload"
         />
         <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full">
-          <Upload className="mr-2 h-4 w-4" /> Upload Images/Videos
+          <Upload className="mr-2 h-4 w-4" /> Upload Images/Videos (Optional)
         </Button>
 
         {assets.length > 0 && (

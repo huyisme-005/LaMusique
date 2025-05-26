@@ -2,7 +2,7 @@
 import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Download, FileAudio, Info } from 'lucide-react';
+import { Download, FileAudio, FileText, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const ExportControls: FC = () => {
@@ -24,12 +24,12 @@ const ExportControls: FC = () => {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">This section will allow you to download your song in formats like MP3, WAV, or MIDI. Full export functionality is currently under development.</p>
+                <p className="text-sm">This section will allow you to download your song in various formats. Full export functionality is currently under development.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardDescription>Download your creation in various audio formats.</CardDescription>
+        <CardDescription>Download your creation in various audio or document formats.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline">
@@ -40,6 +40,9 @@ const ExportControls: FC = () => {
         </Button>
         <Button onClick={() => handleExport('MIDI')} className="w-full" variant="outline">
           <FileAudio className="mr-2 h-4 w-4" /> Export as MIDI
+        </Button>
+        <Button onClick={() => handleExport('Lyrics PDF')} className="w-full" variant="outline">
+          <FileText className="mr-2 h-4 w-4" /> Export Lyrics as PDF
         </Button>
          <p className="text-xs text-muted-foreground text-center pt-2">
             Full export functionality is under development.
