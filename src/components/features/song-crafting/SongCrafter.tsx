@@ -318,7 +318,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
               <div className="space-y-2 pt-1">
                 {showAllThemes ? (
-                  <ScrollArea className="max-h-40 w-full rounded-md border p-2">
+                  <ScrollArea className="max-h-60 w-full rounded-md border p-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                       {PREDEFINED_THEMES.map(theme => (
                         <FormItem key={theme} className="flex flex-row items-center space-x-2 space-y-0">
@@ -545,6 +545,3 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
-
-
-    
