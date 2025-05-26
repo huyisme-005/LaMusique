@@ -60,7 +60,7 @@ const HarmonicAiPage: FC = () => {
       // Clear the query parameter to prevent reloading on refresh/navigation
       // Using router.replace to avoid adding to browser history
       const newPath = window.location.pathname; // Keep current path, remove query params
-      router.replace(newPath, undefined);
+      router.replace(newPath, { scroll: false });
     }
   }, [searchParams, router, toast]);
 
@@ -99,12 +99,16 @@ const HarmonicAiPage: FC = () => {
         }
       }
       songs.push(newSong);
-      localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
-
-      toast({
-        title: "Song Saved!",
-        description: `"${songName.trim()}" has been saved. You can view it on the 'Saved Songs' page.`,
-      });
+      try {
+        localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
+        toast({
+          title: "Song Saved!",
+          description: `"${newSong.name}" has been saved. You can view it on the 'Saved Songs' page.`,
+        });
+      } catch (e) {
+        console.error("Error saving song to localStorage:", e);
+        toast({ title: "Save Error", description: "Could not save your song to local storage. It might be full.", variant: "destructive"});
+      }
     } else if (songName !== null) { // User pressed OK but entered no name
       toast({
         title: "Save Cancelled",
