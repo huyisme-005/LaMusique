@@ -23,6 +23,7 @@ export type GenerateMelodyInput = z.infer<typeof GenerateMelodyInputSchema>;
 const GenerateMelodyOutputSchema = z.object({
   melody: z.string().describe('The generated melody in a suitable format (e.g., MusicXML, MIDI data URI).'),
   description: z.string().describe('A description of the generated melody, including musical considerations and instructions on how to sing the main vocal line.'),
+  lyricFeedback: z.string().describe("Constructive feedback and suggestions for improving the provided lyrics, considering the song's genre, key, tempo, and emotional intent (if inferable). This may include line-by-line comments or general observations on theme, rhyme, rhythm, and imagery."),
 });
 export type GenerateMelodyOutput = z.infer<typeof GenerateMelodyOutputSchema>;
 
@@ -34,21 +35,36 @@ const prompt = ai.definePrompt({
   name: 'generateMelodyPrompt',
   input: {schema: GenerateMelodyInputSchema},
   output: {schema: GenerateMelodyOutputSchema},
-  prompt: `You are an AI music composer specializing in melody generation.
+  prompt: `You are an AI music composer and lyric analyst.
 
-You will generate a fitting melody for the given lyrics, considering the specified genre, key, and tempo.
+Task 1: Melody Generation
+Compose a fitting melody for the given lyrics, considering the specified genre, key, and tempo.
+Provide the melody in MusicXML format.
+In your melody description, include detailed, step-by-step instructions on how to manually sing the main vocal line. Describe pitches (e.g., C4, G#5), rhythms (e.g., quarter note, half note, dotted rhythm), and any expressive details (e.g., crescendo, staccato, legato) for key phrases or the beginning of the song.
 
+Task 2: Lyric Feedback
+After composing the melody, provide constructive feedback on the submitted lyrics. Analyze them based on the provided genre, key, and tempo. If the lyrics imply a certain emotion, consider that as well.
+Offer specific suggestions for improvement. This could include comments on:
+- Word choice and imagery
+- Rhyme scheme and rhythm
+- Thematic consistency and development
+- Clarity and impact
+- How well the lyrics suit the specified genre and musical parameters.
+If specific lines can be improved, point them out with suggestions.
+
+Inputs:
 Lyrics: {{{lyrics}}}
 Genre: {{{genre}}}
 Key: {{{key}}}
 Tempo: {{{tempo}}} BPM
 
-Compose a melody that complements the lyrics and adheres to the musical characteristics of the specified genre, key, and tempo. Provide the melody in MusicXML format.
-
-Crucially, in your description, include detailed, step-by-step instructions on how to manually sing the main vocal line based on the generated melody. Describe pitches (e.g., C4, G#5), rhythms (e.g., quarter note, half note, dotted rhythm), and any expressive details (e.g., crescendo, staccato, legato) in a way a singer can understand and follow for key phrases or the beginning of the song. For example: "The first line 'The sun shines bright' starts with 'The' on C4 as a quarter note, 'sun' steps up to E4 as a half note, 'shines' holds E4 for another beat, and 'bright' resolves down to D4 as a whole note with a slight crescendo."
-
+Output Format:
 Melody (MusicXML):
+[MusicXML content here]
 Description (including singing instructions):
+[Melody description and singing instructions here]
+Lyric Feedback:
+[Constructive feedback and suggestions for the lyrics here]
 `,
 });
 
@@ -60,7 +76,10 @@ const generateMelodyFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('The AI failed to generate a melody and provide lyric feedback.');
+    }
+    return output;
   }
 );
 

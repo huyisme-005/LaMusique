@@ -10,9 +10,10 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Manually type, paste, or edit lyrics directly in an integrated textarea.
     *   Compose a melody based on the current lyrics (either AI-generated or manually entered/edited), selected key, and tempo.
     *   The generated melody description includes **instructions on how to manually sing the song**.
+    *   The AI also provides **feedback and suggestions on the lyrics** used for melody generation.
     *   Includes an expanded list of music genres.
 *   **Audio Input & Analysis**:
-    *   Upload audio files (e.g., song ideas, vocal snippets). If no audio is uploaded, a default silent placeholder is used for analysis.
+    *   Upload audio files (e.g., song ideas, vocal snippets). If no audio is uploaded, a default silent placeholder is used for analysis. Audio input is optional.
     *   (Planned) Record audio directly using a microphone.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio (and any globally available lyrics, if applicable). (Note: This is a preliminary check with limitations).
 *   **Integrated AI Copilot Hints**: Contextual tips and instructions for various features are available via "Info" icons and tooltips directly within each relevant component/section.
@@ -38,7 +39,7 @@ This is a Next.js application. To get started:
 
 3.  **Explore the UI**:
     *   The left panel contains all song creation tools (including emotion selection, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. Integrated AI Copilot hints (info icons) provide guidance within each section.
-    *   The right panel displays generated lyrics, melody information (including singing instructions), and music video asset controls.
+    *   The right panel displays generated lyrics, melody information (including singing instructions and lyric feedback), and music video asset controls.
 
 ## Tech Stack
 
@@ -51,9 +52,9 @@ This is a Next.js application. To get started:
 
 ## Current MVPs (Minimum Viable Products)
 
-*   Unified generation of song lyrics (from AI or manual input) and melody data (MusicXML format and description with singing instructions) based on user input (theme, keywords, selected emotion including "Mixed Emotion", genre, key, tempo) with expanded genre options.
+*   Unified generation of song lyrics (from AI or manual input) and melody data (MusicXML format, description with singing instructions, and lyric feedback) based on user input (theme, keywords, selected emotion including "Mixed Emotion", genre, key, tempo) with expanded genre options.
 *   Integrated lyrics editing within the main song crafting component.
-*   UI for audio file upload (with default silent placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
+*   UI for audio file upload (optional, with default silent placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
 *   Integrated AI Copilot hints via tooltips within each major feature component.
 *   A responsive split-screen user interface with a vertically scrollable left panel for controls and a right panel for viewing generated content.
 *   UI for uploading image/video assets for future music video generation.

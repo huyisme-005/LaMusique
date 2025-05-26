@@ -2,7 +2,7 @@
 import type { FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, ListMusic, Disc3, UserRoundCheck } from 'lucide-react';
+import { FileText, ListMusic, Disc3, UserRoundCheck, MessageSquareQuote } from 'lucide-react';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 
 interface SongOutputDisplayProps {
@@ -18,7 +18,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
           <CardTitle className="flex items-center gap-2"><FileText className="text-primary" /> Generated Lyrics</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-[calc(50vh-180px)] md:h-[calc(100%-5rem)] w-full rounded-md border p-4 bg-muted/30">
+          <ScrollArea className="h-[calc(33vh-120px)] md:h-[calc(100%-5rem)] w-full rounded-md border p-4 bg-muted/30">
             {lyrics ? (
               <pre className="whitespace-pre-wrap text-sm font-mono">{lyrics}</pre>
             ) : (
@@ -34,7 +34,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
           <CardDescription>Details about the composed melody, including how to sing it.</CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-          <ScrollArea className="h-[calc(50vh-220px)] md:h-[calc(100%-6rem)] w-full rounded-md border p-4 bg-muted/30">
+          <ScrollArea className="h-[calc(33vh-140px)] md:h-[calc(100%-6rem)] w-full rounded-md border p-4 bg-muted/30">
             {melody ? (
               <div className="space-y-3">
                 <div>
@@ -59,6 +59,20 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {melody?.lyricFeedback && (
+        <Card className="flex-1 flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><MessageSquareQuote className="text-primary" /> AI Lyric Feedback</CardTitle>
+            <CardDescription>Suggestions and analysis for the lyrics used to generate the melody.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <ScrollArea className="h-[calc(33vh-140px)] md:h-[calc(100%-6rem)] w-full rounded-md border p-4 bg-muted/30">
+              <p className="text-sm whitespace-pre-wrap">{melody.lyricFeedback}</p>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
