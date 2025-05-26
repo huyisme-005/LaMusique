@@ -94,6 +94,8 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   const [lyricsManuallyEdited, setLyricsManuallyEdited] = useState(false);
   const { toast } = useToast();
 
+  const themesScrollAreaViewportRef = React.useRef<HTMLDivElement>(null);
+
   const form = useForm<SongCrafterFormValues>({
     resolver: zodResolver(songCrafterSchema),
     defaultValues: {
@@ -114,6 +116,18 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       setSelectedMixedEmotions([]);
     }
   }, [watchedEmotion]);
+
+  useEffect(() => {
+    if (showAllThemes && themesScrollAreaViewportRef.current) {
+      // Timeout to allow the DOM to update and scrollHeight to be correct
+      setTimeout(() => {
+        if (themesScrollAreaViewportRef.current) {
+          themesScrollAreaViewportRef.current.scrollTop = themesScrollAreaViewportRef.current.scrollHeight;
+        }
+      }, 0);
+    }
+  }, [showAllThemes]); // Re-run when showAllThemes changes
+
 
   const handleMixedEmotionChange = (emotionValue: string) => {
     setSelectedMixedEmotions(prev => {
@@ -212,7 +226,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 
     const finalSelectedThemes: string[] = [...selectedPredefinedThemes];
     if (customTheme.trim() !== "") {
-      finalSelectedThemes.push(customTheme.trim()); // Use custom theme directly without "Custom:" prefix for AI
+      finalSelectedThemes.push(customTheme.trim()); 
     }
     
     if (finalSelectedThemes.length > 3) {
@@ -223,7 +237,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     const themeStringForAI = finalSelectedThemes.join(', ');
 
     try {
-      // Always attempt to generate lyrics in this action
       if (themeStringForAI.trim() !== "" || (data.keywords && data.keywords.trim() !== "")) {
         let emotionInputForLyrics: string | undefined;
         if (data.emotion === "None") {
@@ -247,8 +260,8 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
           title: "Lyrics Generated!",
           description: "AI has crafted new lyrics. They are now in the lyrics area.",
         });
-      } else { // No theme/keywords provided for AI generation
-        toast({ title: "Missing Lyrics Source", description: "Provide Themes/Keywords for AI lyrics regeneration.", variant: "destructive"});
+      } else { 
+        toast({ title: "Missing Lyrics Source", description: "Provide Themes/Keywords for AI lyrics regeneration or type lyrics manually.", variant: "default"});
         setIsLoading(false);
         return;
       }
@@ -296,7 +309,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 
   const themesToRender = showAllThemes ? PREDEFINED_THEMES : PREDEFINED_THEMES.slice(0, INITIAL_THEMES_TO_SHOW);
   
-  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
   return (
     <Card className="min-w-0">
@@ -326,10 +338,13 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
           Craft lyrics with AI or input manually. Then, compose a melody.
         </CardDescription>
       </CardHeader>
-      <ScrollArea orientation="horizontal" type="scroll">
+      <ScrollArea orientation="horizontal" type="scroll" className="flex-grow">
         <div className="min-w-max p-6 pt-0">
           <Form {...form}>
-            <form className="min-w-max space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form
+              className="min-w-max space-y-4"
+              onSubmit={(e) => e.preventDefault()}
+            >
             
               <FormItem>
                 <div className="flex items-center justify-between">
@@ -350,7 +365,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
                 <div className="space-y-2 pt-1">
                   {showAllThemes ? (
-                    <ScrollArea className="max-h-60 w-full rounded-md border p-2">
+                    <ScrollArea viewportRef={themesScrollAreaViewportRef} className="max-h-[28rem] w-full rounded-md border p-2">
                       <div className="grid grid-cols-1 gap-y-2">
                         {PREDEFINED_THEMES.map(theme => (
                           <FormItem key={theme} className="flex flex-row items-start space-x-2 space-y-0">
@@ -488,7 +503,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               {watchedEmotion === "Mixed Emotion" && (
                 <Card className="p-4 bg-muted/50">
                   <Label className="flex items-center gap-1 mb-3 text-sm font-medium"><Blend className="text-primary inline-block h-4 w-4" /> Select up to 3 emotions to mix:</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {mixedEmotionOptions.map(emotionItem => (
                       <FormItem key={emotionItem} className="flex flex-row items-start space-x-2 space-y-0">
                         <FormControl>
@@ -597,5 +612,4 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
-
     
