@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 
 import LyricsGenerator from '@/components/features/song-crafting/LyricsGenerator';
 import MelodyGenerator from '@/components/features/song-crafting/MelodyGenerator';
-import CompletionSuggester from '@/components/features/refinement/CompletionSuggester';
+import AiCopilot from '@/components/features/ai-copilot/AiCopilot'; // Changed from CompletionSuggester
 import LyricsEditor from '@/components/features/editing/LyricsEditor';
 import MelodyEditorPlaceholder from '@/components/features/editing/MelodyEditorPlaceholder';
 import ExportControls from '@/components/features/export-share/ExportControls';
@@ -23,11 +23,10 @@ import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 const HarmonicAiPage: FC = () => {
   const [lyrics, setLyrics] = useState<string>("");
   const [melody, setMelody] = useState<GenerateMelodyOutput | null>(null);
-  const [audioForPlagiarismCheck, setAudioForPlagiarismCheck] = useState<{ audioDataUri: string; lyrics?: string } | null>(null);
+  // audioForPlagiarismCheck is managed within AudioInputHandler now
 
   const handleLyricsGenerated = (newLyrics: string) => {
     setLyrics(newLyrics);
-    // No longer need to switch tabs, user can scroll to the editor
   };
 
   const handleMelodyGenerated = (newMelody: GenerateMelodyOutput) => {
@@ -38,14 +37,9 @@ const HarmonicAiPage: FC = () => {
     setLyrics(newLyrics);
   };
   
-  const handleSuggestionSelected = (suggestion: string) => {
-    setLyrics(prevLyrics => prevLyrics ? prevLyrics + "\\n\\n" + suggestion : suggestion);
-    // No longer need to switch tabs
-  };
+  // onSuggestionSelected is no longer needed as CompletionSuggester is removed.
 
-  const handleAudioPreparedForCheck = (audioDataUri: string, associatedLyrics?: string) => {
-    setAudioForPlagiarismCheck({ audioDataUri, lyrics: associatedLyrics });
-  };
+  // onAudioPrepared is managed within AudioInputHandler
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -69,15 +63,15 @@ const HarmonicAiPage: FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Input & Analysis</h3>
                 <div className="space-y-6">
-                  <AudioInputHandler onAudioPrepared={handleAudioPreparedForCheck} />
+                  <AudioInputHandler onAudioPrepared={() => { /* No longer needs to update page state directly */ }} />
                   <EmotionAnalyzer />
                 </div>
               </div>
               <Separator />
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Refine & Edit</h3>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Guidance & Editing</h3>
                 <div className="space-y-6">
-                  <CompletionSuggester currentLyrics={lyrics} onSuggestionSelected={handleSuggestionSelected} />
+                  <AiCopilot /> 
                   <LyricsEditor lyrics={lyrics} onLyricsChange={handleLyricsChange} />
                   <MelodyEditorPlaceholder />
                 </div>

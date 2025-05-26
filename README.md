@@ -14,7 +14,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Provide optional lyrics associated with the uploaded audio.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works. (Note: This is a preliminary check with limitations).
 *   **Emotion Analysis**: Input text to analyze its emotional content, receiving insights on detected emotion, confidence, and an AI explanation. (Voice input planned for future).
-*   **Refinement Interface**: Get AI suggestions for completing your songs and tweak parameters to match your preferences.
+*   **AI Copilot (New!)**: An in-app guide providing contextual tips and instructions for various features, replacing the previous "Song Completion AI".
 *   **Manual Edit Module**: Directly edit generated lyrics. Placeholder for future advanced melody editing.
 *   **Music Video Asset Management (Enhanced!)**:
     *   Upload image and video files to be used as assets for a music video.
@@ -37,13 +37,8 @@ This is a Next.js application. To get started:
     The application will typically be available at `http://localhost:9002`.
 
 3.  **Explore the UI**:
-    *   Use the "Lyrics" section in the left panel to generate song lyrics.
-    *   Use the "Melody" section to compose a melody for your lyrics.
-    *   The "Audio Input" section allows uploading audio (or uses a default) and performing a basic plagiarism scan.
-    *   The "Emotion" section lets you analyze the emotional tone of text.
-    *   The "Refine" section offers AI suggestions for song completion.
-    *   The "Edit" section allows manual modification of lyrics.
-    *   The "Export" section shows planned options for exporting, sharing, and managing music video assets.
+    *   The left panel contains all song creation tools, analyzers, the AI Copilot, and editing features, organized into scrollable sections.
+    *   The right panel displays generated lyrics, melody information, and music video asset controls.
 
 ## Tech Stack
 
@@ -59,7 +54,7 @@ This is a Next.js application. To get started:
 *   Generation of melody data (MusicXML format and description) based on lyrics and musical parameters (genre, key, tempo) with expanded genre options.
 *   UI for audio file upload (with default placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
 *   AI-powered text emotion analysis.
-*   AI-powered suggestions for song completion.
+*   An AI Copilot providing contextual help for app features.
 *   A responsive split-screen user interface with a vertically scrollable left panel for controls and a right panel for viewing generated content.
 *   Basic manual editing capability for lyrics.
 *   UI for uploading image/video assets for future music video generation.
@@ -71,7 +66,7 @@ This is a Next.js application. To get started:
 *   **Advanced Plagiarism Detection**: The current plagiarism scan is very basic. A more sophisticated system would require advanced audio analysis and a comprehensive database, which is a significant undertaking.
 *   **Melody Playback & Advanced Editing**: Currently, melodies are generated as data (MusicXML) but not played back or visualized in detail. An advanced melody editor is a key future enhancement.
 *   **Music Video Generation**: The music video generation feature itself is a placeholder and requires significant development beyond asset uploading.
-*   **Inline AI Copilot-Style Suggestions**: Enhancing the editing experience with real-time, contextual AI suggestions as the user types.
+*   **Dynamic AI Copilot**: Making the AI Copilot truly context-aware, updating its suggestions automatically as the user interacts with different parts of the application, potentially with AI-generated dynamic tips.
 *   **User Accounts & Work History**: Implementing user authentication (signup/login) and database functionality to save, load, and manage user projects and work history.
 *   **Tiered Plans & Subscriptions**: Adding different subscription levels with varied features.
 *   **Full Export Functionality**: Implementing actual file export in various audio formats.
