@@ -17,14 +17,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { generateSongLyrics, type GenerateSongLyricsInput } from '@/ai/flows/generate-song-lyrics';
 import { generateMelody, type GenerateMelodyOutput, type GenerateMelodyInput } from '@/ai/flows/generate-melody';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Music, ScrollText, Info, Smile, Blend, Edit3 } from 'lucide-react';
+import { Loader2, Music, ScrollText, Info, Smile, Blend, Edit3, ListChecks } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 
 const songCrafterSchema = z.object({
-  theme: z.string().optional(), // Optional now, as lyrics can be manual
-  keywords: z.string().optional(), // Optional now
+  theme: z.string().optional(), // This will store the combined theme string from UI selections
+  keywords: z.string().optional(),
   genre: z.string().min(1, "Genre is required for melody generation."),
   emotion: z.string().optional().describe("The desired emotion for the song."),
   key: z.string().min(1, "Key is required for melody generation."),
@@ -35,8 +35,8 @@ type SongCrafterFormValues = z.infer<typeof songCrafterSchema>;
 
 interface SongCrafterProps {
   currentLyrics: string;
-  onLyricsGenerated: (lyrics: string) => void; // Called when AI generates lyrics
-  onLyricsChange: (lyrics: string) => void;    // Called when user edits lyrics in textarea
+  onLyricsGenerated: (lyrics: string) => void;
+  onLyricsChange: (lyrics: string) => void;
   onMelodyGenerated: (melody: GenerateMelodyOutput) => void;
 }
 
@@ -65,15 +65,27 @@ const songEmotions = [
   "Excitement", "Calmness", "Nostalgia", "Melancholy", "Bittersweet", "Reflective", "Energetic", "Mixed Emotion"
 ];
 
+const PREDEFINED_THEMES = [
+  "Love & Romance", "Heartbreak & Loss", "Friendship & Connection",
+  "Adventure & Journey", "Nature & Seasons", "City Life & Urban Dreams",
+  "Sci-Fi & Fantasy", "Mystery & Suspense", "Historical Tales",
+  "Social Commentary & Protest", "Personal Growth & Self-Discovery",
+  "Celebration & Joy", "Nostalgia & Memories", "Dreams & Aspirations",
+  "Party & Nightlife"
+];
+
 const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, onLyricsChange, onMelodyGenerated }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMixedEmotions, setSelectedMixedEmotions] = useState<string[]>([]);
+  
+  const [selectedPredefinedThemes, setSelectedPredefinedThemes] = useState<string[]>([]);
+  const [customTheme, setCustomTheme] = useState<string>("");
   const { toast } = useToast();
 
   const form = useForm<SongCrafterFormValues>({
     resolver: zodResolver(songCrafterSchema),
     defaultValues: {
-      theme: "",
+      theme: "", // RHF theme will be updated by our custom logic
       keywords: "",
       genre: "",
       emotion: "None",
@@ -83,6 +95,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   });
 
   const watchedEmotion = form.watch("emotion");
+  const totalSelectedThemes = selectedPredefinedThemes.length + (customTheme.trim() ? 1 : 0);
 
   useEffect(() => {
     if (watchedEmotion !== "Mixed Emotion") {
@@ -110,14 +123,68 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     });
   };
 
+  const handlePredefinedThemeChange = (theme: string, checked: boolean) => {
+    setSelectedPredefinedThemes(prev => {
+      if (checked) {
+        if (prev.length + (customTheme.trim() ? 1 : 0) < 3) {
+          return [...prev, theme];
+        } else {
+          toast({ title: "Max 3 themes", description: "You can select up to 3 themes in total.", duration: 3000 });
+          return prev;
+        }
+      } else {
+        return prev.filter(t => t !== theme);
+      }
+    });
+  };
+
+  const handleCustomThemeChange = (value: string) => {
+    const prevHadCustomTheme = customTheme.trim() !== "";
+    const newHasCustomTheme = value.trim() !== "";
+
+    if (!prevHadCustomTheme && newHasCustomTheme) { // Adding a custom theme
+      if (selectedPredefinedThemes.length >= 3) {
+         toast({ title: "Max 3 themes", description: "Cannot add custom theme, 3 predefined themes already selected.", duration: 3000 });
+         return; // Don't update customTheme state
+      }
+    }
+    setCustomTheme(value);
+  };
+  
+  useEffect(() => {
+    const themesForRHF: string[] = [...selectedPredefinedThemes];
+    if (customTheme.trim()) {
+      themesForRHF.push(`Custom: ${customTheme.trim()}`);
+    }
+    form.setValue('theme', themesForRHF.join(', '));
+  }, [selectedPredefinedThemes, customTheme, form]);
+
+
   const onSubmit: SubmitHandler<SongCrafterFormValues> = async (data) => {
     setIsLoading(true);
-    let lyricsForMelody = currentLyrics; // Start with current lyrics from the textarea
+    let lyricsForMelody = currentLyrics;
     let newLyricsWereGenerated = false;
 
+    const finalSelectedThemes: string[] = [...selectedPredefinedThemes];
+    if (customTheme.trim() !== "") {
+      finalSelectedThemes.push(`Custom: ${customTheme.trim()}`);
+    }
+
+    if (finalSelectedThemes.length > 3) {
+      toast({
+        title: "Theme Selection Error",
+        description: "Please select a maximum of 3 themes in total.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    const themeStringForAI = finalSelectedThemes.join(', ');
+
     try {
-      // Step 1: Generate lyrics from AI if theme and keywords are provided
-      if (data.theme && data.theme.trim() !== "" && data.keywords && data.keywords.trim() !== "") {
+      // Step 1: Generate lyrics from AI if themeStringForAI or keywords are provided
+      if (themeStringForAI.trim() !== "" || (data.keywords && data.keywords.trim() !== "")) {
         let emotionInputForLyrics: string | undefined;
         if (data.emotion === "None") {
           emotionInputForLyrics = undefined;
@@ -132,31 +199,28 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
         }
 
         const lyricsInput: GenerateSongLyricsInput = { 
-          theme: data.theme, 
-          keywords: data.keywords,
+          theme: themeStringForAI, 
+          keywords: data.keywords || "", // Use keywords from RHF data
           emotion: emotionInputForLyrics
         };
         const aiLyricsResult = await generateSongLyrics(lyricsInput);
-        onLyricsGenerated(aiLyricsResult.lyrics); // Update state in page.tsx, which updates currentLyrics prop
-        lyricsForMelody = aiLyricsResult.lyrics;  // Use these newly generated lyrics for melody
+        onLyricsGenerated(aiLyricsResult.lyrics);
+        lyricsForMelody = aiLyricsResult.lyrics;
         newLyricsWereGenerated = true;
         toast({
           title: "Lyrics Generated!",
           description: "AI has crafted new lyrics based on your inputs. They are now in the lyrics area.",
         });
       } else if (!currentLyrics || currentLyrics.trim() === "") {
-        // No theme/keywords provided, and the current lyrics textarea is empty
         toast({
           title: "Missing Lyrics Source",
-          description: "Please provide a Theme & Keywords to generate lyrics, or type/paste lyrics directly into the text area below.",
+          description: "Please provide Themes or Keywords to generate lyrics, or type/paste lyrics directly into the text area below.",
           variant: "destructive",
         });
         setIsLoading(false);
         return;
       }
-      // If theme/keywords were not provided, lyricsForMelody remains currentLyrics (from user input/editing or previous generation)
 
-      // Step 2: Generate Melody using lyricsForMelody
       if (lyricsForMelody && lyricsForMelody.trim() !== "") {
         const melodyInput: GenerateMelodyInput = { 
           lyrics: lyricsForMelody, 
@@ -174,13 +238,12 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
          toast({
           title: "Cannot Compose Melody",
           description: "No lyrics available to compose a melody. Please generate or type lyrics first.",
-          variant: "default", // or destructive
+          variant: "default",
         });
       }
     } catch (error) {
       console.error("Error in song crafting process:", error);
       const errorMessage = (error as Error).message || "Something went wrong.";
-      // Distinguish error source if possible
       if (newLyricsWereGenerated && lyricsForMelody && errorMessage.toLowerCase().includes("melody")) {
         toast({ title: "Error Composing Melody", description: errorMessage, variant: "destructive" });
       } else if (errorMessage.toLowerCase().includes("lyrics")) {
@@ -194,6 +257,11 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   };
 
   const mixedEmotionOptions = songEmotions.filter(e => e !== "None" && e !== "Mixed Emotion");
+  const displayedSelectedThemes = [...selectedPredefinedThemes];
+  if (customTheme.trim()) {
+    displayedSelectedThemes.push(`Custom: ${customTheme.trim()}`);
+  }
+
 
   return (
     <Card>
@@ -209,7 +277,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-lg">
                 <p className="text-sm">
-                  <strong>To generate lyrics:</strong> Fill in Theme, Keywords, and optionally Emotion, Key, Tempo, Genre. Then click the button.
+                  <strong>To generate lyrics:</strong> Select/enter Themes, Keywords, and optionally Emotion, Key, Tempo, Genre. Then click the button.
                   <br />
                   <strong>To use your own lyrics:</strong> Type or paste them into the "Lyrics for Melody Generation / Manual Editing" area below. Ensure Genre, Key, and Tempo are set. Then click the button.
                   <br />
@@ -226,19 +294,58 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="theme"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Theme</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Summer romance, Space adventure (Optional if typing lyrics manually)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
+            <FormItem>
+              <div className="flex items-center justify-between">
+                <FormLabel className="flex items-center gap-1"><ListChecks className="text-primary inline-block h-4 w-4" /> Themes</FormLabel>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                          <Info className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-xs">Select up to 3 themes total (predefined or custom) to guide lyrical content. (Optional if typing lyrics manually)</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+              </div>
+              <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
+              <div className="space-y-2 pt-1">
+                <ScrollArea className="max-h-32 w-full rounded-md border p-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                    {PREDEFINED_THEMES.map(theme => (
+                      <FormItem key={theme} className="flex flex-row items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={selectedPredefinedThemes.includes(theme)}
+                            onCheckedChange={(checked) => handlePredefinedThemeChange(theme, !!checked)}
+                            disabled={!selectedPredefinedThemes.includes(theme) && totalSelectedThemes >= 3}
+                          />
+                        </FormControl>
+                        <Label className="text-sm font-normal cursor-pointer" htmlFor={theme.replace(/\s/g, '-')}>{theme}</Label>
+                      </FormItem>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <div>
+                  <Label htmlFor="customTheme" className="text-sm font-medium">Custom Theme</Label>
+                  <Input
+                    id="customTheme"
+                    value={customTheme}
+                    onChange={(e) => handleCustomThemeChange(e.target.value)}
+                    placeholder="Type a custom theme (optional)"
+                    disabled={customTheme.trim() === "" && selectedPredefinedThemes.length >= 3 && totalSelectedThemes >=3}
+                    className="mt-1"
+                  />
+                </div>
+                <FormDescUI className="text-xs text-muted-foreground">
+                  Selected ({totalSelectedThemes}/3): {displayedSelectedThemes.join(', ') || "None"}
+                </FormDescUI>
+              </div>
+            </FormItem>
+
             <FormField
               control={form.control}
               name="keywords"
@@ -325,7 +432,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                           disabled={selectedMixedEmotions.length >= 3 && !selectedMixedEmotions.includes(emotionItem)}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal">
+                      <FormLabel className="text-sm font-normal cursor-pointer" htmlFor={emotionItem.replace(/\s/g, '-')}>
                         {emotionItem}
                       </FormLabel>
                     </FormItem>
@@ -387,7 +494,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 className="min-h-[180px] focus:ring-accent focus:border-accent text-sm"
               />
                <FormDescUI className="text-xs text-muted-foreground">
-                If Theme & Keywords above are filled, AI will generate lyrics here. Otherwise, type your own.
+                If Themes & Keywords above are filled, AI will generate lyrics here. Otherwise, type your own.
               </FormDescUI>
             </div>
           </CardContent>
@@ -403,3 +510,4 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
+
