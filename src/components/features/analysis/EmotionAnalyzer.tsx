@@ -1,4 +1,10 @@
 
+// This file is no longer used and can be deleted.
+// The functionality has been integrated into the SongCrafter.tsx component.
+// See src/components/features/song-crafting/SongCrafter.tsx for the new implementation.
+
+// Original content commented out for reference if needed during cleanup, then delete this file.
+/*
 "use client";
 
 import type { FC } from 'react';
@@ -15,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Smile, Brain, Info } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Label } from '@/components/ui/label'; // Added Label import
+import { Label } from '@/components/ui/label'; 
 
 const emotionSchema = z.object({
   textToAnalyze: z.string().min(5, "Please enter at least 5 characters to analyze.").max(2000, "Text cannot exceed 2000 characters."),
@@ -139,3 +145,4 @@ const EmotionAnalyzer: FC<EmotionAnalyzerProps> = () => {
 };
 
 export default EmotionAnalyzer;
+*/

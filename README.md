@@ -1,19 +1,19 @@
 
 # HarmonicAI
 
-HarmonicAI is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes and details. The app also offers AI-powered suggestions for song completion and allows users to refine and manually edit their creations. It now features integrated AI Copilot hints within each section for better guidance.
+HarmonicAI is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes and details. The app also offers AI-powered text emotion analysis integrated within the song crafting process and allows users to refine and manually edit their creations. It features integrated AI Copilot hints within each section for better guidance.
 
 ## Core Features
 
-*   **AI Song & Melody Crafter**: A unified section to generate original song lyrics and melodies by specifying themes, keywords, genre, key, and tempo.
-    *   Lyrics generation is followed by automatic melody composition using the new lyrics.
+*   **AI Song & Melody Crafter with Integrated Emotion Analysis**: A unified section to:
+    *   Generate original song lyrics and melodies by specifying themes, keywords, genre, key, and tempo. Lyrics generation is followed by automatic melody composition.
+    *   Analyze the emotional content of any user-provided text (e.g., theme, keywords, or generated lyrics) to get insights on detected emotion, confidence, and an AI explanation.
     *   Generated lyrics are immediately available for refinement in the "Edit" section.
     *   Includes an expanded list of music genres.
 *   **Audio Input & Analysis**:
     *   Upload audio files (e.g., song ideas, vocal snippets). If no audio is uploaded, a default silent placeholder is used for analysis.
     *   (Planned) Record audio directly using a microphone.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio (and any globally available lyrics, if applicable). (Note: This is a preliminary check with limitations).
-*   **Emotion Analysis**: Input text to analyze its emotional content, receiving insights on detected emotion, confidence, and an AI explanation. (Voice input planned for future).
 *   **Integrated AI Copilot Hints**: Contextual tips and instructions for various features are available via "Info" icons and tooltips directly within each relevant component/section.
 *   **Manual Edit Module**: Directly edit generated lyrics.
 *   **Music Video Asset Management**:
@@ -37,7 +37,7 @@ This is a Next.js application. To get started:
     The application will typically be available at `http://localhost:9002`.
 
 3.  **Explore the UI**:
-    *   The left panel contains all song creation tools, analyzers, and editing features, organized into a single vertically scrollable view with sections. Integrated AI Copilot hints (info icons) provide guidance within each section.
+    *   The left panel contains all song creation tools (including integrated emotion analysis), audio input, editing features, and export/share controls, organized into a single vertically scrollable view with sections. Integrated AI Copilot hints (info icons) provide guidance within each section.
     *   The right panel displays generated lyrics, melody information, and music video asset controls.
 
 ## Tech Stack
@@ -52,8 +52,8 @@ This is a Next.js application. To get started:
 ## Current MVPs (Minimum Viable Products)
 
 *   Unified generation of song lyrics and melody data (MusicXML format and description) based on user input (theme, keywords, genre, key, tempo) with expanded genre options.
+*   AI-powered text emotion analysis integrated directly into the song crafting workflow.
 *   UI for audio file upload (with default silent placeholder if none provided) and an experimental AI flow for basic plagiarism concern flagging.
-*   AI-powered text emotion analysis.
 *   Integrated AI Copilot hints via tooltips within each major feature component.
 *   A responsive split-screen user interface with a vertically scrollable left panel for controls and a right panel for viewing generated content.
 *   Basic manual editing capability for lyrics.

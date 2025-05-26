@@ -15,10 +15,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { generateSongLyrics, type GenerateSongLyricsInput } from '@/ai/flows/generate-song-lyrics';
 import { generateMelody, type GenerateMelodyOutput, type GenerateMelodyInput } from '@/ai/flows/generate-melody';
+import { analyzeEmotion, type AnalyzeEmotionOutput, type AnalyzeEmotionInput } from '@/ai/flows/analyze-emotion';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Music, ScrollText, Info } from 'lucide-react';
+import { Loader2, Music, ScrollText, Info, Smile, Brain } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 
 const songCrafterSchema = z.object({
   theme: z.string().min(3, "Theme must be at least 3 characters long."),
@@ -73,6 +76,10 @@ const genres = [
 const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, onMelodyGenerated }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const [textToAnalyzeEmotion, setTextToAnalyzeEmotion] = useState<string>("");
+  const [isAnalyzingEmotion, setIsAnalyzingEmotion] = useState(false);
+  const [emotionAnalysisResult, setEmotionAnalysisResult] = useState<AnalyzeEmotionOutput | null>(null);
 
   const form = useForm<SongCrafterFormValues>({
     resolver: zodResolver(songCrafterSchema),
@@ -149,11 +156,41 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
     }
   };
 
+  const handleEmotionAnalysis = async () => {
+    if (!textToAnalyzeEmotion.trim()) {
+      toast({
+        title: "Input Required",
+        description: "Please enter some text to analyze for emotion.",
+        variant: "default", // Changed to default as it's not an error
+      });
+      return;
+    }
+    setIsAnalyzingEmotion(true);
+    setEmotionAnalysisResult(null);
+    try {
+      const result = await analyzeEmotion({ textToAnalyze: textToAnalyzeEmotion });
+      setEmotionAnalysisResult(result);
+      toast({
+        title: "Emotion Analysis Complete!",
+        description: "The AI has analyzed the emotion in the provided text.",
+      });
+    } catch (error) {
+      console.error("Error analyzing emotion:", error);
+      toast({
+        title: "Error Analyzing Emotion",
+        description: (error as Error).message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzingEmotion(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics & Melody</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics, Melody & Emotion</CardTitle>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -162,12 +199,12 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">Enter a theme, keywords, genre, key, and tempo. The AI will generate lyrics first, then a melody. Results appear below and in the main display.</p>
+                <p className="text-sm">Enter song parameters to generate lyrics and melody. You can also analyze the emotion of any text input below.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-        <CardDescription>Craft your song's foundation: lyrics and a matching melody.</CardDescription>
+        <CardDescription>Craft your song's foundation and analyze textual emotion.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -255,15 +292,76 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 </FormItem>
               )}
             />
-             <div className="space-y-1 pt-2">
+
+            <Separator className="my-6" />
+
+            {/* Emotion Analysis Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="emotion-text-input" className="flex items-center gap-2 text-base font-medium"><Smile className="text-primary inline-block h-5 w-5" /> Text Emotion Analysis</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7">
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p className="text-sm">Enter any text (theme, keywords, lyrics fragment) to get an AI-powered emotion analysis.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Textarea
+                id="emotion-text-input"
+                placeholder="Type or paste text here to analyze its emotional content..."
+                value={textToAnalyzeEmotion}
+                onChange={(e) => setTextToAnalyzeEmotion(e.target.value)}
+                className="min-h-[100px]"
+              />
+              <Button 
+                type="button" 
+                onClick={handleEmotionAnalysis} 
+                disabled={isAnalyzingEmotion || !textToAnalyzeEmotion.trim()} 
+                className="w-full"
+                variant="outline"
+              >
+                {isAnalyzingEmotion ? <Loader2 className="animate-spin" /> : <><Brain className="mr-2 h-4 w-4" /> Analyze Emotion of Text</>}
+              </Button>
+
+              {emotionAnalysisResult && (
+                <div className="space-y-2 pt-2 pb-2 px-3 border rounded-md bg-muted/30">
+                  <h4 className="text-sm font-semibold">Emotion Analysis Result:</h4>
+                  <div>
+                    <Label className="text-xs">Detected Emotion:</Label>
+                    <p className="text-md font-semibold text-primary">{emotionAnalysisResult.detectedEmotion}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Confidence Score:</Label>
+                    <div className="flex items-center gap-2">
+                      <Progress value={emotionAnalysisResult.confidence * 100} className="w-[calc(100%-45px)] h-2" />
+                      <span className="text-xs text-muted-foreground">{(emotionAnalysisResult.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Explanation:</Label>
+                    <p className="text-xs text-muted-foreground italic whitespace-pre-wrap">{emotionAnalysisResult.explanation}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <Separator className="my-6" />
+
+            <div className="space-y-1 pt-2">
               <Label htmlFor="generated-lyrics-display" className="flex items-center gap-1">
-                <ScrollText size={16} /> Current Lyrics
+                <ScrollText size={16} /> Current Lyrics for Melody Generation
               </Label>
               <Textarea
                 id="generated-lyrics-display"
                 value={currentLyrics}
                 readOnly
-                placeholder="Generated lyrics will appear here..."
+                placeholder="Generated lyrics will appear here after you click the 'Generate Lyrics & Melody' button..."
                 className="min-h-[150px] bg-muted/50 text-sm"
               />
             </div>

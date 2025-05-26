@@ -12,7 +12,7 @@ import ExportControls from '@/components/features/export-share/ExportControls';
 import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
 import MusicVideoControls from '@/components/features/output/MusicVideoControls';
-import EmotionAnalyzer from '@/components/features/analysis/EmotionAnalyzer';
+// EmotionAnalyzer import removed
 import AudioInputHandler from '@/components/features/audio-input/AudioInputHandler';
 
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
@@ -56,10 +56,10 @@ const HarmonicAiPage: FC = () => {
               </div>
               <Separator />
               <div>
-                <h3 className="text-lg font-semibold mb-4 text-primary">Audio Input & Emotion Analysis</h3>
+                <h3 className="text-lg font-semibold mb-4 text-primary">Audio Input</h3>
                 <div className="space-y-6">
                   <AudioInputHandler onAudioPrepared={() => { /* No longer needs to update page state directly or handle lyrics from here */ }} />
-                  <EmotionAnalyzer />
+                  {/* EmotionAnalyzer component removed from here */}
                 </div>
               </div>
               <Separator />
