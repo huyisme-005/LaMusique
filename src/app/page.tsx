@@ -59,11 +59,11 @@ const HarmonicAiPage: FC = () => {
         {/* Left Panel (Controls) */}
         <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <ScrollArea orientation="horizontal" className="whitespace-nowrap border-b rounded-t-xl">
-              <TabsList className="rounded-none"> {/* Removed grid classes, will flow naturally */}
+            <ScrollArea orientation="horizontal" className="border-b rounded-t-xl">
+              <TabsList className="rounded-none whitespace-nowrap justify-start">
                 <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
                 <TabsTrigger value="melody">Melody</TabsTrigger>
-                <TabsTrigger value="audio">Audio Input</TabsTrigger> {/* New Tab */}
+                <TabsTrigger value="audio">Audio Input</TabsTrigger>
                 <TabsTrigger value="emotion">Emotion</TabsTrigger>
                 <TabsTrigger value="refine">Refine</TabsTrigger>
                 <TabsTrigger value="edit">Edit</TabsTrigger>
@@ -77,7 +77,7 @@ const HarmonicAiPage: FC = () => {
               <TabsContent value="melody">
                 <MelodyGenerator lyrics={lyrics} onMelodyGenerated={handleMelodyGenerated} />
               </TabsContent>
-              <TabsContent value="audio"> {/* New Tab Content */}
+              <TabsContent value="audio">
                 <AudioInputHandler onAudioPrepared={handleAudioPreparedForCheck} />
               </TabsContent>
               <TabsContent value="emotion">
