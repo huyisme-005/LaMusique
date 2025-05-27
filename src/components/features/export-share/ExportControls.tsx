@@ -12,32 +12,37 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 interface ExportControlsProps {
   lyrics: string;
   melody: GenerateMelodyOutput | null;
+  currentSongName: string | null; // Added prop
 }
 
-const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
+const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongName }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const SCROLL_AMOUNT = 200; // Amount to scroll on arrow click
+  const SCROLL_AMOUNT = 200; 
 
   const checkScrollability = useCallback(() => {
     const current = viewportRef.current;
-    if (current) {
+    const content = contentRef.current;
+    if (current && content) {
       setCanScrollLeft(current.scrollLeft > 0);
-      setCanScrollRight(current.scrollLeft < current.scrollWidth - current.clientWidth -1); // -1 for potential subpixel issues
+      setCanScrollRight(current.scrollLeft < content.scrollWidth - current.clientWidth -1); 
+    } else {
+      setCanScrollLeft(false);
+      setCanScrollRight(false);
     }
   }, []);
 
   useEffect(() => {
     const current = viewportRef.current;
-    if (current) {
-      checkScrollability(); // Initial check
-      // Check on window resize
+    const content = contentRef.current;
+    if (current && content) {
+      checkScrollability(); 
       window.addEventListener('resize', checkScrollability);
-      // For more robust updates if content inside scrollarea changes dynamically affecting width:
       const observer = new MutationObserver(checkScrollability);
-      observer.observe(current, { childList: true, subtree: true, attributes: true, characterData: true });
+      observer.observe(content, { childList: true, subtree: true, attributes: true, characterData: true });
       
       return () => {
         window.removeEventListener('resize', checkScrollability);
@@ -54,18 +59,25 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
         left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
         behavior: 'smooth',
       });
-      // Check scrollability again after a short delay to allow scroll to complete
       setTimeout(checkScrollability, 300);
     }
   };
 
 
-  // Placeholder function for export logic
   const handleExport = (format: string) => {
     if (format === 'Lyrics PDF') {
-      if (!lyrics && !melody) {
-        alert("No lyrics or melody data to export.");
+      if (!lyrics && !melody?.description && !melody?.lyricFeedback) {
+        alert("No content available to export.");
         return;
+      }
+
+      let songNameToUse = currentSongName;
+      if (!songNameToUse || songNameToUse.trim() === "") {
+        songNameToUse = window.prompt("Please enter a name for your song to export:");
+        if (!songNameToUse || songNameToUse.trim() === "") {
+          alert("Export cancelled: A song name is required for PDF export.");
+          return;
+        }
       }
       
       const newWindow = window.open('', '_blank');
@@ -73,17 +85,18 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
         let htmlContent = `
           <html>
             <head>
-              <title>HarmonicAI Song Export</title>
+              <title>HarmonicAI Export - ${songNameToUse.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</title>
               <style>
-                body { font-family: sans-serif; line-height: 1.6; padding: 20px; }
-                h1 { color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-                h2 { color: #555; margin-top: 30px; }
-                pre { background-color: #f9f9f9; padding: 15px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
-                .section { margin-bottom: 20px; }
+                body { font-family: sans-serif; line-height: 1.6; padding: 20px; color: #333; }
+                h1 { color: #A020F0; border-bottom: 2px solid #A020F0; padding-bottom: 10px; margin-bottom: 20px; }
+                h2 { color: #7D4B96; margin-top: 30px; border-bottom: 1px solid #E6E6FA; padding-bottom: 5px;}
+                pre { background-color: #f9f9f9; padding: 15px; border: 1px solid #E6E6FA; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em; }
+                .section { margin-bottom: 25px; }
+                .footer-note { font-size: 0.8em; color: #777; margin-top: 40px; text-align: center; }
               </style>
             </head>
             <body>
-              <h1>HarmonicAI Song Export</h1>
+              <h1>${songNameToUse.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</h1>
         `;
 
         if (lyrics) {
@@ -114,19 +127,21 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
         }
 
         htmlContent += `
+              <div class="footer-note">
+                Exported from HarmonicAI
+              </div>
             </body>
           </html>
         `;
         
         newWindow.document.write(htmlContent);
-        newWindow.document.close(); // Important for some browsers
-        alert("Content opened in a new window. Please use your browser's Print to PDF (Ctrl+P or Cmd+P) functionality to save as PDF.");
+        newWindow.document.close(); 
+        alert("Content prepared in a new window. Please use your browser's Print function (Ctrl+P or Cmd+P) and select 'Save as PDF' as the destination.");
       } else {
         alert("Could not open a new window. Please check your browser's pop-up blocker settings.");
       }
       return;
     }
-    // For other formats
     alert(`Exporting as ${format} (functionality not implemented yet).`);
   };
 
@@ -152,18 +167,18 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea orientation="horizontal" type="scroll" className="w-full" viewportRef={viewportRef} onViewportScroll={checkScrollability}>
-          <div className="min-w-max p-6 pt-4"> {/* This div allows internal content to define its width */}
-            <div className="space-y-3"> {/* This div stacks buttons vertically */}
-              <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+          <div ref={contentRef} className="min-w-max p-6 pt-4">
+            <div className="space-y-3">
+              <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline">
                 <FileAudio className="mr-2 h-4 w-4" /> Export as MP3
               </Button>
-              <Button onClick={() => handleExport('WAV')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+              <Button onClick={() => handleExport('WAV')} className="w-full" variant="outline">
                 <FileAudio className="mr-2 h-4 w-4" /> Export as WAV
               </Button>
-              <Button onClick={() => handleExport('MIDI')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+              <Button onClick={() => handleExport('MIDI')} className="w-full" variant="outline">
                 <FileAudio className="mr-2 h-4 w-4" /> Export as MIDI
               </Button>
-              <Button onClick={() => handleExport('Lyrics PDF')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+              <Button onClick={() => handleExport('Lyrics PDF')} className="w-full" variant="outline">
                 <FileText className="mr-2 h-4 w-4" /> Export Lyrics as PDF
               </Button>
               <p className="text-xs text-muted-foreground text-center pt-2">

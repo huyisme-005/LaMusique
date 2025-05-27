@@ -28,6 +28,7 @@ export interface SavedSong { // Exporting for use in /saved page
 const HarmonicAiPage: FC = () => {
   const [lyrics, setLyrics] = useState<string>("");
   const [melody, setMelody] = useState<GenerateMelodyOutput | null>(null);
+  const [currentSongNameForExport, setCurrentSongNameForExport] = useState<string | null>(null);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -43,6 +44,7 @@ const HarmonicAiPage: FC = () => {
           if (songToLoad) {
             setLyrics(songToLoad.lyrics);
             setMelody(songToLoad.melody);
+            setCurrentSongNameForExport(songToLoad.name); // Set name for export
             // Note: Restoring SongCrafter form inputs (theme, keywords, genre, etc.) 
             // would require saving them as part of SavedSong and setting them here.
             // For this iteration, only lyrics and melody are loaded.
@@ -58,8 +60,7 @@ const HarmonicAiPage: FC = () => {
         toast({ title: "No Saved Songs", description: "Could not find any saved songs to load.", variant: "default" });
       }
       // Clear the query parameter to prevent reloading on refresh/navigation
-      // Using router.replace to avoid adding to browser history
-      const newPath = window.location.pathname; // Keep current path, remove query params
+      const newPath = window.location.pathname; 
       router.replace(newPath, { scroll: false });
     }
   }, [searchParams, router, toast]);
@@ -67,6 +68,7 @@ const HarmonicAiPage: FC = () => {
 
   const handleLyricsGenerated = (newLyrics: string) => {
     setLyrics(newLyrics);
+    setCurrentSongNameForExport(null); // New AI lyrics, not yet named/saved
   };
 
   const handleMelodyGenerated = (newMelody: GenerateMelodyOutput) => {
@@ -75,6 +77,10 @@ const HarmonicAiPage: FC = () => {
 
   const handleLyricsEdited = (editedLyrics: string) => {
     setLyrics(editedLyrics);
+    // If user edits lyrics, the name might become stale if they don't re-save.
+    // The export function will handle prompting if currentSongNameForExport is null.
+    // Or, we could clear currentSongNameForExport here if we want to force re-prompt after any edit.
+    // For now, let's keep it simple: name persists until new AI lyrics or explicit save.
   };
 
   const handleSaveCurrentSong = () => {
@@ -103,6 +109,7 @@ const HarmonicAiPage: FC = () => {
       
       try {
         localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
+        setCurrentSongNameForExport(newSong.name); // Update name for export
         toast({
           title: "Song Saved!",
           description: `"${newSong.name}" has been saved. You can view it on the 'Saved Songs' page.`,
@@ -125,7 +132,7 @@ const HarmonicAiPage: FC = () => {
       <AppHeader />
       <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:gap-6 md:p-6">
         {/* Left Panel (Controls) */}
-        <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col">
+        <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col overflow-hidden">
           <div className="p-4 border-b rounded-t-xl bg-muted flex flex-col">
             <div className="flex items-center justify-end w-full mb-2">
               <Button 
@@ -141,8 +148,8 @@ const HarmonicAiPage: FC = () => {
             <h2 className="text-xl font-semibold text-foreground self-start">Song Creation & Tools</h2>
           </div>
           
-          <ScrollArea className="flex-1 h-full p-4 md:p-6 bg-background/30 rounded-b-xl">
-            <div className="min-w-max space-y-8">
+          <ScrollArea className="flex-1 h-full">
+            <div className="min-w-max p-4 md:p-6 space-y-8">
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Generate & Edit Lyrics / Compose Melody</h3>
                 <div className="space-y-6">
@@ -165,7 +172,11 @@ const HarmonicAiPage: FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Export & Share</h3>
                 <div className="space-y-6">
-                  <ExportControls lyrics={lyrics} melody={melody} />
+                  <ExportControls 
+                    lyrics={lyrics} 
+                    melody={melody} 
+                    currentSongName={currentSongNameForExport} 
+                  />
                   <ShareControls />
                 </div>
               </div>
@@ -174,8 +185,8 @@ const HarmonicAiPage: FC = () => {
         </div>
 
         {/* Right Panel (Display) */}
-        <ScrollArea className="bg-card text-card-foreground rounded-xl shadow-xl p-4 md:p-6">
-          <div className="min-w-max space-y-6">
+        <ScrollArea className="bg-card text-card-foreground rounded-xl shadow-xl">
+          <div className="min-w-max p-4 md:p-6 space-y-6">
             <SongOutputDisplay lyrics={lyrics} melody={melody} />
             <Separator />
             <MusicVideoControls />
