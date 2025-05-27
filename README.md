@@ -133,7 +133,7 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 *   **Health Check Path**: Many platforms use a health check path to monitor application status. This app provides one at `/api/health`. You may need to configure this path in your hosting provider's settings.
 *   **Debugging Client-Side Errors**: If you encounter generic errors like "a client-side exception has occurred" after deployment, **it is crucial to check your browser's developer console** on the deployed site for more specific error messages. These messages will provide vital clues for debugging. Common causes include:
     *   Issues with environment variables not being set correctly on the server (e.g., missing `GOOGLE_API_KEY`).
-    *   Attempts to access browser-specific APIs (`window`, `localStorage`) during server-side rendering or static generation. Ensure such code is deferred to the client-side (e.g., within `useEffect` hooks guarded by a client check).
+    *   Attempts to access browser-specific APIs (`window`, `localStorage`) during server-side rendering or static generation. Ensure such code is deferred to the client-side (e.g., within `useEffect` hooks guarded by a client check, or by using `<Suspense>` for components that depend on client-side data like URL search parameters).
 *   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
 *   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
 

@@ -1,8 +1,7 @@
 
 "use client";
 
-import React, { useState, type FC, useEffect, useRef } from 'react'; // Ensured React is here
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { useState, type FC, useEffect, Suspense } from 'react';
 import AppHeader from '@/components/layout/AppHeader';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +11,7 @@ import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
 import MusicVideoControls from '@/components/features/output/MusicVideoControls';
 import AudioInputHandler from '@/components/features/audio-input/AudioInputHandler';
+import SongLoader from '@/components/features/song-loading/SongLoader'; // New import
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -25,57 +25,33 @@ export interface SavedSong {
   melody: GenerateMelodyOutput | null;
 }
 
+// Define a loading component for Suspense
+const SongLoaderFallback: FC = () => {
+  return (
+    <div className="flex justify-center items-center p-4">
+      <p className="text-muted-foreground">Loading song data...</p>
+    </div>
+  );
+};
+
+
 const HarmonicAiPage: FC = () => {
   const [lyrics, setLyrics] = useState<string>("");
   const [melody, setMelody] = useState<GenerateMelodyOutput | null>(null);
   const [currentSongNameForExport, setCurrentSongNameForExport] = useState<string | null>(null);
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
+  
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true); // Component has mounted on the client
   }, []);
 
-  useEffect(() => {
-    if (!isClient) { // Guard: only run on client
-      return;
-    }
-
-    const songIdToLoad = searchParams.get('loadSongId');
-    if (songIdToLoad) {
-      const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
-      if (storedSongs) {
-        try {
-          const songs: SavedSong[] = JSON.parse(storedSongs);
-          const songToLoad = songs.find(s => s.id === songIdToLoad);
-          if (songToLoad) {
-            setLyrics(songToLoad.lyrics);
-            setMelody(songToLoad.melody);
-            setCurrentSongNameForExport(songToLoad.name); 
-            toast({ title: "Song Loaded", description: `"${songToLoad.name}" lyrics and melody have been loaded.` });
-          } else {
-            toast({ title: "Error Loading Song", description: "Could not find the song to load.", variant: "destructive" });
-          }
-        } catch (e) {
-          console.error("Error parsing saved songs from localStorage", e);
-          toast({ title: "Error Loading Song", description: "Could not parse saved songs data.", variant: "destructive" });
-        }
-      } else {
-        toast({ title: "No Saved Songs", description: "Could not find any saved songs to load.", variant: "default" });
-      }
-      // Clear the query parameter to prevent reloading on refresh/navigation
-      // Safely construct the new URL to remove only the 'loadSongId' query parameter
-      const currentPathname = window.location.pathname; // Safe to use window now
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.delete('loadSongId');
-      const newUrl = `${currentPathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`;
-      router.replace(newUrl, { scroll: false });
-    }
-  }, [isClient, searchParams, router, toast]); // setLyrics, setMelody, setCurrentSongNameForExport are stable
-
+  const handleSongLoaded = (loadedLyrics: string, loadedMelody: GenerateMelodyOutput | null, songName: string) => {
+    setLyrics(loadedLyrics);
+    setMelody(loadedMelody);
+    setCurrentSongNameForExport(songName);
+  };
 
   const handleLyricsGenerated = (newLyrics: string) => {
     setLyrics(newLyrics);
@@ -91,12 +67,12 @@ const HarmonicAiPage: FC = () => {
   };
 
   const handleSaveCurrentSong = () => {
-    if (!isClient) { // Guard against running on server
+    if (!isClient) { 
       toast({ title: "Error", description: "Cannot save song at this moment.", variant: "destructive" });
       return;
     }
 
-    const songName = window.prompt("Enter a name for your song:"); // window.prompt is client-side
+    const songName = window.prompt("Enter a name for your song:");
     if (songName && songName.trim() !== "") {
       const newSong: SavedSong = {
         id: Date.now().toString(),
@@ -107,7 +83,7 @@ const HarmonicAiPage: FC = () => {
       
       let songs: SavedSong[] = [];
       try {
-        const storedSongs = localStorage.getItem('harmonicAI_savedSongs'); // localStorage is client-side
+        const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
         if (storedSongs) {
           songs = JSON.parse(storedSongs);
         }
@@ -120,7 +96,7 @@ const HarmonicAiPage: FC = () => {
       songs.push(newSong);
       
       try {
-        localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs)); // localStorage is client-side
+        localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
         setCurrentSongNameForExport(newSong.name); 
         toast({
           title: "Song Saved!",
@@ -142,6 +118,12 @@ const HarmonicAiPage: FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
+      {/* Suspense boundary for SongLoader */}
+      {isClient && ( // Only render SongLoader on the client to avoid SSR issues with localStorage
+        <Suspense fallback={<SongLoaderFallback />}>
+          <SongLoader onSongLoaded={handleSongLoaded} isClient={isClient} />
+        </Suspense>
+      )}
       <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:gap-6 md:p-6">
         {/* Left Panel (Controls) */}
         <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col">
