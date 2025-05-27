@@ -1,6 +1,8 @@
 
 # HarmonicAI
 
+**Author:** [Your Name/Organization Here]
+
 HarmonicAI is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes, details, and a selected emotion. The app allows users to refine and manually edit their creations. It features integrated AI Copilot hints (via tooltips) within each section for better guidance and allows users to save their progress locally.
 
 ## Core Features
