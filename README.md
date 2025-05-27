@@ -87,7 +87,7 @@ The exact method for setting environment variables depends on your hosting provi
 *   **Vercel:** In your project settings on the Vercel dashboard, find the "Environment Variables" section.
 *   **Netlify:** In your site settings on Netlify, navigate to "Site configuration" -> "Build & deploy" -> "Environment".
 *   **Firebase App Hosting:** (See specific section below)
-*   **Render:** In your service settings on the Render dashboard, under "Environment".
+*   **Render:** In your service settings on the Render dashboard, under "Environment". Specify the Node.js version (e.g., 20) if needed.
 *   **AWS Amplify:** In the Amplify console, for your app, look for "Environment variables".
 *   **Heroku:** Use the Heroku Dashboard (Settings -> Config Vars) or the Heroku CLI (`heroku config:set GOOGLE_API_KEY=YOUR_KEY_HERE`).
 *   **Other Platforms (Azure App Service, Google Cloud Run, DigitalOcean App Platform, etc.):** Consult your provider's specific documentation for "environment variables" or "application settings".
@@ -123,11 +123,13 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 
 ### General Deployment Considerations for Next.js (e.g., Vercel, Netlify, Render)
 
+*   **Node.js Version**: Ensure your hosting provider is using a Node.js version compatible with your project (Next.js 15 typically requires Node 18+ or 20+). The `package.json` now includes an `engines` field specifying `node >=20.0.0`. Platforms like Render might pick this up, or you may need to set it explicitly in their dashboard.
 *   **Git Repository**: Platforms like Vercel and Render integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
 *   **Environment Variables**: As mentioned above, configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings dashboard.
 *   **Build Command**: Platforms will typically use `npm run build` (or `yarn build`).
 *   **Start Command**: Platforms will typically use `npm start` (or `yarn start`).
 *   **Health Check Path**: Many platforms use a health check path to monitor application status. This app provides one at `/api/health`. You may need to configure this path in your hosting provider's settings.
+*   **Debugging Client-Side Errors**: If you encounter generic errors like "a client-side exception has occurred" after deployment, **it is crucial to check your browser's developer console** on the deployed site for more specific error messages. These messages will provide vital clues for debugging.
 *   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
 *   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
 
