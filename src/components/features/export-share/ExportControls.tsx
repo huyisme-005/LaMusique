@@ -35,13 +35,16 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
       checkScrollability(); // Initial check
       // Check on window resize
       window.addEventListener('resize', checkScrollability);
-      // Check if content inside changes (this is a bit tricky without specific MutationObserver setup)
-      // For now, we'll rely on initial check and resize.
+      // For more robust updates if content inside scrollarea changes dynamically affecting width:
+      const observer = new MutationObserver(checkScrollability);
+      observer.observe(current, { childList: true, subtree: true, attributes: true, characterData: true });
+      
       return () => {
         window.removeEventListener('resize', checkScrollability);
+        observer.disconnect();
       };
     }
-  }, [checkScrollability]); // Rerun if checkScrollability changes (it won't due to useCallback, but good practice)
+  }, [checkScrollability]); 
 
 
   const handleScroll = (direction: 'left' | 'right') => {
@@ -147,27 +150,29 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
         </div>
         <CardDescription>Download your creation in various audio or document formats.</CardDescription>
       </CardHeader>
-      <ScrollArea orientation="horizontal" type="scroll" className="w-full" viewportRef={viewportRef} onViewportScroll={checkScrollability}>
-        <div className="min-w-max p-6 pt-0"> {/* Content wrapper for min-w-max and padding */}
-          <div className="space-y-3"> {/* Actual content */}
-            <Button onClick={() => handleExport('MP3')} className="w-full sm:w-auto" variant="outline">
-              <FileAudio className="mr-2 h-4 w-4" /> Export as MP3
-            </Button>
-            <Button onClick={() => handleExport('WAV')} className="w-full sm:w-auto" variant="outline">
-              <FileAudio className="mr-2 h-4 w-4" /> Export as WAV
-            </Button>
-            <Button onClick={() => handleExport('MIDI')} className="w-full sm:w-auto" variant="outline">
-              <FileAudio className="mr-2 h-4 w-4" /> Export as MIDI
-            </Button>
-            <Button onClick={() => handleExport('Lyrics PDF')} className="w-full sm:w-auto" variant="outline">
-              <FileText className="mr-2 h-4 w-4" /> Export Lyrics as PDF
-            </Button>
-            <p className="text-xs text-muted-foreground text-center pt-2 sm:w-full">
-                Full export functionality is under development.
-            </p>
+      <CardContent className="p-0">
+        <ScrollArea orientation="horizontal" type="scroll" className="w-full" viewportRef={viewportRef} onViewportScroll={checkScrollability}>
+          <div className="min-w-max p-6 pt-4"> {/* This div allows internal content to define its width */}
+            <div className="space-y-3"> {/* This div stacks buttons vertically */}
+              <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+                <FileAudio className="mr-2 h-4 w-4" /> Export as MP3
+              </Button>
+              <Button onClick={() => handleExport('WAV')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+                <FileAudio className="mr-2 h-4 w-4" /> Export as WAV
+              </Button>
+              <Button onClick={() => handleExport('MIDI')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+                <FileAudio className="mr-2 h-4 w-4" /> Export as MIDI
+              </Button>
+              <Button onClick={() => handleExport('Lyrics PDF')} className="w-full" variant="outline"> {/* Changed: removed sm:w-auto */}
+                <FileText className="mr-2 h-4 w-4" /> Export Lyrics as PDF
+              </Button>
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                  Full export functionality is under development.
+              </p>
+            </div>
           </div>
-        </div>
-      </ScrollArea>
+        </ScrollArea>
+      </CardContent>
       <CardFooter className="flex justify-between items-center pt-4 border-t">
         <Button 
           variant="ghost" 
@@ -194,3 +199,4 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody }) => {
 };
 
 export default ExportControls;
+    
