@@ -2,14 +2,13 @@
 "use client";
 
 import type { FC } from 'react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Clapperboard, Film, Sparkles, Upload, Image as ImageIcon, Video, Trash2, Info, ShieldAlert } from 'lucide-react';
+import { Clapperboard, Film, Sparkles, Upload, Image as ImageIcon, Video, Trash2, ShieldAlert } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -25,6 +24,8 @@ const MusicVideoControls: FC = () => {
   const [assets, setAssets] = useState<AssetFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const viewportRef = useRef<HTMLDivElement>(null);
+
 
   const handleGenerateVideo = () => {
     toast({
@@ -85,29 +86,18 @@ const MusicVideoControls: FC = () => {
   };
 
   return (
-    <Card className="min-w-0">
+    <Card className="min-w-0 overflow-x-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Clapperboard className="text-primary" /> Music Video Assets</CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">Optionally, upload images and video clips for a future AI-generated music video. Manage your assets below. AI video generation and asset plagiarism scanning are planned features.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Info icon removed */}
         </div>
         <CardDescription>Optionally, upload images/videos. AI-powered music video generation and asset plagiarism scan are future features.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea orientation="horizontal" type="scroll" className="w-full">
-          <div className="min-w-max p-6 pt-0"> {/* Adjusted padding */}
-            <div className="space-y-4 min-w-max"> {/* Ensured min-w-max on content wrapper */}
+        <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
+          <div className="min-w-max p-6 pt-0">
+            <div className="min-w-max space-y-4">
               <Input 
                 type="file" 
                 accept="image/*,video/*" 
@@ -166,7 +156,6 @@ const MusicVideoControls: FC = () => {
         </ScrollArea>
       </CardContent>
       <CardFooter className="pt-4 border-t">
-         {/* Arrows removed */}
       </CardFooter>
     </Card>
   );

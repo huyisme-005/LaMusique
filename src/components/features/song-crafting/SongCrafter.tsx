@@ -17,9 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { generateSongLyrics, type GenerateSongLyricsInput } from '@/ai/flows/generate-song-lyrics';
 import { generateMelody, type GenerateMelodyOutput, type GenerateMelodyInput } from '@/ai/flows/generate-melody';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Music, ScrollText, Info, Smile, Blend, Edit3, ListChecks, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Loader2, Music, ScrollText, Smile, Blend, Edit3, ListChecks, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import {
   DropdownMenu,
@@ -91,7 +90,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   const [customTheme, setCustomTheme] = useState<string>("");
   const [showAllThemes, setShowAllThemes] = useState(false);
   const [lyricsManuallyEdited, setLyricsManuallyEdited] = useState(false);
-  const [lyricsWereAIDrivenThisSession, setLyricsWereAIDrivenThisSession] = useState(false); // Declared state variable
+  const [lyricsWereAIDrivenThisSession, setLyricsWereAIDrivenThisSession] = useState(false);
   const { toast } = useToast();
 
   const themesScrollAreaViewportRef = React.useRef<HTMLDivElement>(null);
@@ -315,34 +314,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics & Melody</CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-lg">
-                 <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li><strong>To generate AI lyrics &amp; melody:</strong>
-                    <ul className="list-['-_'] list-inside pl-4">
-                      <li>Fill in 'Themes', 'Keywords', and 'Desired Emotion'.</li>
-                      <li>Set 'Genre', 'Key', and 'Tempo' for the melody.</li>
-                      <li>Click "Generate Lyrics &amp; Compose Melody" or "Regenerate Lyrics &amp; Melody" (if available).</li>
-                    </ul>
-                  </li>
-                  <li><strong>To use your own lyrics:</strong>
-                    <ul className="list-['-_'] list-inside pl-4">
-                      <li>Type or paste into the "Lyrics for Melody Generation..." area. This makes the "Compose Options" dropdown appear.</li>
-                      <li>Set 'Genre', 'Key', and 'Tempo'.</li>
-                      <li>Click "Compose Options", then "Continue with these Lyrics".</li>
-                    </ul>
-                  </li>
-                  <li>Melody output includes singing instructions and AI lyric feedback.</li>
-                </ul>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Info icon removed */}
         </div>
         <CardDescription>
           Craft lyrics with AI or input manually. Then, compose a melody.
@@ -359,18 +331,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel className="flex items-center gap-1"><ListChecks className="text-primary inline-block h-4 w-4" /> Themes</FormLabel>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <Info className="h-3 w-3 text-muted-foreground" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Select up to 3 themes total (from the list or your custom input) to guide AI lyric generation. This is optional if you're typing lyrics manually to compose a melody.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                  {/* Info icon removed */}
                 </div>
                 <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
                 <div className="space-y-2 pt-1">
@@ -480,18 +441,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                   <FormItem>
                     <div className="flex items-center justify-between">
                       <FormLabel className="flex items-center gap-1"><Smile className="text-primary inline-block h-4 w-4" /> Desired Emotion</FormLabel>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <Info className="h-3 w-3 text-muted-foreground" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-xs">Select an emotion to guide AI lyric generation. Choose "Mixed Emotion" to select up to 3 specific sub-emotions. This is optional if you're typing lyrics manually.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      {/* Info icon removed */}
                     </div>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value || "None"}>
                       <FormControl>

@@ -3,11 +3,10 @@
 import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Download, FileAudio, FileText, Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Download, FileAudio, FileText } from 'lucide-react';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef } from 'react';
 
 interface ExportControlsProps {
   lyrics: string;
@@ -17,7 +16,7 @@ interface ExportControlsProps {
 
 const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongName }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null); // Added this ref, though not used for scroll logic in this version
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleExport = (format: string) => {
     if (format === 'Lyrics PDF') {
@@ -101,29 +100,18 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
   };
 
   return (
-    <Card className="min-w-0">
+    <Card className="min-w-0 overflow-x-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Download className="text-primary" /> Export Your Song</CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">Download your song lyrics, melody description, and AI lyric feedback as a PDF by using your browser's "Print to PDF" function (available when content opens in a new window). Full audio export (MP3, WAV, MIDI) is planned for a future update.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Info icon removed */}
         </div>
         <CardDescription>Download your creation in various audio or document formats.</CardDescription>
       </CardHeader>
-      <CardContent className="p-0"> {/* Remove padding from CardContent */}
-        <ScrollArea orientation="horizontal" type="scroll" className="w-full">
-          <div ref={contentRef} className="min-w-max p-6 pt-4"> {/* Add padding to this inner div */}
-            <div className="space-y-3 w-full"> {/* Ensure this div takes full width to stack buttons */}
+      <CardContent className="p-0">
+        <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
+          <div ref={contentRef} className="min-w-max p-6 pt-4">
+            <div className="min-w-max space-y-3 w-full">
               <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline">
                 <FileAudio className="mr-2 h-4 w-4" /> Export as MP3
               </Button>
@@ -144,7 +132,6 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
         </ScrollArea>
       </CardContent>
       <CardFooter className="pt-4 border-t">
-         {/* Arrows removed, ScrollArea's native scrollbar handles it */}
       </CardFooter>
     </Card>
   );

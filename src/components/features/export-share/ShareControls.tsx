@@ -2,40 +2,31 @@
 import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Share2, Twitter, Facebook, Instagram, Info } from 'lucide-react'; 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Share2, Twitter, Facebook, Instagram } from 'lucide-react'; 
 import { ScrollArea } from '@/components/ui/scroll-area';
+import React, { useRef } from 'react';
 
 
 const ShareControls: FC = () => {
+  const viewportRef = useRef<HTMLDivElement>(null);
+
   const handleShare = (platform: string) => {
     alert(`Sharing on ${platform} (functionality not implemented yet).`);
   };
 
   return (
-    <Card className="min-w-0">
+    <Card className="min-w-0 overflow-x-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Share2 className="text-primary" /> Share on Social Media</CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">This section will enable direct sharing of your generated songs to various social media platforms. Full API integration is planned for a future update.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {/* Info icon removed */}
         </div>
         <CardDescription>Let the world hear your masterpiece!</CardDescription>
       </CardHeader>
-      <CardContent className="p-0"> {/* Remove padding from CardContent */}
-        <ScrollArea orientation="horizontal" type="scroll" className="w-full">
-            <div className="min-w-max p-6"> {/* Add padding to this inner div */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-max"> {/* Added min-w-max here too */}
+      <CardContent className="p-0">
+        <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
+            <div className="min-w-max p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-max">
                     <Button onClick={() => handleShare('Twitter')} variant="outline">
                     <Twitter className="mr-2 h-4 w-4 text-[#1DA1F2]" /> Share on X
                     </Button>
@@ -57,7 +48,6 @@ const ShareControls: FC = () => {
         </ScrollArea>
       </CardContent>
        <CardFooter className="pt-4 border-t">
-            {/* Arrows removed */}
       </CardFooter>
     </Card>
   );
