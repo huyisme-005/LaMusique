@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, type FC, useEffect, useRef } from 'react';
+import React, { useState, type FC, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import AppHeader from '@/components/layout/AppHeader';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,9 +45,6 @@ const HarmonicAiPage: FC = () => {
             setLyrics(songToLoad.lyrics);
             setMelody(songToLoad.melody);
             setCurrentSongNameForExport(songToLoad.name); // Set name for export
-            // Note: Restoring SongCrafter form inputs (theme, keywords, genre, etc.) 
-            // would require saving them as part of SavedSong and setting them here.
-            // For this iteration, only lyrics and melody are loaded.
             toast({ title: "Song Loaded", description: `"${songToLoad.name}" lyrics and melody have been loaded.` });
           } else {
             toast({ title: "Error Loading Song", description: "Could not find the song to load.", variant: "destructive" });
@@ -68,7 +65,7 @@ const HarmonicAiPage: FC = () => {
 
   const handleLyricsGenerated = (newLyrics: string) => {
     setLyrics(newLyrics);
-    setCurrentSongNameForExport(null); // New AI lyrics, not yet named/saved
+    setCurrentSongNameForExport(null); 
   };
 
   const handleMelodyGenerated = (newMelody: GenerateMelodyOutput) => {
@@ -77,10 +74,6 @@ const HarmonicAiPage: FC = () => {
 
   const handleLyricsEdited = (editedLyrics: string) => {
     setLyrics(editedLyrics);
-    // If user edits lyrics, the name might become stale if they don't re-save.
-    // The export function will handle prompting if currentSongNameForExport is null.
-    // Or, we could clear currentSongNameForExport here if we want to force re-prompt after any edit.
-    // For now, let's keep it simple: name persists until new AI lyrics or explicit save.
   };
 
   const handleSaveCurrentSong = () => {
@@ -109,7 +102,7 @@ const HarmonicAiPage: FC = () => {
       
       try {
         localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
-        setCurrentSongNameForExport(newSong.name); // Update name for export
+        setCurrentSongNameForExport(newSong.name); 
         toast({
           title: "Song Saved!",
           description: `"${newSong.name}" has been saved. You can view it on the 'Saved Songs' page.`,
@@ -118,7 +111,7 @@ const HarmonicAiPage: FC = () => {
         console.error("Error saving song to localStorage:", e);
         toast({ title: "Save Error", description: "Could not save your song to local storage. It might be full.", variant: "destructive"});
       }
-    } else if (songName !== null) { // User pressed OK but entered no name
+    } else if (songName !== null) { 
       toast({
         title: "Save Cancelled",
         description: "Song name cannot be empty.",
@@ -132,7 +125,7 @@ const HarmonicAiPage: FC = () => {
       <AppHeader />
       <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:gap-6 md:p-6">
         {/* Left Panel (Controls) */}
-        <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col overflow-hidden">
+        <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col">
           <div className="p-4 border-b rounded-t-xl bg-muted flex flex-col">
             <div className="flex items-center justify-end w-full mb-2">
               <Button 

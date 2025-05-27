@@ -1,10 +1,9 @@
 
 "use client";
 
-import type { FC } from 'react';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { type FC, useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area'; // ScrollBar also available if needed
+import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Button } from '@/components/ui/button';
 import { FileText, ListMusic, Disc3, UserRoundCheck, MessageSquareQuote, ShieldAlert, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
@@ -20,10 +19,12 @@ interface SongSectionCardProps {
   description?: string;
   children: React.ReactNode;
   contentClassName?: string;
-  footerContent?: React.ReactNode; // Optional footer content for buttons
+  footerContent?: React.ReactNode; 
 }
 
 const SongSectionCard: FC<SongSectionCardProps> = ({ title, icon: Icon, description, children, contentClassName, footerContent }) => {
+  const viewportRef = useRef<HTMLDivElement>(null);
+
   return (
     <Card className="flex-1 flex flex-col min-w-0">
       <CardHeader>
@@ -35,6 +36,7 @@ const SongSectionCard: FC<SongSectionCardProps> = ({ title, icon: Icon, descript
           orientation="horizontal" 
           type="scroll" 
           className="w-full flex-grow"
+          viewportRef={viewportRef}
         >
           <div className={`min-w-max p-4 ${contentClassName || ''}`}>
             {children}
@@ -101,7 +103,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
       <SongSectionCard 
         title="Generated Lyrics" 
         icon={FileText} 
-        contentClassName="h-[calc(33vh-120px)] md:h-auto" // Adjust height as needed
+        contentClassName="h-[calc(33vh-120px)] md:h-auto" 
         footerContent={
             <div className="w-full">
                 <Button onClick={handleScanLyrics} disabled={isScanningLyrics || !lyrics} className="w-full sm:w-auto">
@@ -135,7 +137,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
         title="Generated Melody" 
         icon={ListMusic} 
         description="Details about the composed melody, including how to sing it."
-        contentClassName="h-[calc(33vh-140px)] md:h-auto" // Adjust height
+        contentClassName="h-[calc(33vh-140px)] md:h-auto" 
       >
         <ScrollArea className="h-full w-full rounded-md border p-4 bg-muted/30">
           {melody ? (
@@ -169,7 +171,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
           title="AI Lyric Feedback" 
           icon={MessageSquareQuote} 
           description="Suggestions and analysis for the lyrics used to generate the melody."
-          contentClassName="h-[calc(33vh-140px)] md:h-auto" // Adjust height
+          contentClassName="h-[calc(33vh-140px)] md:h-auto" 
         >
           <ScrollArea className="h-full w-full rounded-md border p-4 bg-muted/30">
             <p className="text-sm whitespace-pre-wrap">{melody.lyricFeedback}</p>
@@ -181,4 +183,3 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
 };
 
 export default SongOutputDisplay;
-

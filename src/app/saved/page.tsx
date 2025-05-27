@@ -1,17 +1,16 @@
 
 "use client";
 
-import type { FC } from 'react';
-import { useState, useEffect } from 'react';
+import React, { type FC, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AppHeader from '@/components/layout/AppHeader';
-import { Button } from '@/components/ui/button'; // Corrected import path
+import { Button } from '@/components/ui/button'; 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Home, Trash2, PlayCircle, Eye } from 'lucide-react';
-import type { SavedSong } from '@/app/page'; // Import the interface
+import type { SavedSong } from '@/app/page'; 
 import {
   AlertDialog,
   AlertDialogAction,

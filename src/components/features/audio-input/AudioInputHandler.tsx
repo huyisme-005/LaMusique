@@ -1,8 +1,7 @@
 
 "use client";
 
-import type { FC } from 'react';
-import { useState, useRef, useCallback, useEffect } from 'react';
+import React, { type FC, useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -29,9 +28,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const mainCardViewportRef = useRef<HTMLDivElement>(null);
-
   const resultCardViewportRef = useRef<HTMLDivElement>(null);
-
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -128,14 +125,12 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   
   const isAudioAvailableForScan = (audioFile !== null) || (audioDataUri !== null && audioDataUri !== DEFAULT_AUDIO_DATA_URI);
 
-
   return (
     <div className="space-y-6">
-      <Card className="min-w-0 overflow-x-auto">
+      <Card className="min-w-0">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
-            {/* Info icon removed */}
           </div>
           <CardDescription>
             Optionally, upload an audio file. Explicit audio input (upload, future recording, or future AI generation) is required to enable the plagiarism scan.
@@ -143,7 +138,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea orientation="horizontal" type="scroll" viewportRef={mainCardViewportRef}>
-            <div className="min-w-max p-6 pt-4">
+            <div className="min-w-max p-6 pt-0">
                <div className="min-w-max space-y-4">
                 <div>
                   <Label htmlFor="audio-upload">Upload Audio File</Label>
@@ -184,7 +179,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       </Card>
 
       {plagiarismResult && (
-        <Card className="min-w-0 mt-6 overflow-x-auto">
+        <Card className="mt-6 min-w-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {plagiarismResult.isHighConcern ? <AlertTriangle className="text-destructive" /> : <ShieldCheck className="text-green-500" />}

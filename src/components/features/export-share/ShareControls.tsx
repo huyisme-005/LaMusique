@@ -1,4 +1,6 @@
 
+"use client";
+
 import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -15,17 +17,16 @@ const ShareControls: FC = () => {
   };
 
   return (
-    <Card className="min-w-0 overflow-x-auto">
+    <Card className="min-w-0">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Share2 className="text-primary" /> Share on Social Media</CardTitle>
-          {/* Info icon removed */}
         </div>
         <CardDescription>Let the world hear your masterpiece!</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
-            <div className="min-w-max p-6">
+            <div className="min-w-max p-6 pt-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-max">
                     <Button onClick={() => handleShare('Twitter')} variant="outline">
                     <Twitter className="mr-2 h-4 w-4 text-[#1DA1F2]" /> Share on X
@@ -54,4 +55,3 @@ const ShareControls: FC = () => {
 };
 
 export default ShareControls;
-

@@ -1,8 +1,7 @@
 
 "use client";
 
-import type { FC } from 'react';
-import { useState, useRef } from 'react';
+import React, { type FC, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Clapperboard, Film, Sparkles, Upload, Image as ImageIcon, Video, Trash2, ShieldAlert } from 'lucide-react';
@@ -86,11 +85,10 @@ const MusicVideoControls: FC = () => {
   };
 
   return (
-    <Card className="min-w-0 overflow-x-auto">
+    <Card className="min-w-0">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Clapperboard className="text-primary" /> Music Video Assets</CardTitle>
-          {/* Info icon removed */}
         </div>
         <CardDescription>Optionally, upload images/videos. AI-powered music video generation and asset plagiarism scan are future features.</CardDescription>
       </CardHeader>
@@ -162,4 +160,3 @@ const MusicVideoControls: FC = () => {
 };
 
 export default MusicVideoControls;
-
