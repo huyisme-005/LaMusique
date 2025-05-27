@@ -14,7 +14,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Includes an expanded list of music genres.
     *   Includes an experimental AI-powered **scan for potential lyrical plagiarism** based on the generated or entered lyrics.
 *   **Audio Input (Optional)**:
-    *   Upload audio files (e.g., song ideas, vocal snippets). If no audio is uploaded, a default silent placeholder is used for analysis. Explicit audio input (upload, future recording, or future AI generation) is required to enable the plagiarism scan for audio.
+    *   Upload audio files (e.g., song ideas, vocal snippets). Explicit audio input (upload, future recording, or future AI generation) is required to enable the plagiarism scan for audio. If no audio is uploaded, a default silent placeholder is used for analysis if the scan is initiated.
     *   (Planned) Record audio directly using a microphone.
     *   (Planned) AI-powered audio generation.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio. (Note: This is a preliminary check with limitations).
@@ -29,7 +29,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 *   **Save & Load Progress**:
     *   Users can save their current song (lyrics and melody data) with a custom name. Saved songs are stored in the browser's `localStorage`.
     *   A dedicated "Saved Songs" page (`/saved`) lists all saved work, allowing users to view details, load a song back into the main creation editor, or delete saved entries.
-*   **Integrated AI Copilot Hints**: Tooltips with instructions are provided on various UI elements to guide the user.
+*   **Integrated AI Copilot Hints**: Tooltips with instructions are provided on various UI elements (though currently removed) to guide the user. Functionality was previously explored with info icons in card headers.
 
 ## Getting Started
 
@@ -79,7 +79,17 @@ This application is structured for deployment on platforms that support Next.js.
 For the AI features (lyrics generation, melody composition, plagiarism checks via Genkit/Gemini) to work in your deployed application, you **MUST** configure the `GOOGLE_API_KEY` as an environment variable in your hosting provider's settings.
 
 *   **Do NOT commit your API key directly into your `.env` file if that file is part of your Git repository.**
-*   The application's Genkit setup (`src/ai/genkit.ts`) is already designed to use this environment variable.
+*   The application's Genkit setup (`src/ai/genkit.ts`) is already designed to use this environment variable (`process.env.GOOGLE_API_KEY`).
+
+**Setting Environment Variables on Hosting Platforms:**
+
+The exact method for setting environment variables depends on your hosting provider. Here are general pointers:
+*   **Vercel:** In your project settings on the Vercel dashboard, find the "Environment Variables" section.
+*   **Netlify:** In your site settings on Netlify, navigate to "Site configuration" -> "Build & deploy" -> "Environment".
+*   **Firebase App Hosting:** (See specific section below)
+*   **AWS Amplify:** In the Amplify console, for your app, look for "Environment variables".
+*   **Heroku:** Use the Heroku Dashboard (Settings -> Config Vars) or the Heroku CLI (`heroku config:set GOOGLE_API_KEY=YOUR_KEY_HERE`).
+*   **Other Platforms (Azure App Service, Google Cloud Run, DigitalOcean App Platform, etc.):** Consult your provider's specific documentation for "environment variables" or "application settings".
 
 ### Firebase App Hosting
 
@@ -113,7 +123,7 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 ### General Deployment Considerations for Next.js (e.g., Vercel, Netlify)
 
 *   **Git Repository**: Platforms like Vercel integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
-*   **Environment Variables**: Similar to Firebase, you'll need to configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings dashboard.
+*   **Environment Variables**: As mentioned above, configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings dashboard.
 *   **Build Process**: The `npm run build` script (`next build`) prepares your Next.js app for production. Most modern hosting platforms for Next.js will run this command automatically.
 *   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
 *   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
