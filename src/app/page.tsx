@@ -87,18 +87,20 @@ const HarmonicAiPage: FC = () => {
         melody: melody,
       };
       
-      const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
       let songs: SavedSong[] = [];
-      if (storedSongs) {
-        try {
+      try {
+        const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
+        if (storedSongs) {
           songs = JSON.parse(storedSongs);
-        } catch (e) {
-          console.error("Error parsing saved songs from localStorage for saving:", e);
-          toast({ title: "Save Error", description: "Could not read existing saved songs. Your song was not saved.", variant: "destructive"});
-          return;
         }
+      } catch (e) {
+        console.error("Error parsing saved songs from localStorage for saving:", e);
+        toast({ title: "Save Error", description: "Could not read existing saved songs. Your song was not saved.", variant: "destructive"});
+        return;
       }
+
       songs.push(newSong);
+      
       try {
         localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
         toast({
@@ -123,7 +125,7 @@ const HarmonicAiPage: FC = () => {
       <AppHeader />
       <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:gap-6 md:p-6">
         {/* Left Panel (Controls) */}
-        <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col overflow-hidden">
+        <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col">
           <div className="p-4 border-b rounded-t-xl bg-muted flex flex-col">
             <div className="flex items-center justify-end w-full mb-2">
               <Button 
@@ -140,7 +142,7 @@ const HarmonicAiPage: FC = () => {
           </div>
           
           <ScrollArea className="flex-1 h-full p-4 md:p-6 bg-background/30 rounded-b-xl">
-            <div className="space-y-8">
+            <div className="min-w-max space-y-8">
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Generate & Edit Lyrics / Compose Melody</h3>
                 <div className="space-y-6">
@@ -163,7 +165,7 @@ const HarmonicAiPage: FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Export & Share</h3>
                 <div className="space-y-6">
-                  <ExportControls />
+                  <ExportControls lyrics={lyrics} melody={melody} />
                   <ShareControls />
                 </div>
               </div>
@@ -173,7 +175,7 @@ const HarmonicAiPage: FC = () => {
 
         {/* Right Panel (Display) */}
         <ScrollArea className="bg-card text-card-foreground rounded-xl shadow-xl p-4 md:p-6">
-          <div className="space-y-6">
+          <div className="min-w-max space-y-6">
             <SongOutputDisplay lyrics={lyrics} melody={melody} />
             <Separator />
             <MusicVideoControls />
