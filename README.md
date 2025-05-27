@@ -35,6 +35,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 This is a Next.js application. To get started:
 
 1.  **Install dependencies**:
+    Run the following command in your project's root directory. This will install all necessary project dependencies as defined in the `package.json` file.
     ```bash
     npm install
     ```
@@ -100,9 +101,11 @@ This application is structured for deployment, particularly with Firebase App Ho
     ```
     The CLI will provide a URL for your deployed application.
 
-### General Deployment Considerations for Next.js
+### General Deployment Considerations for Next.js (e.g., Vercel)
 
-*   **Build Process**: The `npm run build` script (`next build`) prepares your Next.js app for production. Firebase App Hosting will typically run this command as part of its deployment pipeline.
+*   **Git Repository**: Platforms like Vercel integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
+*   **Environment Variables**: Similar to Firebase, you'll need to configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings.
+*   **Build Process**: The `npm run build` script (`next build`) prepares your Next.js app for production. Most modern hosting platforms for Next.js will run this command automatically.
 *   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
 *   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
 
