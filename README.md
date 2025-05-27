@@ -31,7 +31,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 *   **Save & Load Progress**:
     *   Users can save their current song (lyrics and melody data) with a custom name. Saved songs are stored in the browser's `localStorage`.
     *   A dedicated "Saved Songs" page (`/saved`) lists all saved work, allowing users to view details, load a song back into the main creation editor, or delete saved entries.
-*   **Integrated AI Copilot Hints**: Tooltip instructions are no longer present on various UI elements. The feature was removed to simplify the interface.
+*   **Integrated AI Copilot Hints (Removed)**: Tooltip instructions are no longer present on various UI elements. The feature was removed to simplify the interface.
 
 ## Getting Started
 
@@ -131,7 +131,9 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 *   **Build Command**: Platforms will typically use `npm run build` (or `yarn build`).
 *   **Start Command**: Platforms will typically use `npm start` (or `yarn start`).
 *   **Health Check Path**: Many platforms use a health check path to monitor application status. This app provides one at `/api/health`. You may need to configure this path in your hosting provider's settings.
-*   **Debugging Client-Side Errors**: If you encounter generic errors like "a client-side exception has occurred" after deployment, **it is crucial to check your browser's developer console** on the deployed site for more specific error messages. These messages will provide vital clues for debugging.
+*   **Debugging Client-Side Errors**: If you encounter generic errors like "a client-side exception has occurred" after deployment, **it is crucial to check your browser's developer console** on the deployed site for more specific error messages. These messages will provide vital clues for debugging. Common causes include:
+    *   Issues with environment variables not being set correctly on the server (e.g., missing `GOOGLE_API_KEY`).
+    *   Attempts to access browser-specific APIs (`window`, `localStorage`) during server-side rendering or static generation. Ensure such code is deferred to the client-side (e.g., within `useEffect` hooks guarded by a client check).
 *   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
 *   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
 

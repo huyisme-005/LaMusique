@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, type FC, useEffect, useRef } from 'react';
+import React, { useState, type FC, useEffect, useRef } from 'react'; // Ensured React is here
 import { useSearchParams, useRouter } from 'next/navigation';
 import AppHeader from '@/components/layout/AppHeader';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 
-export interface SavedSong { // Exporting for use in /saved page
+export interface SavedSong {
   id: string;
   name: string;
   lyrics: string;
@@ -33,7 +33,17 @@ const HarmonicAiPage: FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
+    setIsClient(true); // Component has mounted on the client
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) { // Guard: only run on client
+      return;
+    }
+
     const songIdToLoad = searchParams.get('loadSongId');
     if (songIdToLoad) {
       const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
@@ -44,7 +54,7 @@ const HarmonicAiPage: FC = () => {
           if (songToLoad) {
             setLyrics(songToLoad.lyrics);
             setMelody(songToLoad.melody);
-            setCurrentSongNameForExport(songToLoad.name); // Set name for export
+            setCurrentSongNameForExport(songToLoad.name); 
             toast({ title: "Song Loaded", description: `"${songToLoad.name}" lyrics and melody have been loaded.` });
           } else {
             toast({ title: "Error Loading Song", description: "Could not find the song to load.", variant: "destructive" });
@@ -57,10 +67,14 @@ const HarmonicAiPage: FC = () => {
         toast({ title: "No Saved Songs", description: "Could not find any saved songs to load.", variant: "default" });
       }
       // Clear the query parameter to prevent reloading on refresh/navigation
-      const newPath = window.location.pathname; 
-      router.replace(newPath, { scroll: false });
+      // Safely construct the new URL to remove only the 'loadSongId' query parameter
+      const currentPathname = window.location.pathname; // Safe to use window now
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('loadSongId');
+      const newUrl = `${currentPathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`;
+      router.replace(newUrl, { scroll: false });
     }
-  }, [searchParams, router, toast]);
+  }, [isClient, searchParams, router, toast]); // setLyrics, setMelody, setCurrentSongNameForExport are stable
 
 
   const handleLyricsGenerated = (newLyrics: string) => {
@@ -77,7 +91,12 @@ const HarmonicAiPage: FC = () => {
   };
 
   const handleSaveCurrentSong = () => {
-    const songName = window.prompt("Enter a name for your song:");
+    if (!isClient) { // Guard against running on server
+      toast({ title: "Error", description: "Cannot save song at this moment.", variant: "destructive" });
+      return;
+    }
+
+    const songName = window.prompt("Enter a name for your song:"); // window.prompt is client-side
     if (songName && songName.trim() !== "") {
       const newSong: SavedSong = {
         id: Date.now().toString(),
@@ -88,7 +107,7 @@ const HarmonicAiPage: FC = () => {
       
       let songs: SavedSong[] = [];
       try {
-        const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
+        const storedSongs = localStorage.getItem('harmonicAI_savedSongs'); // localStorage is client-side
         if (storedSongs) {
           songs = JSON.parse(storedSongs);
         }
@@ -101,7 +120,7 @@ const HarmonicAiPage: FC = () => {
       songs.push(newSong);
       
       try {
-        localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
+        localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs)); // localStorage is client-side
         setCurrentSongNameForExport(newSong.name); 
         toast({
           title: "Song Saved!",
