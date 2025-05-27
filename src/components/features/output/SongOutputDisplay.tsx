@@ -4,16 +4,15 @@
 import type { FC } from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area'; // ScrollBar also available if needed
 import { Button } from '@/components/ui/button';
-import { FileText, ListMusic, Disc3, UserRoundCheck, MessageSquareQuote, ChevronLeft, ChevronRight, ShieldAlert, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { FileText, ListMusic, Disc3, UserRoundCheck, MessageSquareQuote, ShieldAlert, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 import { checkAudioPlagiarism, type CheckAudioPlagiarismOutput } from '@/ai/flows/check-audio-plagiarism';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAA";
-const SCROLL_AMOUNT = 200;
 
 interface SongSectionCardProps {
   title: string;
@@ -21,91 +20,32 @@ interface SongSectionCardProps {
   description?: string;
   children: React.ReactNode;
   contentClassName?: string;
+  footerContent?: React.ReactNode; // Optional footer content for buttons
 }
 
-const SongSectionCard: FC<SongSectionCardProps> = ({ title, icon: Icon, description, children, contentClassName }) => {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScrollability = useCallback(() => {
-    const current = viewportRef.current;
-    if (current) {
-      setCanScrollLeft(current.scrollLeft > 0);
-      setCanScrollRight(current.scrollLeft < current.scrollWidth - current.clientWidth -1);
-    } else {
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkScrollability();
-    const current = viewportRef.current;
-    if (current) {
-      const handleResize = () => checkScrollability();
-      window.addEventListener('resize', handleResize);
-      const observer = new MutationObserver(checkScrollability);
-      observer.observe(current, { childList: true, subtree: true, attributes: true, characterData: true });
-      
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        observer.disconnect();
-      };
-    }
-  }, [checkScrollability]);
-
-  const handleScroll = (direction: 'left' | 'right') => {
-    const current = viewportRef.current;
-    if (current) {
-      current.scrollBy({
-        left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
-        behavior: 'smooth',
-      });
-      setTimeout(checkScrollability, 300);
-    }
-  };
-
+const SongSectionCard: FC<SongSectionCardProps> = ({ title, icon: Icon, description, children, contentClassName, footerContent }) => {
   return (
     <Card className="flex-1 flex flex-col min-w-0">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Icon className="text-primary" /> {title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden"> {/* Ensure CardContent can flex */}
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
         <ScrollArea 
           orientation="horizontal" 
           type="scroll" 
-          className="w-full flex-grow" // Allow ScrollArea to take available space
-          viewportRef={viewportRef}
-          onViewportScroll={checkScrollability}
+          className="w-full flex-grow"
         >
-          <div className={`min-w-max p-4 ${contentClassName || ''}`}> {/* Content padding applied here */}
+          <div className={`min-w-max p-4 ${contentClassName || ''}`}>
             {children}
           </div>
         </ScrollArea>
       </CardContent>
-      <CardFooter className="flex justify-between items-center pt-4 border-t">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleScroll('left')}
-          disabled={!canScrollLeft}
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <span className="text-xs text-muted-foreground">Scroll for details</span>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleScroll('right')}
-          disabled={!canScrollRight}
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-      </CardFooter>
+      {footerContent && (
+        <CardFooter className="pt-4 border-t">
+          {footerContent}
+        </CardFooter>
+      )}
     </Card>
   );
 };
@@ -136,7 +76,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
     try {
       const result = await checkAudioPlagiarism({ 
         lyrics: lyrics, 
-        audioDataUri: DEFAULT_AUDIO_DATA_URI // Use default silent audio for lyrics-only scan
+        audioDataUri: DEFAULT_AUDIO_DATA_URI 
       });
       setLyricsPlagiarismResult(result);
       toast({
@@ -158,7 +98,30 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <SongSectionCard title="Generated Lyrics" icon={FileText} contentClassName="h-[calc(33vh-120px)] md:h-auto">
+      <SongSectionCard 
+        title="Generated Lyrics" 
+        icon={FileText} 
+        contentClassName="h-[calc(33vh-120px)] md:h-auto" // Adjust height as needed
+        footerContent={
+            <div className="w-full">
+                <Button onClick={handleScanLyrics} disabled={isScanningLyrics || !lyrics} className="w-full sm:w-auto">
+                    {isScanningLyrics ? <Loader2 className="animate-spin mr-2" /> : <ShieldAlert className="mr-2" />}
+                    Scan Lyrics for Plagiarism (Experimental)
+                </Button>
+                {lyricsPlagiarismResult && (
+                    <Alert variant={lyricsPlagiarismResult.isHighConcern ? "destructive" : "default"} className="mt-4">
+                    <AlertTitle className="flex items-center gap-1">
+                        {lyricsPlagiarismResult.isHighConcern ? <AlertTriangle className="text-destructive" /> : <ShieldCheck className="text-green-500" />}
+                        Lyrics Scan Result
+                    </AlertTitle>
+                    <AlertDescription className="whitespace-pre-wrap text-xs">
+                        {lyricsPlagiarismResult.potentialConcerns}
+                    </AlertDescription>
+                    </Alert>
+                )}
+            </div>
+        }
+      >
         <ScrollArea className="h-full w-full rounded-md border p-4 bg-muted/30">
           {lyrics ? (
             <pre className="whitespace-pre-wrap text-sm font-mono">{lyrics}</pre>
@@ -166,30 +129,13 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
             <p className="text-muted-foreground italic">Your generated lyrics will appear here once crafted.</p>
           )}
         </ScrollArea>
-        <div className="mt-4">
-            <Button onClick={handleScanLyrics} disabled={isScanningLyrics || !lyrics} className="w-full sm:w-auto">
-                {isScanningLyrics ? <Loader2 className="animate-spin mr-2" /> : <ShieldAlert className="mr-2" />}
-                Scan Lyrics for Plagiarism (Experimental)
-            </Button>
-        </div>
-        {lyricsPlagiarismResult && (
-            <Alert variant={lyricsPlagiarismResult.isHighConcern ? "destructive" : "default"} className="mt-4">
-              <AlertTitle className="flex items-center gap-1">
-                {lyricsPlagiarismResult.isHighConcern ? <AlertTriangle className="text-destructive" /> : <ShieldCheck className="text-green-500" />}
-                Lyrics Scan Result
-              </AlertTitle>
-              <AlertDescription className="whitespace-pre-wrap text-xs">
-                {lyricsPlagiarismResult.potentialConcerns}
-              </AlertDescription>
-            </Alert>
-        )}
       </SongSectionCard>
 
       <SongSectionCard 
         title="Generated Melody" 
         icon={ListMusic} 
         description="Details about the composed melody, including how to sing it."
-        contentClassName="h-[calc(33vh-140px)] md:h-auto"
+        contentClassName="h-[calc(33vh-140px)] md:h-auto" // Adjust height
       >
         <ScrollArea className="h-full w-full rounded-md border p-4 bg-muted/30">
           {melody ? (
@@ -223,7 +169,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
           title="AI Lyric Feedback" 
           icon={MessageSquareQuote} 
           description="Suggestions and analysis for the lyrics used to generate the melody."
-          contentClassName="h-[calc(33vh-140px)] md:h-auto"
+          contentClassName="h-[calc(33vh-140px)] md:h-auto" // Adjust height
         >
           <ScrollArea className="h-full w-full rounded-md border p-4 bg-muted/30">
             <p className="text-sm whitespace-pre-wrap">{melody.lyricFeedback}</p>
@@ -235,3 +181,4 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
 };
 
 export default SongOutputDisplay;
+

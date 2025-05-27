@@ -3,7 +3,7 @@
 import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Download, FileAudio, FileText, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, FileAudio, FileText, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,57 +12,12 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 interface ExportControlsProps {
   lyrics: string;
   melody: GenerateMelodyOutput | null;
-  currentSongName: string | null; // Added prop
+  currentSongName: string | null; 
 }
 
 const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongName }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const SCROLL_AMOUNT = 200; 
-
-  const checkScrollability = useCallback(() => {
-    const current = viewportRef.current;
-    const content = contentRef.current;
-    if (current && content) {
-      setCanScrollLeft(current.scrollLeft > 0);
-      setCanScrollRight(current.scrollLeft < content.scrollWidth - current.clientWidth -1); 
-    } else {
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const current = viewportRef.current;
-    const content = contentRef.current;
-    if (current && content) {
-      checkScrollability(); 
-      window.addEventListener('resize', checkScrollability);
-      const observer = new MutationObserver(checkScrollability);
-      observer.observe(content, { childList: true, subtree: true, attributes: true, characterData: true });
-      
-      return () => {
-        window.removeEventListener('resize', checkScrollability);
-        observer.disconnect();
-      };
-    }
-  }, [checkScrollability]); 
-
-
-  const handleScroll = (direction: 'left' | 'right') => {
-    const current = viewportRef.current;
-    if (current) {
-      current.scrollBy({
-        left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
-        behavior: 'smooth',
-      });
-      setTimeout(checkScrollability, 300);
-    }
-  };
-
+  const contentRef = useRef<HTMLDivElement>(null); // Added this ref, though not used for scroll logic in this version
 
   const handleExport = (format: string) => {
     if (format === 'Lyrics PDF') {
@@ -158,17 +113,17 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">This section will allow you to download your song. For "Lyrics as PDF", content opens in a new window for browser-based PDF saving. Full export functionality is under development.</p>
+                <p className="text-sm">Download your song lyrics, melody description, and AI lyric feedback as a PDF by using your browser's "Print to PDF" function (available when content opens in a new window). Full audio export (MP3, WAV, MIDI) is planned for a future update.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
         <CardDescription>Download your creation in various audio or document formats.</CardDescription>
       </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea orientation="horizontal" type="scroll" className="w-full" viewportRef={viewportRef} onViewportScroll={checkScrollability}>
-          <div ref={contentRef} className="min-w-max p-6 pt-4">
-            <div className="space-y-3">
+      <CardContent className="p-0"> {/* Remove padding from CardContent */}
+        <ScrollArea orientation="horizontal" type="scroll" className="w-full">
+          <div ref={contentRef} className="min-w-max p-6 pt-4"> {/* Add padding to this inner div */}
+            <div className="space-y-3 w-full"> {/* Ensure this div takes full width to stack buttons */}
               <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline">
                 <FileAudio className="mr-2 h-4 w-4" /> Export as MP3
               </Button>
@@ -188,26 +143,8 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
           </div>
         </ScrollArea>
       </CardContent>
-      <CardFooter className="flex justify-between items-center pt-4 border-t">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleScroll('left')}
-          disabled={!canScrollLeft}
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <span className="text-xs text-muted-foreground">Scroll options</span>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleScroll('right')}
-          disabled={!canScrollRight}
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
+      <CardFooter className="pt-4 border-t">
+         {/* Arrows removed, ScrollArea's native scrollbar handles it */}
       </CardFooter>
     </Card>
   );

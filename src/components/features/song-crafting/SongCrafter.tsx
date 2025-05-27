@@ -1,9 +1,8 @@
 
 "use client";
 
-import React from 'react'; // Ensure React is imported
+import React, { useState, useEffect, useCallback } from 'react'; // Ensure React and hooks are imported
 import type { FC } from 'react';
-import { useState, useEffect, useCallback } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -92,6 +91,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   const [customTheme, setCustomTheme] = useState<string>("");
   const [showAllThemes, setShowAllThemes] = useState(false);
   const [lyricsManuallyEdited, setLyricsManuallyEdited] = useState(false);
+  const [lyricsWereAIDrivenThisSession, setLyricsWereAIDrivenThisSession] = useState(false); // Declared state variable
   const { toast } = useToast();
 
   const themesScrollAreaViewportRef = React.useRef<HTMLDivElement>(null);
@@ -119,14 +119,13 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 
   useEffect(() => {
     if (showAllThemes && themesScrollAreaViewportRef.current) {
-      // Timeout to allow the DOM to update and scrollHeight to be correct
       setTimeout(() => {
         if (themesScrollAreaViewportRef.current) {
           themesScrollAreaViewportRef.current.scrollTop = themesScrollAreaViewportRef.current.scrollHeight;
         }
       }, 0);
     }
-  }, [showAllThemes]); // Re-run when showAllThemes changes
+  }, [showAllThemes]);
 
 
   const handleMixedEmotionChange = (emotionValue: string) => {
@@ -256,6 +255,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
         onLyricsGenerated(aiLyricsResult.lyrics);
         lyricsForMelody = aiLyricsResult.lyrics;
         setLyricsManuallyEdited(false); 
+        setLyricsWereAIDrivenThisSession(true);
         toast({
           title: "Lyrics Generated!",
           description: "AI has crafted new lyrics. They are now in the lyrics area.",
@@ -311,7 +311,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
   
 
   return (
-    <Card className="min-w-0">
+    <Card className="min-w-0 overflow-x-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics & Melody</CardTitle>
@@ -323,13 +323,23 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-lg">
-                <p className="text-sm">
-                  <strong>To generate lyrics & melody:</strong> Fill Themes, Keywords, Emotion, Genre, Key, Tempo. Click "Generate Lyrics & Compose Melody".
-                  <br />
-                  <strong>To use your own lyrics:</strong> Type or paste them into the "Lyrics for Melody Generation / Manual Editing" area. Set Genre, Key, Tempo. Then choose "Continue with these Lyrics" from the compose options.
-                  <br />
-                  Melody output includes singing instructions and lyric feedback.
-                </p>
+                 <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li><strong>To generate AI lyrics &amp; melody:</strong>
+                    <ul className="list-['-_'] list-inside pl-4">
+                      <li>Fill in 'Themes', 'Keywords', and 'Desired Emotion'.</li>
+                      <li>Set 'Genre', 'Key', and 'Tempo' for the melody.</li>
+                      <li>Click "Generate Lyrics &amp; Compose Melody" or "Regenerate Lyrics &amp; Melody" (if available).</li>
+                    </ul>
+                  </li>
+                  <li><strong>To use your own lyrics:</strong>
+                    <ul className="list-['-_'] list-inside pl-4">
+                      <li>Type or paste into the "Lyrics for Melody Generation..." area. This makes the "Compose Options" dropdown appear.</li>
+                      <li>Set 'Genre', 'Key', and 'Tempo'.</li>
+                      <li>Click "Compose Options", then "Continue with these Lyrics".</li>
+                    </ul>
+                  </li>
+                  <li>Melody output includes singing instructions and AI lyric feedback.</li>
+                </ul>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -338,12 +348,12 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
           Craft lyrics with AI or input manually. Then, compose a melody.
         </CardDescription>
       </CardHeader>
-      <ScrollArea orientation="horizontal" type="scroll" className="flex-grow">
+      <ScrollArea orientation="horizontal" type="scroll">
         <div className="min-w-max p-6 pt-0">
           <Form {...form}>
             <form
-              className="min-w-max space-y-4"
-              onSubmit={(e) => e.preventDefault()}
+              className="min-w-max space-y-4" 
+              onSubmit={(e) => e.preventDefault()} 
             >
             
               <FormItem>
@@ -357,7 +367,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-xs">
-                          <p className="text-xs">Select up to 3 themes total (predefined or custom) to guide lyrical content. (Optional if typing lyrics manually)</p>
+                          <p className="text-xs">Select up to 3 themes total (from the list or your custom input) to guide AI lyric generation. This is optional if you're typing lyrics manually to compose a melody.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -478,7 +488,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-xs">Select an emotion to guide lyrical content. Choose "Mixed Emotion" to select up to 3 specific emotions. (Optional if typing lyrics manually)</p>
+                            <p className="text-xs">Select an emotion to guide AI lyric generation. Choose "Mixed Emotion" to select up to 3 specific sub-emotions. This is optional if you're typing lyrics manually.</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -584,7 +594,7 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
         </div>
       </ScrollArea>
       <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-2 pt-4 border-t">
-         {lyricsManuallyEdited ? (
+         {(lyricsManuallyEdited || lyricsWereAIDrivenThisSession) ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button disabled={isLoading} className="w-full sm:w-auto">

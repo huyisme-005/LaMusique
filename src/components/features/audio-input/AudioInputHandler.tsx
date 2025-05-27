@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mic, UploadCloud, FileAudio, ShieldAlert, ShieldCheck, AlertTriangle, Info, Sparkles, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Loader2, Mic, UploadCloud, FileAudio, ShieldAlert, ShieldCheck, AlertTriangle, Info, Sparkles, Trash2 } from 'lucide-react';
 import { checkAudioPlagiarism, type CheckAudioPlagiarismInput, type CheckAudioPlagiarismOutput } from '@/ai/flows/check-audio-plagiarism';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -16,8 +16,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 // A very short, silent WAV audio data URI to be used as a default
 const DEFAULT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAA";
-
-const SCROLL_AMOUNT = 200;
 
 interface AudioInputHandlerProps {
   onAudioPrepared: (audioDataUri: string) => void;
@@ -39,6 +37,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const [canScrollResultLeft, setCanScrollResultLeft] = useState(false);
   const [canScrollResultRight, setCanScrollResultRight] = useState(false);
 
+  const SCROLL_AMOUNT = 200; // Define scroll amount
+
   const createScrollHandler = useCallback((
     viewportRef: React.RefObject<HTMLDivElement>, 
     setCanScrollLeft: React.Dispatch<React.SetStateAction<boolean>>, 
@@ -48,7 +48,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       const current = viewportRef.current;
       if (current) {
         setCanScrollLeft(current.scrollLeft > 0);
-        setCanScrollRight(current.scrollLeft < current.scrollWidth - current.clientWidth - 1); // -1 to account for potential subpixel rendering issues
+        setCanScrollRight(current.scrollLeft < current.scrollWidth - current.clientWidth - 1);
       } else {
         setCanScrollLeft(false);
         setCanScrollRight(false);
@@ -57,8 +57,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   }, []);
 
   const mainCheckScrollability = useCallback(createScrollHandler(mainCardViewportRef, setCanScrollMainLeft, setCanScrollMainRight), [createScrollHandler]);
-  const resultCheckScrollability = useCallback(createScrollHandler(resultCardViewportRef, setCanScrollResultLeft, setCanScrollResultRight), [createScrollHandler]);
-  
+  const resultCheckScrollability = useCallback(createScrollHandler(resultCardViewportRef, setCanScrollResultLeft, setCanScrollResultRight), [createScrollHandler, plagiarismResult]); // Added plagiarismResult to dependencies
 
   useEffect(() => {
     mainCheckScrollability();
@@ -99,7 +98,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
         behavior: 'smooth',
       });
-      // Check scrollability after scroll animation (give it time to complete)
       setTimeout(checkScrollabilityFn, 300); 
     }
   };
@@ -139,10 +137,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     setAudioFile(null);
     setAudioDataUri(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Reset the file input
+      fileInputRef.current.value = ""; 
     }
     onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
-    setPlagiarismResult(null); // Clear any previous plagiarism result
+    setPlagiarismResult(null); 
     toast({
       title: "Audio Cleared",
       description: "The uploaded audio file has been removed.",
@@ -202,7 +200,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
   return (
     <div className="space-y-6">
-      <Card className="min-w-0 overflow-x-scroll">
+      <Card className="min-w-0">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
@@ -214,14 +212,13 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
-                  <p className="text-sm">Optionally, upload an audio file. Microphone recording and AI audio generation are future features. An explicit audio source (upload, record, or generate) is required to enable the plagiarism scan. The scan itself is a basic preliminary check.</p>
+                  <p className="text-sm">Optionally, upload an audio file (e.g., song ideas, vocal snippets). Explicit audio input (upload, future recording, or future AI generation) is required to enable the plagiarism scan. The scan itself is a basic preliminary check for audio similarities.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <CardDescription>
-            Optionally, upload an audio file. Microphone recording and AI audio generation are future features.
-            Explicit audio input is required to enable the plagiarism scan.
+            Optionally, upload an audio file. Explicit audio input is required for plagiarism scan.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -259,35 +256,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t gap-2">
-           <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => handleScroll('left', mainCardViewportRef)}
-            disabled={!canScrollMainLeft}
-            aria-label="Scroll left"
-            className="hidden sm:flex"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
+          {/* Arrows are removed as per user request, scrollbar directly on ScrollArea handles it now */}
           <Button onClick={handlePlagiarismCheck} disabled={isLoading || !isAudioAvailableForScan} className="w-full sm:w-auto flex-grow">
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <ShieldAlert className="mr-2" />} 
             Scan for Potential Plagiarism (Future Feature)
-          </Button>
-           <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => handleScroll('right', mainCardViewportRef)}
-            disabled={!canScrollMainRight}
-            aria-label="Scroll right"
-            className="hidden sm:flex"
-          >
-            <ChevronRight className="h-5 w-5" />
           </Button>
         </CardFooter>
       </Card>
 
       {plagiarismResult && (
-        <Card className="min-w-0 mt-6 overflow-x-scroll">
+        <Card className="min-w-0 mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {plagiarismResult.isHighConcern ? <AlertTriangle className="text-destructive" /> : <ShieldCheck className="text-green-500" />}
@@ -313,27 +291,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
               </div>
             </ScrollArea>
           </CardContent>
-          <CardFooter className="flex justify-between items-center pt-4 border-t">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleScroll('left', resultCardViewportRef)}
-              disabled={!canScrollResultLeft}
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <span className="text-xs text-muted-foreground">Scroll for details</span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleScroll('right', resultCardViewportRef)}
-              disabled={!canScrollResultRight}
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </CardFooter>
+           <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t gap-2">
+              {/* Arrows are removed */}
+           </CardFooter>
         </Card>
       )}
     </div>

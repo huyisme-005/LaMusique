@@ -23,7 +23,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Optionally upload image and video files if you intend to use assets for a music video. These are managed on the main creation page.
     *   (Planned) AI-powered music video generation using uploaded assets.
     *   (Planned) Experimental plagiarism scan for uploaded visual assets.
-*   **Exporting Feature (Placeholder for Audio, Functional for Lyrics PDF)**: 
+*   **Exporting Feature (Functional for Lyrics PDF, Placeholders for Audio)**: 
     *   Functionality to export lyrics, melody description, and AI lyric feedback as a PDF (via browser's print-to-PDF). Prompts for song name if not already set.
     *   Placeholders for exporting songs in common audio formats (e.g., MP3, WAV, MIDI) are planned, accessible from the creation page.
 *   **Social Media Sharing (Placeholder)**: Easily share your generated songs on social media platforms (planned feature), accessible from the creation page.
@@ -99,3 +99,4 @@ The application is built with responsive design principles, aiming for usability
 *   **Dark Mode Theme**: The current focus is on the light theme; a polished dark mode could be added.
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
+

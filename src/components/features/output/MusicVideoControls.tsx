@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Clapperboard, Film, Sparkles, Upload, Image as ImageIcon, Video, Trash2, Info, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
+import { Clapperboard, Film, Sparkles, Upload, Image as ImageIcon, Video, Trash2, Info, ShieldAlert } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -18,60 +18,20 @@ interface AssetFile {
   name: string;
   type: 'image' | 'video';
   file: File;
-  previewUrl?: string; // For images
+  previewUrl?: string; 
 }
-
-const SCROLL_AMOUNT = 200;
 
 const MusicVideoControls: FC = () => {
   const [assets, setAssets] = useState<AssetFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
   const { toast } = useToast();
 
-
-  const checkScrollability = useCallback(() => {
-    const current = viewportRef.current;
-    if (current) {
-      setCanScrollLeft(current.scrollLeft > 0);
-      setCanScrollRight(current.scrollLeft < current.scrollWidth - current.clientWidth -1);
-    } else {
-      setCanScrollLeft(false);
-      setCanScrollRight(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkScrollability();
-    const current = viewportRef.current;
-    if (current) {
-      const handleResize = () => checkScrollability();
-      window.addEventListener('resize', handleResize);
-      const observer = new MutationObserver(checkScrollability);
-      observer.observe(current, { childList: true, subtree: true, attributes: true, characterData: true });
-      
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        observer.disconnect();
-      };
-    }
-  }, [checkScrollability]);
-
-  const handleScroll = (direction: 'left' | 'right') => {
-    const current = viewportRef.current;
-    if (current) {
-      current.scrollBy({
-        left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
-        behavior: 'smooth',
-      });
-      setTimeout(checkScrollability, 300);
-    }
-  };
-
   const handleGenerateVideo = () => {
-    alert("Music video generation is a future feature and not yet implemented. Uploaded assets are listed below.");
+    toast({
+        title: "Feature Not Implemented",
+        description: "AI-powered music video generation is a future feature. Uploaded assets are listed below.",
+        variant: "default",
+    });
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +39,10 @@ const MusicVideoControls: FC = () => {
     if (files) {
       const newAssets: AssetFile[] = Array.from(files).map(file => {
         const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : null);
-        if (!fileType) return null; // Skip non-image/video files
+        if (!fileType) {
+            toast({ title: "Invalid File", description: `Skipping file: ${file.name} (not an image or video).`, variant: "default"});
+            return null; 
+        }
 
         const asset: AssetFile = {
           id: crypto.randomUUID(),
@@ -94,8 +57,10 @@ const MusicVideoControls: FC = () => {
       }).filter(Boolean) as AssetFile[];
       
       setAssets(prevAssets => [...prevAssets, ...newAssets]);
+      if (newAssets.length > 0) {
+        toast({ title: "Assets Added", description: `${newAssets.length} new asset(s) ready.`});
+      }
     }
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -104,10 +69,11 @@ const MusicVideoControls: FC = () => {
   const removeAsset = (assetId: string) => {
     setAssets(prevAssets => prevAssets.filter(asset => {
       if (asset.id === assetId && asset.previewUrl) {
-        URL.revokeObjectURL(asset.previewUrl); // Clean up image preview URL
+        URL.revokeObjectURL(asset.previewUrl); 
       }
       return asset.id !== assetId;
     }));
+    toast({ title: "Asset Removed", description: "The asset has been removed." });
   };
 
   const handleAssetPlagiarismScan = () => {
@@ -131,7 +97,7 @@ const MusicVideoControls: FC = () => {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">Optionally, upload images and video clips here if you plan to create an AI-generated music video (feature coming soon). Manage your uploaded assets below. Plagiarism scan for assets is also a future feature.</p>
+                <p className="text-sm">Optionally, upload images and video clips for a future AI-generated music video. Manage your assets below. AI video generation and asset plagiarism scanning are planned features.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -139,15 +105,9 @@ const MusicVideoControls: FC = () => {
         <CardDescription>Optionally, upload images/videos. AI-powered music video generation and asset plagiarism scan are future features.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea 
-          orientation="horizontal" 
-          type="scroll" 
-          className="w-full"
-          viewportRef={viewportRef}
-          onViewportScroll={checkScrollability}
-        >
-          <div className="min-w-max p-6 pt-0">
-            <div className="space-y-4">
+        <ScrollArea orientation="horizontal" type="scroll" className="w-full">
+          <div className="min-w-max p-6 pt-0"> {/* Adjusted padding */}
+            <div className="space-y-4 min-w-max"> {/* Ensured min-w-max on content wrapper */}
               <Input 
                 type="file" 
                 accept="image/*,video/*" 
@@ -205,29 +165,12 @@ const MusicVideoControls: FC = () => {
           </div>
         </ScrollArea>
       </CardContent>
-      <CardFooter className="flex justify-between items-center pt-4 border-t">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleScroll('left')}
-          disabled={!canScrollLeft}
-          aria-label="Scroll left"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <span className="text-xs text-muted-foreground">Scroll options</span>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => handleScroll('right')}
-          disabled={!canScrollRight}
-          aria-label="Scroll right"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
+      <CardFooter className="pt-4 border-t">
+         {/* Arrows removed */}
       </CardFooter>
     </Card>
   );
 };
 
 export default MusicVideoControls;
+
