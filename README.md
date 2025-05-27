@@ -29,7 +29,7 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 *   **Save & Load Progress**:
     *   Users can save their current song (lyrics and melody data) with a custom name. Saved songs are stored in the browser's `localStorage`.
     *   A dedicated "Saved Songs" page (`/saved`) lists all saved work, allowing users to view details, load a song back into the main creation editor, or delete saved entries.
-*   **Integrated AI Copilot Hints**: Tooltips with instructions are provided on various UI elements (though currently removed) to guide the user. Functionality was previously explored with info icons in card headers.
+*   **Integrated AI Copilot Hints**: Tooltip instructions are no longer present on various UI elements. The feature was removed to simplify the interface.
 
 ## Getting Started
 
@@ -44,7 +44,7 @@ This is a Next.js application. To get started:
     *   Create a `.env` file in the root of the project (if one doesn't exist).
     *   Add your `GOOGLE_API_KEY` for Genkit to access Google AI models (like Gemini):
         ```env
-        GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
+        GOOGLE_API_KEY=your_api_key_here
         ```
     *   **Important**: This `.env` file is for local development and should NOT be committed to your Git repository if it contains sensitive keys. Ensure `.env` is listed in your `.gitignore` file.
     *   For more advanced Google Cloud integrations (like using service accounts for Genkit), you might use Application Default Credentials. Refer to Google Cloud and Genkit documentation.
@@ -81,12 +81,13 @@ For the AI features (lyrics generation, melody composition, plagiarism checks vi
 *   **Do NOT commit your API key directly into your `.env` file if that file is part of your Git repository.**
 *   The application's Genkit setup (`src/ai/genkit.ts`) is already designed to use this environment variable (`process.env.GOOGLE_API_KEY`).
 
-**Setting Environment Variables on Hosting Platforms:**
+### Setting Environment Variables on Hosting Platforms:
 
 The exact method for setting environment variables depends on your hosting provider. Here are general pointers:
 *   **Vercel:** In your project settings on the Vercel dashboard, find the "Environment Variables" section.
 *   **Netlify:** In your site settings on Netlify, navigate to "Site configuration" -> "Build & deploy" -> "Environment".
 *   **Firebase App Hosting:** (See specific section below)
+*   **Render:** In your service settings on the Render dashboard, under "Environment".
 *   **AWS Amplify:** In the Amplify console, for your app, look for "Environment variables".
 *   **Heroku:** Use the Heroku Dashboard (Settings -> Config Vars) or the Heroku CLI (`heroku config:set GOOGLE_API_KEY=YOUR_KEY_HERE`).
 *   **Other Platforms (Azure App Service, Google Cloud Run, DigitalOcean App Platform, etc.):** Consult your provider's specific documentation for "environment variables" or "application settings".
@@ -120,11 +121,13 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
     ```
     The CLI will provide a URL for your deployed application.
 
-### General Deployment Considerations for Next.js (e.g., Vercel, Netlify)
+### General Deployment Considerations for Next.js (e.g., Vercel, Netlify, Render)
 
-*   **Git Repository**: Platforms like Vercel integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
+*   **Git Repository**: Platforms like Vercel and Render integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
 *   **Environment Variables**: As mentioned above, configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings dashboard.
-*   **Build Process**: The `npm run build` script (`next build`) prepares your Next.js app for production. Most modern hosting platforms for Next.js will run this command automatically.
+*   **Build Command**: Platforms will typically use `npm run build` (or `yarn build`).
+*   **Start Command**: Platforms will typically use `npm start` (or `yarn start`).
+*   **Health Check Path**: Many platforms use a health check path to monitor application status. This app provides one at `/api/health`. You may need to configure this path in your hosting provider's settings.
 *   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
 *   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
 
