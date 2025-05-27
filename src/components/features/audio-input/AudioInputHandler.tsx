@@ -202,7 +202,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
   return (
     <div className="space-y-6">
-      <Card className="min-w-0">
+      <Card className="min-w-0 overflow-x-scroll">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
@@ -214,14 +214,14 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
-                  <p className="text-sm">Optionally, upload an audio file. Microphone recording and AI audio generation are future features. An audio source is required to enable the plagiarism scan. The scan itself is a basic preliminary check.</p>
+                  <p className="text-sm">Optionally, upload an audio file. Microphone recording and AI audio generation are future features. An explicit audio source (upload, record, or generate) is required to enable the plagiarism scan. The scan itself is a basic preliminary check.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <CardDescription>
             Optionally, upload an audio file. Microphone recording and AI audio generation are future features.
-            Audio input is required to enable the plagiarism scan.
+            Explicit audio input is required to enable the plagiarism scan.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -271,7 +271,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           </Button>
           <Button onClick={handlePlagiarismCheck} disabled={isLoading || !isAudioAvailableForScan} className="w-full sm:w-auto flex-grow">
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <ShieldAlert className="mr-2" />} 
-            Scan for Potential Plagiarism
+            Scan for Potential Plagiarism (Future Feature)
           </Button>
            <Button 
             variant="ghost" 
@@ -287,7 +287,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       </Card>
 
       {plagiarismResult && (
-        <Card className="min-w-0 mt-6">
+        <Card className="min-w-0 mt-6 overflow-x-scroll">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {plagiarismResult.isHighConcern ? <AlertTriangle className="text-destructive" /> : <ShieldCheck className="text-green-500" />}
