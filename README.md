@@ -18,7 +18,6 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   (Planned) Record audio directly using a microphone.
     *   (Planned) AI-powered audio generation.
     *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio (and any globally available lyrics, if applicable). (Note: This is a preliminary check with limitations).
-*   **Integrated AI Copilot Hints**: Contextual tips and instructions for various features are available via "Info" icons and tooltips directly within each relevant component/section on the creation page.
 *   **Music Video Asset Management (Optional)**:
     *   Optionally upload image and video files if you intend to use assets for a music video. These are managed on the main creation page.
     *   (Planned) AI-powered music video generation using uploaded assets.
@@ -39,17 +38,73 @@ This is a Next.js application. To get started:
     ```bash
     npm install
     ```
-2.  **Run the development server**:
+2.  **Environment Variables (for local development)**:
+    *   Create a `.env` file in the root of the project.
+    *   Add your `GOOGLE_API_KEY` for Genkit to access Google AI models:
+        ```env
+        GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
+        ```
+    *   For more advanced Google Cloud integrations, you might use Application Default Credentials. Refer to Google Cloud and Genkit documentation.
+
+3.  **Run the development server**:
     ```bash
     npm run dev
     ```
     The application will typically be available at `http://localhost:9002`.
 
-3.  **Explore the UI**:
+4.  **(Optional) Run Genkit Developer UI**:
+    To inspect and test your Genkit flows locally:
+    ```bash
+    npm run genkit:dev
+    # or for auto-reloading on changes
+    npm run genkit:watch
+    ```
+    The Genkit Developer UI is usually available at `http://localhost:4000`.
+
+5.  **Explore the UI**:
     *   The main page (`/`) is for song creation:
-        *   The left panel contains all song creation tools (including theme selection from a list, emotion selection with mixed emotion options, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. Integrated AI Copilot hints (info icons) provide guidance. A "Save Current Song" button is available here.
+        *   The left panel contains all song creation tools (including theme selection from a list, emotion selection with mixed emotion options, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. A "Save Current Song" button is available here.
         *   The right panel displays generated lyrics (with plagiarism scan option), melody information (including singing instructions and lyric feedback), and music video asset controls (with placeholder plagiarism scan option).
     *   The "Saved Songs" page (`/saved`), accessible from the header, allows management of locally saved songs.
+
+## Deployment
+
+This application is structured for deployment, particularly with Firebase App Hosting in mind due to the presence of `apphosting.yaml`.
+
+### Firebase App Hosting
+
+1.  **Install Firebase CLI**:
+    ```bash
+    npm install -g firebase-tools
+    ```
+2.  **Login to Firebase**:
+    ```bash
+    firebase login
+    ```
+3.  **Initialize Firebase in your project** (if not already done):
+    *   Run `firebase init apphosting` in your project root.
+    *   Follow the prompts, selecting your Firebase project (or creating a new one) and configuring the App Hosting backend. It should detect your Next.js app.
+4.  **Configure Environment Variables for Genkit**:
+    *   For Genkit to function in the deployed environment, it needs access to your Google AI API key.
+    *   Go to your Firebase project settings in the Firebase console.
+    *   Navigate to the settings for your App Hosting backend.
+    *   Add an environment variable named `GOOGLE_API_KEY` with your actual API key as its value.
+    *   **IMPORTANT**: Do NOT commit your API key directly into your `.env` file or any other version-controlled file. The `.env` file is for local development and should be listed in your `.gitignore`.
+5.  **Deploy**:
+    ```bash
+    firebase apphosting:backends:deploy
+    ```
+    Or, depending on your Firebase CLI version and setup:
+    ```bash
+    firebase deploy --only apphosting
+    ```
+    The CLI will provide a URL for your deployed application.
+
+### General Deployment Considerations for Next.js
+
+*   **Build Process**: The `npm run build` script (`next build`) prepares your Next.js app for production. Firebase App Hosting will typically run this command as part of its deployment pipeline.
+*   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
+*   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
 
 ## Tech Stack & Design
 
@@ -58,7 +113,7 @@ This is a Next.js application. To get started:
 *   Tailwind CSS (for responsive styling)
 *   ShadCN UI Components (responsive by design)
 *   Genkit (for AI flow integration, using Google AI models like Gemini)
-*   Lucide Icons & ShadCN Tooltips (for integrated AI Copilot hints)
+*   Lucide Icons
 *   `localStorage` for saving song progress.
 
 The application is built with responsive design principles, aiming for usability across various screen sizes, including desktop PCs and mobile devices like iPhones (accessed via a web browser).
@@ -69,7 +124,6 @@ The application is built with responsive design principles, aiming for usability
 *   Integrated lyrics editing within the main song crafting component, with conditional buttons for continuing with manual edits or regenerating AI content.
 *   UI for audio file upload (optional, with default silent placeholder if none provided, explicit audio required for audio plagiarism scan) and an experimental AI flow for basic plagiarism concern flagging of audio.
 *   Experimental AI flow for basic plagiarism concern flagging of generated/entered lyrics.
-*   Integrated AI Copilot hints via tooltips within each major feature component on the creation page.
 *   A responsive split-screen user interface on the creation page with a vertically scrollable left panel for controls and a right panel for viewing generated content. Horizontal scrollbars with arrow controls appear on individual cards if content overflows.
 *   UI for optionally uploading image/video assets for future music video generation, with a placeholder for asset plagiarism scanning.
 *   Local song saving (lyrics & melody data) and loading functionality via `localStorage`, managed on a separate "Saved Songs" page.
@@ -99,4 +153,3 @@ The application is built with responsive design principles, aiming for usability
 *   **Dark Mode Theme**: The current focus is on the light theme; a polished dark mode could be added.
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
-
