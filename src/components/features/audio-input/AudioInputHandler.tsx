@@ -2,7 +2,7 @@
 "use client";
 
 import type { FC } from 'react';
-import { useState, useRef, useCallback, useEffect } from 'react'; // Added useEffect
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -89,9 +89,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   }, [resultCheckScrollability, plagiarismResult]);
 
 
-  const handleScroll = (direction: 'left' | 'right', viewportRef: React.RefObject<HTMLDivElement>, checkScrollabilityFn: () => void) => {
+  const handleScroll = (direction: 'left' | 'right', viewportRef: React.RefObject<HTMLDivElement>) => {
     const current = viewportRef.current;
     if (current) {
+      const checkScrollabilityFn = viewportRef === mainCardViewportRef ? mainCheckScrollability : resultCheckScrollability;
       current.scrollBy({
         left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
         behavior: 'smooth',
@@ -123,6 +124,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       };
       reader.readAsDataURL(file);
       setPlagiarismResult(null); 
+    } else { // No file selected or selection cancelled
+      setAudioFile(null);
+      setAudioDataUri(null); // Reset if file is cleared
+      onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Or pass null if that's preferred when no file
     }
   };
 
@@ -132,6 +137,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       description: "Microphone recording functionality will be available in a future update.",
       variant: "default",
     });
+    // In future, this would setAudioDataUri to recorded audio, enabling the scan button.
   };
 
   const handleGenerateAudio = () => {
@@ -140,24 +146,27 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       description: "AI-powered audio generation will be available in a future update.",
       variant: "default",
     });
+    // In future, this would setAudioDataUri to generated audio, enabling the scan button.
   };
   
   const handlePlagiarismCheck = async () => {
     setIsLoading(true);
     setPlagiarismResult(null);
 
-    const currentAudioDataUri = audioDataUri || DEFAULT_AUDIO_DATA_URI;
-    let isDefaultAudioUsed = !audioDataUri;
+    // Use user-provided audio if available, otherwise the default (though button logic should prevent this implicit default usage)
+    const currentAudioDataForScan = audioDataUri || DEFAULT_AUDIO_DATA_URI; 
+    const isUsingUploadedOrGeneratedAudio = audioDataUri !== null && audioDataUri !== DEFAULT_AUDIO_DATA_URI;
 
     try {
-      const input: CheckAudioPlagiarismInput = { audioDataUri: currentAudioDataUri };
+      const input: CheckAudioPlagiarismInput = { audioDataUri: currentAudioDataForScan };
       
       const result = await checkAudioPlagiarism(input);
       setPlagiarismResult(result);
       
       let toastDescription = result.isHighConcern ? "Potential concerns identified." : "Preliminary check found no major concerns.";
-      if (isDefaultAudioUsed) {
-        toastDescription += " (Used default silent audio as no input was provided).";
+      if (!isUsingUploadedOrGeneratedAudio && currentAudioDataForScan === DEFAULT_AUDIO_DATA_URI) {
+         // This case should ideally not be hit if button logic is correct, but good for robustness
+        toastDescription += " (Scan was run with default silent audio as no specific audio was provided).";
       }
 
       toast({
@@ -176,6 +185,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       setIsLoading(false);
     }
   };
+  
+  // Condition for enabling the scan button:
+  // True if an audio file is uploaded, OR if audioDataUri is set to something other than the default (e.g., by future recording/generation)
+  const isAudioAvailableForScan = (audioFile !== null) || (audioDataUri !== null && audioDataUri !== DEFAULT_AUDIO_DATA_URI);
+
 
   return (
     <div className="space-y-6">
@@ -191,16 +205,19 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
-                  <p className="text-sm">Upload audio or use the mic (future) to analyze. If no audio is provided, a silent default is used for scans. The scan is a basic check.</p>
+                  <p className="text-sm">Upload an audio file, or use future features like microphone recording or AI audio generation. An audio source is required to enable the plagiarism scan. The scan itself is a basic preliminary check.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <CardDescription>Upload an audio file. If no audio is uploaded, a default silent placeholder will be used for analysis. AI Audio Generation is a future feature.</CardDescription>
+          <CardDescription>
+            Upload an audio file to analyze. Microphone recording and AI audio generation are future features.
+            The plagiarism scan button will be enabled once an audio source is provided.
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea orientation="horizontal" type="scroll" viewportRef={mainCardViewportRef} onViewportScroll={mainCheckScrollability} className="w-full">
-            <div className="min-w-max p-6 pt-4">
+            <div className="min-w-max p-6 pt-4"> {/* Added min-w-max here */}
                <div className="space-y-4 min-w-max">
                 <div>
                   <Label htmlFor="audio-upload">Upload Audio File</Label>
@@ -229,21 +246,21 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
            <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => handleScroll('left', mainCardViewportRef, mainCheckScrollability)}
+            onClick={() => handleScroll('left', mainCardViewportRef)}
             disabled={!canScrollMainLeft}
             aria-label="Scroll left"
             className="hidden sm:flex"
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <Button onClick={handlePlagiarismCheck} disabled={isLoading} className="w-full sm:w-auto flex-grow">
+          <Button onClick={handlePlagiarismCheck} disabled={isLoading || !isAudioAvailableForScan} className="w-full sm:w-auto flex-grow">
             {isLoading ? <Loader2 className="animate-spin mr-2" /> : <ShieldAlert className="mr-2" />} 
             Scan for Potential Plagiarism
           </Button>
            <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => handleScroll('right', mainCardViewportRef, mainCheckScrollability)}
+            onClick={() => handleScroll('right', mainCardViewportRef)}
             disabled={!canScrollMainRight}
             aria-label="Scroll right"
             className="hidden sm:flex"
@@ -254,7 +271,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       </Card>
 
       {plagiarismResult && (
-        <Card className="min-w-0">
+        <Card className="min-w-0 mt-6"> {/* Ensure mt-6 if it was there, or adjust styling as needed */}
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {plagiarismResult.isHighConcern ? <AlertTriangle className="text-destructive" /> : <ShieldCheck className="text-green-500" />}
@@ -263,7 +280,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea orientation="horizontal" type="scroll" viewportRef={resultCardViewportRef} onViewportScroll={resultCheckScrollability} className="w-full">
-              <div className="min-w-max p-6">
+              <div className="min-w-max p-6"> {/* Added min-w-max here */}
                 <div className="space-y-2 min-w-max">
                   <Alert variant={plagiarismResult.isHighConcern ? "destructive" : "default"}>
                     <AlertTitle>
@@ -284,7 +301,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => handleScroll('left', resultCardViewportRef, resultCheckScrollability)}
+              onClick={() => handleScroll('left', resultCardViewportRef)}
               disabled={!canScrollResultLeft}
               aria-label="Scroll left"
             >
@@ -294,7 +311,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => handleScroll('right', resultCardViewportRef, resultCheckScrollability)}
+              onClick={() => handleScroll('right', resultCardViewportRef)}
               disabled={!canScrollResultRight}
               aria-label="Scroll right"
             >
