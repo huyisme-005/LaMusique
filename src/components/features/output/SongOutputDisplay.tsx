@@ -30,7 +30,6 @@ const SongSectionCard: FC<SongSectionCardProps> = ({ title, icon: Icon, descript
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
         <ScrollArea
-          orientation="horizontal"
           type="scroll"
           className="w-full flex-grow"
           viewportRef={viewportRef}
@@ -107,7 +106,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
               <div className="pt-2">
                 <h4 className="font-semibold text-sm">Melody Structure (MusicXML Representation):</h4>
                 <p className="text-xs text-muted-foreground italic">(MusicXML data is generated for structural representation. Actual playback/visualization is a future feature.)</p>
-                <ScrollArea className="max-h-[100px] bg-background p-2 rounded mt-1" orientation="horizontal" type="auto">
+                <ScrollArea className="max-h-[100px] bg-background p-2 rounded mt-1" type="auto">
                    <pre className="whitespace-pre text-xs">
                     {melody.melody}
                   </pre>
