@@ -16,7 +16,7 @@ interface AssetFile {
   name: string;
   type: 'image' | 'video';
   file: File;
-  previewUrl?: string; 
+  previewUrl?: string;
 }
 
 const MusicVideoControls: FC = () => {
@@ -41,7 +41,7 @@ const MusicVideoControls: FC = () => {
         const fileType = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : null);
         if (!fileType) {
             toast({ title: "Invalid File", description: `Skipping file: ${file.name} (not an image or video).`, variant: "default"});
-            return null; 
+            return null;
         }
 
         const asset: AssetFile = {
@@ -55,7 +55,7 @@ const MusicVideoControls: FC = () => {
         }
         return asset;
       }).filter(Boolean) as AssetFile[];
-      
+
       setAssets(prevAssets => [...prevAssets, ...newAssets]);
       if (newAssets.length > 0) {
         toast({ title: "Assets Added", description: `${newAssets.length} new asset(s) ready.`});
@@ -69,7 +69,7 @@ const MusicVideoControls: FC = () => {
   const removeAsset = (assetId: string) => {
     setAssets(prevAssets => prevAssets.filter(asset => {
       if (asset.id === assetId && asset.previewUrl) {
-        URL.revokeObjectURL(asset.previewUrl); 
+        URL.revokeObjectURL(asset.previewUrl);
       }
       return asset.id !== assetId;
     }));
@@ -96,10 +96,10 @@ const MusicVideoControls: FC = () => {
         <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
           <div className="min-w-max p-6 pt-0">
             <div className="min-w-max space-y-4">
-              <Input 
-                type="file" 
-                accept="image/*,video/*" 
-                multiple 
+              <Input
+                type="file"
+                accept="image/*,video/*"
+                multiple
                 onChange={handleFileChange}
                 ref={fileInputRef}
                 className="hidden"
@@ -136,8 +136,8 @@ const MusicVideoControls: FC = () => {
                   </ScrollArea>
                 </div>
               )}
-              
-              <div 
+
+              <div
                 className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center border border-dashed"
                 data-ai-hint="music video abstract"
               >

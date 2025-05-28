@@ -3,15 +3,12 @@
 
 import React, { type FC, useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area'; 
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { FileText, ListMusic, Disc3, UserRoundCheck, MessageSquareQuote, ShieldAlert, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { FileText, ListMusic, Disc3, UserRoundCheck, MessageSquareQuote, ShieldAlert } from 'lucide-react';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
-import { checkAudioPlagiarism, type CheckAudioPlagiarismOutput } from '@/ai/flows/check-audio-plagiarism';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from "@/hooks/use-toast";
 
-const DEFAULT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAA";
 
 interface SongSectionCardProps {
   title: string;
@@ -19,7 +16,7 @@ interface SongSectionCardProps {
   description?: string;
   children: React.ReactNode;
   contentClassName?: string;
-  footerContent?: React.ReactNode; 
+  footerContent?: React.ReactNode;
 }
 
 const SongSectionCard: FC<SongSectionCardProps> = ({ title, icon: Icon, description, children, contentClassName, footerContent }) => {
@@ -32,9 +29,9 @@ const SongSectionCard: FC<SongSectionCardProps> = ({ title, icon: Icon, descript
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        <ScrollArea 
-          orientation="horizontal" 
-          type="scroll" 
+        <ScrollArea
+          orientation="horizontal"
+          type="scroll"
           className="w-full flex-grow"
           viewportRef={viewportRef}
         >
@@ -59,68 +56,29 @@ interface SongOutputDisplayProps {
 }
 
 const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
-  const [lyricsPlagiarismResult, setLyricsPlagiarismResult] = useState<CheckAudioPlagiarismOutput | null>(null);
-  const [isScanningLyrics, setIsScanningLyrics] = useState(false);
   const { toast } = useToast();
 
-  const handleScanLyrics = async () => {
-    if (!lyrics || lyrics.trim() === "") {
-      toast({
-        title: "No Lyrics to Scan",
-        description: "Please generate or enter lyrics before scanning.",
-        variant: "default",
-      });
-      return;
-    }
-
-    setIsScanningLyrics(true);
-    setLyricsPlagiarismResult(null);
-    try {
-      const result = await checkAudioPlagiarism({ 
-        lyrics: lyrics, 
-        audioDataUri: DEFAULT_AUDIO_DATA_URI 
-      });
-      setLyricsPlagiarismResult(result);
-      toast({
-        title: "Lyrics Scan Complete",
-        description: result.isHighConcern ? "Potential concerns identified in lyrics." : "Preliminary lyrics scan found no major concerns.",
-      });
-    } catch (error) {
-      console.error("Error scanning lyrics:", error);
-      toast({
-        title: "Error Scanning Lyrics",
-        description: (error as Error).message || "Something went wrong.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsScanningLyrics(false);
-    }
+  const handleScanLyrics = () => {
+    toast({
+      title: "Feature Not Implemented",
+      description: "Lyrics plagiarism scanning will be available in a future update.",
+      variant: "default",
+    });
   };
 
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <SongSectionCard 
-        title="Generated Lyrics" 
-        icon={FileText} 
-        contentClassName="h-[calc(33vh-120px)] md:h-auto" 
+      <SongSectionCard
+        title="Generated Lyrics"
+        icon={FileText}
+        contentClassName="h-[calc(33vh-120px)] md:h-auto"
         footerContent={
             <div className="w-full">
-                <Button onClick={handleScanLyrics} disabled={isScanningLyrics || !lyrics} className="w-full sm:w-auto">
-                    {isScanningLyrics ? <Loader2 className="animate-spin mr-2" /> : <ShieldAlert className="mr-2" />}
-                    Scan Lyrics for Plagiarism (Experimental)
+                <Button onClick={handleScanLyrics} disabled={!lyrics || lyrics.trim() === ""} className="w-full sm:w-auto">
+                    <ShieldAlert className="mr-2" />
+                    Scan Lyrics for Plagiarism (Future Feature)
                 </Button>
-                {lyricsPlagiarismResult && (
-                    <Alert variant={lyricsPlagiarismResult.isHighConcern ? "destructive" : "default"} className="mt-4">
-                    <AlertTitle className="flex items-center gap-1">
-                        {lyricsPlagiarismResult.isHighConcern ? <AlertTriangle className="text-destructive" /> : <ShieldCheck className="text-green-500" />}
-                        Lyrics Scan Result
-                    </AlertTitle>
-                    <AlertDescription className="whitespace-pre-wrap text-xs">
-                        {lyricsPlagiarismResult.potentialConcerns}
-                    </AlertDescription>
-                    </Alert>
-                )}
             </div>
         }
       >
@@ -133,11 +91,11 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
         </ScrollArea>
       </SongSectionCard>
 
-      <SongSectionCard 
-        title="Generated Melody" 
-        icon={ListMusic} 
+      <SongSectionCard
+        title="Generated Melody"
+        icon={ListMusic}
         description="Details about the composed melody, including how to sing it."
-        contentClassName="h-[calc(33vh-140px)] md:h-auto" 
+        contentClassName="h-[calc(33vh-140px)] md:h-auto"
       >
         <ScrollArea className="h-full w-full rounded-md border p-4 bg-muted/30">
           {melody ? (
@@ -150,7 +108,7 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
                 <h4 className="font-semibold text-sm">Melody Structure (MusicXML Representation):</h4>
                 <p className="text-xs text-muted-foreground italic">(MusicXML data is generated for structural representation. Actual playback/visualization is a future feature.)</p>
                 <ScrollArea className="max-h-[100px] bg-background p-2 rounded mt-1" orientation="horizontal" type="auto">
-                   <pre className="whitespace-pre text-xs"> 
+                   <pre className="whitespace-pre text-xs">
                     {melody.melody}
                   </pre>
                 </ScrollArea>
@@ -167,11 +125,11 @@ const SongOutputDisplay: FC<SongOutputDisplayProps> = ({ lyrics, melody }) => {
       </SongSectionCard>
 
       {melody?.lyricFeedback && (
-        <SongSectionCard 
-          title="AI Lyric Feedback" 
-          icon={MessageSquareQuote} 
+        <SongSectionCard
+          title="AI Lyric Feedback"
+          icon={MessageSquareQuote}
           description="Suggestions and analysis for the lyrics used to generate the melody."
-          contentClassName="h-[calc(33vh-140px)] md:h-auto" 
+          contentClassName="h-[calc(33vh-140px)] md:h-auto"
         >
           <ScrollArea className="h-full w-full rounded-md border p-4 bg-muted/30">
             <p className="text-sm whitespace-pre-wrap">{melody.lyricFeedback}</p>
