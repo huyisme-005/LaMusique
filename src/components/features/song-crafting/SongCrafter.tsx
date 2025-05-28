@@ -320,8 +320,8 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
           Craft lyrics with AI or input manually. Then, compose a melody.
         </CardDescription>
       </CardHeader>
-      <ScrollArea orientation="horizontal" type="scroll">
-        <div className="min-w-max p-6 pt-0">
+      <ScrollArea>
+        <div className="min-w-max p-6 pt-0"> {/* min-w-max applied here */}
           <Form {...form}>
             <form
               className="min-w-max space-y-4" 
