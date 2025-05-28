@@ -38,19 +38,28 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
 
 For the AI features (lyrics generation, melody composition, plagiarism checks via Genkit/Gemini) to work, you **MUST** have a valid Google API key enabled for the "Generative Language API" (which provides access to Gemini models).
 
-**Obtaining your API Key:**
+**How to Obtain Your API Key:**
 *   Go to [Google AI Studio](https://aistudio.google.com/).
-*   Sign in and follow the instructions to "Get API key".
+*   Sign in with your Google account.
+*   Follow the instructions to "Get API key" or create one within a new project. Ensure it's enabled for the "Generative Language API".
 
 **Setting up your API Key for Local Development (e.g., Firebase Studio, your local machine):**
-*   Create a file named `.env` in the **root directory** of this project (if it doesn't already exist).
-*   Add your API key to this `.env` file like so:
+*   **Create/Edit the `.env` file:** In the **root directory** of this project, you will find a file named `.env`.
+*   **Add your API key:** Open the `.env` file and ensure it has the following line, replacing the placeholder with your actual key:
     ```env
-    GOOGLE_API_KEY=YOUR_ACTUAL_VALID_API_KEY_HERE
+    GOOGLE_API_KEY="YOUR_ACTUAL_VALID_API_KEY_GOES_HERE"
     ```
-    Replace `YOUR_ACTUAL_VALID_API_KEY_HERE` with the key you obtained from Google.
-*   **Important**: The Genkit setup in this project (`src/ai/dev.ts`) uses the `dotenv` package to load this key from the `.env` file. If the AI features are not working locally and you see "API key not valid" errors, ensure this file is correctly set up and that your key is valid.
-*   **Security**: The `.env` file is already listed in `.gitignore`, so your local API key will not be committed to your Git repository. This is good practice.
+    *   **Important:** Make sure there are no extra spaces or characters around your key.
+    *   **Example if your key is `Abc123XYZ`**:
+        ```env
+        GOOGLE_API_KEY="Abc123XYZ"
+        ```
+*   **Restart the Development Server:** If you are running a local development server (e.g., `npm run dev`) or if you are in an environment like Firebase Studio, **you MUST restart the server/environment after saving changes to the `.env` file.** Environment variables are typically loaded only when the server starts.
+*   **Security:** The `.env` file is already listed in `.gitignore`, so your local API key will not be committed to your Git repository. This is good practice.
+*   **If AI features still don't work:**
+    *   Double-check the key for typos.
+    *   Ensure the key is enabled for the correct API in Google Cloud Console.
+    *   Ensure you've restarted your development environment after setting the key.
 
 ### **2. Install Dependencies**
 Run the following command in your project's root directory. This will install all necessary project dependencies as defined in the `package.json` file.
