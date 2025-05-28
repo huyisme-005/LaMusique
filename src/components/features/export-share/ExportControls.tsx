@@ -109,7 +109,7 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
         <CardDescription>Download your creation in various audio or document formats.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
+        <ScrollArea viewportRef={viewportRef}>
           <div ref={contentRef} className="min-w-max p-6 pt-4">
             <div className="min-w-max space-y-3 w-full">
               <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline">
