@@ -16,10 +16,10 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Includes an expanded list of music genres.
     *   Includes an experimental AI-powered **scan for potential lyrical plagiarism** based on the generated or entered lyrics.
 *   **Audio Input (Optional)**:
-    *   Upload audio files (e.g., song ideas, vocal snippets). Explicit audio input (upload, future recording, or future AI generation) is required to enable the plagiarism scan for audio. If no audio is uploaded, a default silent placeholder is used for analysis if the scan is initiated.
+    *   Upload audio files (e.g., song ideas, vocal snippets). A default silent placeholder is used if no audio is explicitly provided.
     *   (Planned) Record audio directly using a microphone.
     *   (Planned) AI-powered audio generation.
-    *   Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio. (Note: This is a preliminary check with limitations).
+    *   (Planned) Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio.
 *   **Music Video Asset Management (Optional)**:
     *   Optionally upload image and video files if you intend to use assets for a music video. These are managed on the main creation page.
     *   (Planned) AI-powered music video generation using uploaded assets.
@@ -44,8 +44,8 @@ For the AI features (lyrics generation, melody composition, plagiarism checks vi
 *   Follow the instructions to "Get API key" or create one within a new project. Ensure it's enabled for the "Generative Language API".
 
 **Setting up your API Key for Local Development (e.g., Firebase Studio, your local machine):**
-*   **Create/Edit the `.env` file:** In the **root directory** of this project, you will find a file named `.env`.
-*   **Add your API key:** Open the `.env` file and ensure it has the following line, replacing the placeholder with your actual key:
+*   **Create/Edit the `.env` file:** In the **root directory** of this project, you will find a file named `.env`. If it doesn't exist, create it.
+*   **Add your API key:** Open the `.env` file and ensure it has the following line, replacing `YOUR_ACTUAL_VALID_API_KEY_GOES_HERE` with your actual key:
     ```env
     GOOGLE_API_KEY="YOUR_ACTUAL_VALID_API_KEY_GOES_HERE"
     ```
@@ -137,9 +137,9 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
     ```
     The CLI will provide a URL for your deployed application.
 
-### General Deployment Considerations for Next.js (e.g., Vercel, Netlify, Render)
+### General Deployment Considerations for Next.js (e.g., Vercel, Render, Netlify)
 
-*   **Node.js Version**: Ensure your hosting provider is using a Node.js version compatible with your project. The `package.json` now includes an `engines` field specifying `node >=20.0.0`. Platforms like Render might pick this up, or you may need to set it explicitly in their dashboard.
+*   **Node.js Version**: Ensure your hosting provider is using a Node.js version compatible with your project. The `package.json` includes an `engines` field specifying `node >=20.0.0`. Platforms like Render might pick this up, or you may need to set it explicitly in their dashboard.
 *   **Git Repository**: Platforms like Vercel and Render integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
 *   **Environment Variables**: As mentioned above, configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings dashboard.
 *   **Build Command**: Platforms will typically use `npm install && npm run build` (or `yarn install && yarn build`).
@@ -166,7 +166,7 @@ The application is built with responsive design principles, aiming for usability
 ## Known Issues & Future Enhancements
 
 *   **SongCrafter Form State on Load**: When loading a saved song from `localStorage`, only lyrics and melody are restored. The form inputs in `SongCrafter` (theme, keywords, genre, etc.) are not repopulated.
-*   **Advanced Plagiarism Detection**: The current plagiarism scans are basic and experimental. More sophisticated systems would require advanced techniques and access to larger content databases.
+*   **Advanced Plagiarism Detection**: The current plagiarism scans (lyrics, planned for visual assets) are basic and experimental. More sophisticated systems would require advanced techniques and access to larger content databases. Scanning audio for plagiarism is also a planned future feature.
 *   **Melody Playback & Visualization**: Currently, melodies are generated as data (MusicXML) but not played back or visualized in detail.
 *   **Full Audio Functionality**: Implementing robust microphone recording, AI audio generation, and more detailed audio analysis.
 *   **Music Video Generation**: The music video generation feature itself is a placeholder and requires significant development beyond asset uploading.
@@ -182,5 +182,3 @@ The application is built with responsive design principles, aiming for usability
 *   **Dark Mode Theme**: The current focus is on the light theme; a polished dark mode could be added.
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
-
-    
