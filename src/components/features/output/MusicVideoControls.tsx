@@ -93,7 +93,7 @@ const MusicVideoControls: FC = () => {
         <CardDescription>Optionally, upload images/videos. AI-powered music video generation and asset plagiarism scan are future features.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
+        <ScrollArea type="scroll" viewportRef={viewportRef}>
           <div className="min-w-max p-6 pt-0">
             <div className="min-w-max space-y-4">
               <Input
