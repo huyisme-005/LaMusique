@@ -24,72 +24,77 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Optionally upload image and video files if you intend to use assets for a music video. These are managed on the main creation page.
     *   (Planned) AI-powered music video generation using uploaded assets.
     *   (Planned) Experimental plagiarism scan for uploaded visual assets.
-*   **Exporting Feature (Functional for Lyrics PDF, Placeholders for Audio)**: 
+*   **Exporting Feature (Functional for Lyrics PDF, Placeholders for Audio)**:
     *   Functionality to export lyrics, melody description, and AI lyric feedback as a PDF (via browser's print-to-PDF). Prompts for song name if not already set or uses the current song name if available.
     *   Placeholders for exporting songs in common audio formats (e.g., MP3, WAV, MIDI) are planned, accessible from the creation page.
 *   **Social Media Sharing (Placeholder)**: Easily share your generated songs on social media platforms (planned feature), accessible from the creation page.
 *   **Save & Load Progress**:
     *   Users can save their current song (lyrics and melody data) with a custom name. Saved songs are stored in the browser's `localStorage`.
     *   A dedicated "Saved Songs" page (`/saved`) lists all saved work, allowing users to view details, load a song back into the main creation editor, or delete saved entries.
-*   **Integrated AI Copilot Hints (Removed)**: Tooltip instructions are no longer present on various UI elements. The feature was removed to simplify the interface.
 
 ## Getting Started
 
-This is a Next.js application. To get started:
+### **1. Crucial Step for AI Functionality: `GOOGLE_API_KEY`**
 
-1.  **Install dependencies**:
-    Run the following command in your project's root directory. This will install all necessary project dependencies as defined in the `package.json` file.
-    ```bash
-    npm install
+For the AI features (lyrics generation, melody composition, plagiarism checks via Genkit/Gemini) to work, you **MUST** have a valid Google API key enabled for the "Generative Language API" (which provides access to Gemini models).
+
+**Obtaining your API Key:**
+*   Go to [Google AI Studio](https://aistudio.google.com/).
+*   Sign in and follow the instructions to "Get API key".
+
+**Setting up your API Key for Local Development (e.g., Firebase Studio, your local machine):**
+*   Create a file named `.env` in the **root directory** of this project (if it doesn't already exist).
+*   Add your API key to this `.env` file like so:
+    ```env
+    GOOGLE_API_KEY=YOUR_ACTUAL_VALID_API_KEY_HERE
     ```
-2.  **Environment Variables (for local development)**:
-    *   Create a `.env` file in the root of the project (if one doesn't exist).
-    *   Add your `GOOGLE_API_KEY` for Genkit to access Google AI models (like Gemini):
-        ```env
-        GOOGLE_API_KEY=your_api_key_here
-        ```
-    *   **Important**: This `.env` file is for local development and should NOT be committed to your Git repository if it contains sensitive keys. Ensure `.env` is listed in your `.gitignore` file.
-    *   For more advanced Google Cloud integrations (like using service accounts for Genkit), you might use Application Default Credentials. Refer to Google Cloud and Genkit documentation.
+    Replace `YOUR_ACTUAL_VALID_API_KEY_HERE` with the key you obtained from Google.
+*   **Important**: The Genkit setup in this project (`src/ai/dev.ts`) uses the `dotenv` package to load this key from the `.env` file. If the AI features are not working locally and you see "API key not valid" errors, ensure this file is correctly set up and that your key is valid.
+*   **Security**: The `.env` file is already listed in `.gitignore`, so your local API key will not be committed to your Git repository. This is good practice.
 
-3.  **Run the development server**:
-    ```bash
-    npm run dev
-    ```
-    The application will typically be available at `http://localhost:9002`.
+### **2. Install Dependencies**
+Run the following command in your project's root directory. This will install all necessary project dependencies as defined in the `package.json` file.
+```bash
+npm install
+```
 
-4.  **(Optional) Run Genkit Developer UI**:
-    To inspect and test your Genkit flows locally:
-    ```bash
-    npm run genkit:dev
-    # or for auto-reloading on changes
-    npm run genkit:watch
-    ```
-    The Genkit Developer UI is usually available at `http://localhost:4000`.
+### **3. Run the Development Server**
+```bash
+npm run dev
+```
+The application will typically be available at `http://localhost:9002`.
 
-5.  **Explore the UI**:
-    *   The main page (`/`) is for song creation:
-        *   The left panel contains all song creation tools (including theme selection from a scrollable list with custom input, emotion selection with mixed emotion options, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. A "Save Current Song" button is available here. Individual cards within this panel will show horizontal scrollbars if their content overflows.
-        *   The right panel displays generated lyrics (with plagiarism scan option), melody information (including singing instructions and lyric feedback), and music video asset controls (with placeholder plagiarism scan option). Individual cards here will also show horizontal scrollbars if their content overflows.
-    *   The "Saved Songs" page (`/saved`), accessible from the header, allows management of locally saved songs.
+### **4. (Optional) Run Genkit Developer UI**
+To inspect and test your Genkit flows locally:
+```bash
+npm run genkit:dev
+# or for auto-reloading on changes
+npm run genkit:watch
+```
+The Genkit Developer UI is usually available at `http://localhost:4000`.
+
+### **5. Explore the UI**
+*   The main page (`/`) is for song creation:
+    *   The left panel contains all song creation tools (including theme selection from a scrollable list with custom input, emotion selection with mixed emotion options, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. A "Save Current Song" button is available here. Individual cards within this panel will show horizontal scrollbars if their content overflows.
+    *   The right panel displays generated lyrics (with plagiarism scan option), melody information (including singing instructions and lyric feedback), and music video asset controls (with placeholder plagiarism scan option). Individual cards here will also show horizontal scrollbars if their content overflows.
+*   The "Saved Songs" page (`/saved`), accessible from the header, allows management of locally saved songs.
 
 ## Deployment
 
-This application is structured for deployment on platforms that support Next.js.
+### **Crucial Step for AI Functionality on Deployed App: `GOOGLE_API_KEY`**
 
-### **Crucial Step for AI Functionality: `GOOGLE_API_KEY`**
+For the AI features to work in your deployed application, you **MUST** configure the `GOOGLE_API_KEY` (obtained as described in "Getting Started") as an environment variable in your **hosting provider's settings**.
 
-For the AI features (lyrics generation, melody composition, plagiarism checks via Genkit/Gemini) to work in your deployed application, you **MUST** configure the `GOOGLE_API_KEY` as an environment variable in your hosting provider's settings.
-
-*   **Do NOT commit your API key directly into your `.env` file if that file is part of your Git repository.**
+*   **Do NOT commit your API key directly into your `.env` file if that file is part of your Git repository.** The `.env` file is for local development.
 *   The application's Genkit setup (`src/ai/genkit.ts`) is already designed to use this environment variable (`process.env.GOOGLE_API_KEY`).
 
 ### Setting Environment Variables on Hosting Platforms:
 
 The exact method for setting environment variables depends on your hosting provider. Here are general pointers:
-*   **Vercel:** In your project settings on the Vercel dashboard, find the "Environment Variables" section.
+*   **Vercel:** In your project settings on the Vercel dashboard, find the "Settings" tab, then "Environment Variables" section.
+*   **Render:** In your service settings on the Render dashboard, under "Environment".
 *   **Netlify:** In your site settings on Netlify, navigate to "Site configuration" -> "Build & deploy" -> "Environment".
 *   **Firebase App Hosting:** (See specific section below)
-*   **Render:** In your service settings on the Render dashboard, under "Environment". Specify the Node.js version (e.g., 20) if needed.
 *   **AWS Amplify:** In the Amplify console, for your app, look for "Environment variables".
 *   **Heroku:** Use the Heroku Dashboard (Settings -> Config Vars) or the Heroku CLI (`heroku config:set GOOGLE_API_KEY=YOUR_KEY_HERE`).
 *   **Other Platforms (Azure App Service, Google Cloud Run, DigitalOcean App Platform, etc.):** Consult your provider's specific documentation for "environment variables" or "application settings".
@@ -125,10 +130,10 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 
 ### General Deployment Considerations for Next.js (e.g., Vercel, Netlify, Render)
 
-*   **Node.js Version**: Ensure your hosting provider is using a Node.js version compatible with your project (Next.js 15 typically requires Node 18+ or 20+). The `package.json` now includes an `engines` field specifying `node >=20.0.0`. Platforms like Render might pick this up, or you may need to set it explicitly in their dashboard.
+*   **Node.js Version**: Ensure your hosting provider is using a Node.js version compatible with your project. The `package.json` now includes an `engines` field specifying `node >=20.0.0`. Platforms like Render might pick this up, or you may need to set it explicitly in their dashboard.
 *   **Git Repository**: Platforms like Vercel and Render integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
 *   **Environment Variables**: As mentioned above, configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings dashboard.
-*   **Build Command**: Platforms will typically use `npm run build` (or `yarn build`).
+*   **Build Command**: Platforms will typically use `npm install && npm run build` (or `yarn install && yarn build`).
 *   **Start Command**: Platforms will typically use `npm start` (or `yarn start`).
 *   **Health Check Path**: Many platforms use a health check path to monitor application status. This app provides one at `/api/health`. You may need to configure this path in your hosting provider's settings.
 *   **Debugging Client-Side Errors**: If you encounter generic errors like "a client-side exception has occurred" after deployment, **it is crucial to check your browser's developer console** on the deployed site for more specific error messages. These messages will provide vital clues for debugging. Common causes include:
@@ -168,3 +173,5 @@ The application is built with responsive design principles, aiming for usability
 *   **Dark Mode Theme**: The current focus is on the light theme; a polished dark mode could be added.
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
+
+    
