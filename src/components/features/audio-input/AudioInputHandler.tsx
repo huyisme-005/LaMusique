@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Mic, UploadCloud, FileAudio, ShieldAlert, Sparkles, Trash2 } from 'lucide-react';
+import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, ShieldAlert } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // A very short, silent WAV audio data URI to be used as a default
@@ -23,7 +23,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainCardViewportRef = useRef<HTMLDivElement>(null);
-
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -84,23 +83,15 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     });
   };
 
-  const handlePlagiarismCheck = () => {
-    toast({
-      title: "Feature Not Implemented",
-      description: "Audio plagiarism scanning will be available in a future update.",
-      variant: "default",
-    });
-  };
-
   return (
     <div className="space-y-6">
-      <Card className="min-w-0">
+      <Card className="min-w-0 overflow-x-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
           </div>
           <CardDescription>
-            Optionally, upload an audio file. Explicit audio input (upload, future recording, or future AI generation) is required to enable the plagiarism scan.
+            Optionally, upload an audio file. Audio recording and AI generation are future features.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -138,7 +129,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t gap-2">
-          <Button onClick={handlePlagiarismCheck} className="w-full sm:w-auto flex-grow">
+          <Button 
+            className="w-full sm:w-auto flex-grow"
+            disabled // Make the button non-clickable
+          >
             <ShieldAlert className="mr-2" />
             Scan Audio for Plagiarism (Future Feature)
           </Button>
