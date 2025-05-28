@@ -94,7 +94,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea orientation="horizontal" type="scroll" viewportRef={mainCardViewportRef}>
+        <ScrollArea viewportRef={mainCardViewportRef}>
           <div className="min-w-max p-6 pt-0">
              <div className="min-w-max space-y-4">
               <div>
