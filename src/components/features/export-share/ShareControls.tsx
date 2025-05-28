@@ -25,7 +25,7 @@ const ShareControls: FC = () => {
         <CardDescription>Let the world hear your masterpiece!</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
+        <ScrollArea type="scroll" viewportRef={viewportRef}>
             <div className="min-w-max p-6 pt-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-max">
                     <Button onClick={() => handleShare('Twitter')} variant="outline">
