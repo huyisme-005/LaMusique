@@ -11,7 +11,7 @@ import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
 import MusicVideoControls from '@/components/features/output/MusicVideoControls';
 import AudioInputHandler from '@/components/features/audio-input/AudioInputHandler';
-import SongLoader from '@/components/features/song-loading/SongLoader'; // New import
+import SongLoader from '@/components/features/song-loading/SongLoader';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +35,7 @@ const SongLoaderFallback: FC = () => {
 };
 
 
-const HarmonicAiPage: FC = () => {
+const LaMusiquePage: FC = () => {
   const [lyrics, setLyrics] = useState<string>("");
   const [melody, setMelody] = useState<GenerateMelodyOutput | null>(null);
   const [currentSongNameForExport, setCurrentSongNameForExport] = useState<string | null>(null);
@@ -83,7 +83,7 @@ const HarmonicAiPage: FC = () => {
       
       let songs: SavedSong[] = [];
       try {
-        const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
+        const storedSongs = localStorage.getItem('laMusique_savedSongs');
         if (storedSongs) {
           songs = JSON.parse(storedSongs);
         }
@@ -96,7 +96,7 @@ const HarmonicAiPage: FC = () => {
       songs.push(newSong);
       
       try {
-        localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(songs));
+        localStorage.setItem('laMusique_savedSongs', JSON.stringify(songs));
         setCurrentSongNameForExport(newSong.name); 
         toast({
           title: "Song Saved!",
@@ -118,14 +118,12 @@ const HarmonicAiPage: FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
-      {/* Suspense boundary for SongLoader */}
-      {isClient && ( // Only render SongLoader on the client to avoid SSR issues with localStorage
+      {isClient && (
         <Suspense fallback={<SongLoaderFallback />}>
-          <SongLoader onSongLoaded={handleSongLoaded} isClient={isClient} />
+          <SongLoader onSongLoaded={handleSongLoaded} isClient={isClient} localStorageKey="laMusique_savedSongs" />
         </Suspense>
       )}
       <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:gap-6 md:p-6">
-        {/* Left Panel (Controls) */}
         <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col">
           <div className="p-4 border-b rounded-t-xl bg-muted flex flex-col">
             <div className="flex items-center justify-end w-full mb-2">
@@ -170,6 +168,7 @@ const HarmonicAiPage: FC = () => {
                     lyrics={lyrics} 
                     melody={melody} 
                     currentSongName={currentSongNameForExport} 
+                    appName="La Musique"
                   />
                   <ShareControls />
                 </div>
@@ -178,7 +177,6 @@ const HarmonicAiPage: FC = () => {
           </ScrollArea>
         </div>
 
-        {/* Right Panel (Display) */}
         <ScrollArea className="bg-card text-card-foreground rounded-xl shadow-xl">
           <div className="min-w-max p-4 md:p-6 space-y-6">
             <SongOutputDisplay lyrics={lyrics} melody={melody} />
@@ -191,4 +189,4 @@ const HarmonicAiPage: FC = () => {
   );
 };
 
-export default HarmonicAiPage;
+export default LaMusiquePage;

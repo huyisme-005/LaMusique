@@ -1,9 +1,9 @@
 
-# HarmonicAI
+# La Musique
 
 **Author:** [Your Name/Organization Here]
 
-HarmonicAI is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes, details, and a selected emotion. The app allows users to refine and manually edit their creations. It features integrated AI Copilot hints (via tooltips) within each section for better guidance and allows users to save their progress locally.
+La Musique is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes, details, and a selected emotion. The app allows users to refine and manually edit their creations. It features integrated AI Copilot hints (via tooltips) within each section for better guidance and allows users to save their progress locally.
 
 ## Core Features
 
@@ -16,10 +16,9 @@ HarmonicAI is an adaptive song-writing application designed to be your creative 
     *   Includes an expanded list of music genres.
     *   Includes an experimental AI-powered **scan for potential lyrical plagiarism** based on the generated or entered lyrics.
 *   **Audio Input (Optional)**:
-    *   Upload audio files (e.g., song ideas, vocal snippets). A default silent placeholder is used if no audio is explicitly provided.
+    *   Upload audio files (e.g., song ideas, vocal snippets). A default silent placeholder is used if no audio is explicitly provided. A text note indicates that scanning audio for plagiarism is a future feature.
     *   (Planned) Record audio directly using a microphone.
     *   (Planned) AI-powered audio generation.
-    *   (Planned) Perform an experimental AI-powered scan for potential lyrical or obvious thematic overlaps with existing works based on the audio.
 *   **Music Video Asset Management (Optional)**:
     *   Optionally upload image and video files if you intend to use assets for a music video. These are managed on the main creation page.
     *   (Planned) AI-powered music video generation using uploaded assets.
@@ -100,8 +99,8 @@ For the AI features to work in your deployed application, you **MUST** configure
 ### Setting Environment Variables on Hosting Platforms:
 
 The exact method for setting environment variables depends on your hosting provider. Here are general pointers:
-*   **Vercel:** In your project settings on the Vercel dashboard, find the "Settings" tab, then "Environment Variables" section.
-*   **Render:** In your service settings on the Render dashboard, under "Environment".
+*   **Vercel:** In your project settings on the Vercel dashboard, find the "Settings" tab, then "Environment Variables" section. Add `GOOGLE_API_KEY` with your actual key.
+*   **Render:** In your service settings on the Render dashboard, under "Environment", add `GOOGLE_API_KEY` with your actual key.
 *   **Netlify:** In your site settings on Netlify, navigate to "Site configuration" -> "Build & deploy" -> "Environment".
 *   **Firebase App Hosting:** (See specific section below)
 *   **AWS Amplify:** In the Amplify console, for your app, look for "Environment variables".
@@ -137,17 +136,37 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
     ```
     The CLI will provide a URL for your deployed application.
 
-### General Deployment Considerations for Next.js (e.g., Vercel, Render, Netlify)
+### Deploying to Vercel
+
+1.  **Push to Git:** Ensure your project is pushed to a Git repository (GitHub, GitLab, Bitbucket).
+2.  **Import to Vercel:** Go to your Vercel dashboard, select "Add New..." -> "Project", and import your Git repository.
+3.  **Configure Project:**
+    *   Vercel should automatically detect it as a Next.js project.
+    *   **Environment Variables:** Go to your project's "Settings" -> "Environment Variables" on Vercel. Add `GOOGLE_API_KEY` with your actual API key.
+4.  **Deploy:** Click "Deploy". Vercel will build and deploy your app.
+
+### Deploying to Render
+
+1.  **Push to Git:** Ensure your project is pushed to a Git repository.
+2.  **New Web Service on Render:** On the Render dashboard, click "New +" -> "Web Service" and connect your Git repository.
+3.  **Configuration:**
+    *   **Build Command:** `npm install && npm run build`
+    *   **Start Command:** `npm start`
+    *   **Node Version:** Ensure Render uses Node.js 20 or higher (you can set this in "Advanced Settings" or by having an `engines` field in `package.json` like `"node": ">=20.0.0"`).
+    *   **Environment Variables:** In "Advanced Settings" -> "Environment Variables", add `GOOGLE_API_KEY` with your actual key.
+4.  **Create Service:** Click "Create Web Service".
+
+### General Deployment Considerations for Next.js
 
 *   **Node.js Version**: Ensure your hosting provider is using a Node.js version compatible with your project. The `package.json` includes an `engines` field specifying `node >=20.0.0`. Platforms like Render might pick this up, or you may need to set it explicitly in their dashboard.
 *   **Git Repository**: Platforms like Vercel and Render integrate best with Git repositories (GitHub, GitLab, Bitbucket) for continuous deployment.
 *   **Environment Variables**: As mentioned above, configure `GOOGLE_API_KEY` (and any other necessary environment variables) in your hosting provider's settings dashboard.
 *   **Build Command**: Platforms will typically use `npm install && npm run build` (or `yarn install && yarn build`).
 *   **Start Command**: Platforms will typically use `npm start` (or `yarn start`).
-*   **Health Check Path**: Many platforms use a health check path to monitor application status. This app provides one at `/api/health`. You may need to configure this path in your hosting provider's settings.
+*   **Health Check Path**: This app provides one at `/api/health`. You may need to configure this path in your hosting provider's settings.
 *   **Debugging Client-Side Errors**: If you encounter generic errors like "a client-side exception has occurred" after deployment, **it is crucial to check your browser's developer console** on the deployed site for more specific error messages. These messages will provide vital clues for debugging. Common causes include:
     *   Issues with environment variables not being set correctly on the server (e.g., missing `GOOGLE_API_KEY`).
-    *   Attempts to access browser-specific APIs (`window`, `localStorage`) during server-side rendering or static generation. Ensure such code is deferred to the client-side (e.g., within `useEffect` hooks guarded by a client check, or by using `<Suspense>` for components that depend on client-side data like URL search parameters).
+    *   Attempts to access browser-specific APIs (`window`, `localStorage`) during server-side rendering or static generation. Ensure such code is deferred to the client-side (e.g., within `useEffect` hooks guarded by a client check like `isClient`, or by using `<Suspense>` for components that depend on client-side data like URL search parameters). Your main page (`src/app/page.tsx`) now uses an `isClient` guard for `localStorage` access, and the `SongLoader` component handles `useSearchParams` within a `Suspense` boundary.
 *   **Serverless Functions**: Next.js App Router features like Server Components and Server Actions are well-suited for serverless environments. Your Genkit flows (`'use server';`) are also designed to run server-side.
 *   **Static Assets**: Ensure any static assets are correctly placed (usually in the `public` directory).
 
@@ -166,7 +185,7 @@ The application is built with responsive design principles, aiming for usability
 ## Known Issues & Future Enhancements
 
 *   **SongCrafter Form State on Load**: When loading a saved song from `localStorage`, only lyrics and melody are restored. The form inputs in `SongCrafter` (theme, keywords, genre, etc.) are not repopulated.
-*   **Advanced Plagiarism Detection**: The current plagiarism scans (lyrics, planned for visual assets) are basic and experimental. More sophisticated systems would require advanced techniques and access to larger content databases. Scanning audio for plagiarism is also a planned future feature.
+*   **Advanced Plagiarism Detection**: The current plagiarism scans (lyrics, planned for visual assets) are basic and experimental. Audio plagiarism scanning is also a planned future feature. More sophisticated systems would require advanced techniques and access to larger content databases.
 *   **Melody Playback & Visualization**: Currently, melodies are generated as data (MusicXML) but not played back or visualized in detail.
 *   **Full Audio Functionality**: Implementing robust microphone recording, AI audio generation, and more detailed audio analysis.
 *   **Music Video Generation**: The music video generation feature itself is a placeholder and requires significant development beyond asset uploading.

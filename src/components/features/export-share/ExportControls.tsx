@@ -1,22 +1,26 @@
 
 "use client";
-import type { FC } from 'react';
+import React, { type FC, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Download, FileAudio, FileText } from 'lucide-react';
+import { Download, FileAudio, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import React, { useRef } from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area'; // Keep if used for card layout
 
 interface ExportControlsProps {
   lyrics: string;
   melody: GenerateMelodyOutput | null;
-  currentSongName: string | null; 
+  currentSongName: string | null;
+  appName: string; // Added prop for app name
 }
 
-const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongName }) => {
+const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongName, appName }) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Note: Horizontal scroll with arrows logic was removed in a previous step.
+  // If needed for a specific part *within* this card, it would be re-added here.
+  // For now, assuming the vertical button layout doesn't require it for the card itself.
 
   const handleExport = (format: string) => {
     if (format === 'Lyrics PDF') {
@@ -39,7 +43,7 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
         let htmlContent = `
           <html>
             <head>
-              <title>HarmonicAI Export - ${songNameToUse.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</title>
+              <title>${appName} Export - ${songNameToUse.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</title>
               <style>
                 body { font-family: sans-serif; line-height: 1.6; padding: 20px; color: #333; }
                 h1 { color: #A020F0; border-bottom: 2px solid #A020F0; padding-bottom: 10px; margin-bottom: 20px; }
@@ -82,7 +86,7 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
 
         htmlContent += `
               <div class="footer-note">
-                Exported from HarmonicAI
+                Exported from ${appName}
               </div>
             </body>
           </html>
@@ -100,18 +104,17 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
   };
 
   return (
-    <Card className="min-w-0 overflow-x-auto">
+    <Card className="min-w-0">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Download className="text-primary" /> Export Your Song</CardTitle>
-          {/* Info icon removed */}
         </div>
         <CardDescription>Download your creation in various audio or document formats.</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea viewportRef={viewportRef}>
-          <div ref={contentRef} className="min-w-max p-6 pt-4">
-            <div className="min-w-max space-y-3 w-full">
+        <ScrollArea orientation="horizontal" type="scroll" viewportRef={viewportRef}>
+          <div ref={contentRef} className="min-w-max p-6 pt-4"> {/* Ensures content can expand */}
+            <div className="space-y-3 w-full"> {/* This div also needs to allow its children to set the width */}
               <Button onClick={() => handleExport('MP3')} className="w-full" variant="outline">
                 <FileAudio className="mr-2 h-4 w-4" /> Export as MP3
               </Button>
@@ -132,10 +135,10 @@ const ExportControls: FC<ExportControlsProps> = ({ lyrics, melody, currentSongNa
         </ScrollArea>
       </CardContent>
       <CardFooter className="pt-4 border-t">
+        {/* Arrow buttons removed from here as per last request */}
       </CardFooter>
     </Card>
   );
 };
 
 export default ExportControls;
-    

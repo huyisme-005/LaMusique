@@ -10,7 +10,7 @@ const AppHeader: FC = () => {
       <div className="container mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
           <Music size={32} />
-          <h1 className="text-2xl font-bold tracking-tight">HarmonicAI</h1>
+          <h1 className="text-2xl font-bold tracking-tight">La Musique</h1>
         </Link>
         <Link href="/saved" passHref>
           <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">

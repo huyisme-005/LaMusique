@@ -25,6 +25,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 
+const LOCAL_STORAGE_KEY = 'laMusique_savedSongs';
 
 const SavedProgressPage: FC = () => {
   const [savedSongs, setSavedSongs] = useState<SavedSong[]>([]);
@@ -33,7 +34,7 @@ const SavedProgressPage: FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
+    const storedSongs = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (storedSongs) {
       try {
         setSavedSongs(JSON.parse(storedSongs));
@@ -46,7 +47,7 @@ const SavedProgressPage: FC = () => {
 
   const updateLocalStorageAndState = (newSongs: SavedSong[]) => {
     setSavedSongs(newSongs);
-    localStorage.setItem('harmonicAI_savedSongs', JSON.stringify(newSongs));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newSongs));
   };
 
   const handleDeleteSong = (songId: string) => {

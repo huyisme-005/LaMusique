@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'HarmonicAI - Your Creative Music Partner',
-  description: 'AI-powered song and melody generation, refinement, and inspiration.',
+  title: 'La Musique - Your Creative Music Partner',
+  description: 'AI-powered song and melody generation, refinement, and inspiration by La Musique.',
 };
 
 export default function RootLayout({

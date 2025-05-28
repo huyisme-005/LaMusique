@@ -5,15 +5,16 @@ import type { FC } from 'react';
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
-import type { SavedSong } from '@/app/page'; // Assuming SavedSong is exported from page.tsx or a types file
+import type { SavedSong } from '@/app/page';
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 
 interface SongLoaderProps {
   onSongLoaded: (lyrics: string, melody: GenerateMelodyOutput | null, songName: string) => void;
-  isClient: boolean; // Pass isClient from parent to avoid re-checking
+  isClient: boolean;
+  localStorageKey: string; // Added prop for localStorage key
 }
 
-const SongLoader: FC<SongLoaderProps> = ({ onSongLoaded, isClient }) => {
+const SongLoader: FC<SongLoaderProps> = ({ onSongLoaded, isClient, localStorageKey }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -25,7 +26,7 @@ const SongLoader: FC<SongLoaderProps> = ({ onSongLoaded, isClient }) => {
 
     const songIdToLoad = searchParams.get('loadSongId');
     if (songIdToLoad) {
-      const storedSongs = localStorage.getItem('harmonicAI_savedSongs');
+      const storedSongs = localStorage.getItem(localStorageKey);
       if (storedSongs) {
         try {
           const songs: SavedSong[] = JSON.parse(storedSongs);
@@ -44,18 +45,15 @@ const SongLoader: FC<SongLoaderProps> = ({ onSongLoaded, isClient }) => {
         toast({ title: "No Saved Songs", description: "Could not find any saved songs to load.", variant: "default" });
       }
       
-      // Clear the query parameter to prevent reloading on refresh/navigation
-      // This part needs to be careful as router.replace can cause re-renders.
-      // Ensure it's done in a way that doesn't trigger infinite loops or unnecessary suspense.
       const currentPathname = window.location.pathname; 
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.delete('loadSongId');
       const newUrl = `${currentPathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`;
       router.replace(newUrl, { scroll: false });
     }
-  }, [isClient, searchParams, router, toast, onSongLoaded]);
+  }, [isClient, searchParams, router, toast, onSongLoaded, localStorageKey]);
 
-  return null; // This component only handles logic, doesn't render anything itself
+  return null;
 };
 
 export default SongLoader;
