@@ -5,6 +5,8 @@
 
 La Musique is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes, details, and a selected emotion. The app allows users to refine and manually edit their creations. It also allows user to save their songs for later use, or even download their songs. Last but not least, it also instructs users on how to sing their songs.
 
+Link: https://harmony-seven-livid.vercel.app/
+
 ## Core Features
 
 *   **AI Song & Melody Crafter with User-Selected Emotion and Integrated Editing**: A unified section on the main creation page to:
