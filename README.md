@@ -3,7 +3,7 @@
 
 **Author:** [Your Name/Organization Here]
 
-La Musique is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes, details, and a selected emotion. The app allows users to refine and manually edit their creations. It features integrated AI Copilot hints (via tooltips) within each section for better guidance and allows users to save their progress locally.
+La Musique is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes, details, and a selected emotion. The app allows users to refine and manually edit their creations. It features integrated AI Copilot hints (via tooltips) within each section for better guidance and allows users to save their progress locally. Users can also submit detailed feedback via an in-app survey, which is currently saved to their browser's local storage.
 
 ## Core Features
 
@@ -14,7 +14,7 @@ La Musique is an adaptive song-writing application designed to be your creative 
     *   The generated melody description includes **instructions on how to manually sing the song**.
     *   The AI also provides **feedback and suggestions on the lyrics** used for melody generation.
     *   Includes an expanded list of music genres.
-    *   Includes an experimental AI-powered **scan for potential lyrical plagiarism** based on the generated or entered lyrics.
+    *   Includes an experimental AI-powered **scan for potential lyrical plagiarism** based on the generated or entered lyrics (currently a placeholder).
 *   **Audio Input (Optional)**:
     *   Upload audio files (e.g., song ideas, vocal snippets). A default silent placeholder is used if no audio is explicitly provided. A text note indicates that scanning audio for plagiarism is a future feature.
     *   (Planned) Record audio directly using a microphone.
@@ -30,6 +30,9 @@ La Musique is an adaptive song-writing application designed to be your creative 
 *   **Save & Load Progress**:
     *   Users can save their current song (lyrics and melody data) with a custom name. Saved songs are stored in the browser's `localStorage`.
     *   A dedicated "Saved Songs" page (`/saved`) lists all saved work, allowing users to view details, load a song back into the main creation editor, or delete saved entries.
+*   **Feedback Submission**:
+    *   A dedicated "Feedback" page (`/feedback`) allows users to submit detailed survey responses.
+    *   Currently, submitted feedback is saved to the user's browser `localStorage`. (Future enhancement: Store feedback centrally for admin review).
 
 ## Getting Started
 
@@ -47,12 +50,9 @@ For the AI features (lyrics generation, melody composition, plagiarism checks vi
 *   **Add your API key:** Open the `.env` file and ensure it has the following line, replacing `YOUR_ACTUAL_VALID_API_KEY_GOES_HERE` with your actual key:
     ```env
     GOOGLE_API_KEY="YOUR_ACTUAL_VALID_API_KEY_GOES_HERE"
+    # Example: GOOGLE_API_KEY="Abc123XYZ"
     ```
     *   **Important:** Make sure there are no extra spaces or characters around your key.
-    *   **Example if your key is `Abc123XYZ`**:
-        ```env
-        GOOGLE_API_KEY="Abc123XYZ"
-        ```
 *   **Restart the Development Server:** If you are running a local development server (e.g., `npm run dev`) or if you are in an environment like Firebase Studio, **you MUST restart the server/environment after saving changes to the `.env` file.** Environment variables are typically loaded only when the server starts.
 *   **Security:** The `.env` file is already listed in `.gitignore`, so your local API key will not be committed to your Git repository. This is good practice.
 *   **If AI features still don't work:**
@@ -86,6 +86,7 @@ The Genkit Developer UI is usually available at `http://localhost:4000`.
     *   The left panel contains all song creation tools (including theme selection from a scrollable list with custom input, emotion selection with mixed emotion options, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. A "Save Current Song" button is available here. Individual cards within this panel will show horizontal scrollbars if their content overflows.
     *   The right panel displays generated lyrics (with plagiarism scan option), melody information (including singing instructions and lyric feedback), and music video asset controls (with placeholder plagiarism scan option). Individual cards here will also show horizontal scrollbars if their content overflows.
 *   The "Saved Songs" page (`/saved`), accessible from the header, allows management of locally saved songs.
+*   The "Feedback" page (`/feedback`), accessible from the header, provides a survey for user input.
 
 ## Deployment
 
@@ -178,26 +179,29 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 *   ShadCN UI Components (responsive by design)
 *   Genkit (for AI flow integration, using Google AI models like Gemini)
 *   Lucide Icons
-*   `localStorage` for saving song progress.
+*   `localStorage` for saving song progress and submitted feedback.
 
 The application is built with responsive design principles, aiming for usability across various screen sizes, including desktop PCs and mobile devices like iPhones (accessed via a web browser).
 
 ## Known Issues & Future Enhancements
 
 *   **SongCrafter Form State on Load**: When loading a saved song from `localStorage`, only lyrics and melody are restored. The form inputs in `SongCrafter` (theme, keywords, genre, etc.) are not repopulated.
-*   **Advanced Plagiarism Detection**: The current plagiarism scans (lyrics, planned for visual assets) are basic and experimental. Audio plagiarism scanning is also a planned future feature. More sophisticated systems would require advanced techniques and access to larger content databases.
+*   **Advanced Plagiarism Detection**: The current plagiarism scans (lyrics, planned for visual assets) are basic and experimental. More sophisticated systems would require advanced techniques and access to larger content databases.
 *   **Melody Playback & Visualization**: Currently, melodies are generated as data (MusicXML) but not played back or visualized in detail.
 *   **Full Audio Functionality**: Implementing robust microphone recording, AI audio generation, and more detailed audio analysis.
 *   **Music Video Generation**: The music video generation feature itself is a placeholder and requires significant development beyond asset uploading.
 *   **Full Export Functionality**: Implementing actual file export in various audio formats (MP3, WAV, MIDI).
 *   **Social Media Integration**: Direct API integration for seamless sharing on social platforms.
+*   **Centralized Feedback System**: Currently, user feedback submitted via the survey is stored in the user's browser `localStorage`. For admin access to all feedback, a backend database (e.g., Firebase Firestore) and API endpoints would need to be implemented.
 *   **User Authentication & Cloud Storage**:
     *   Implement a full user authentication system (e.g., email/password, phone number, social media logins).
     *   Replace `localStorage` with cloud-based storage (e.g., Firestore) for saved songs, linked to user accounts. This would allow users to access their work across devices and sessions after logging in.
 *   **Admin Accounts & Management**:
-    *   Develop an admin role with capabilities to manage users, view user information (with appropriate privacy considerations), and potentially oversee app functionalities.
+    *   Develop an admin role with capabilities to manage users, view user information (with appropriate privacy considerations), and potentially oversee app functionalities (including centrally viewing submitted feedback).
 *   **Tiered Plans & Subscriptions**:
     *   Introduce different subscription levels (e.g., Free, Premium, Corporate) with varied feature access or usage limits, once user accounts are in place.
 *   **Dark Mode Theme**: The current focus is on the light theme; a polished dark mode could be added.
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
+
+    

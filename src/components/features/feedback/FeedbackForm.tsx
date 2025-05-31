@@ -13,8 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Info } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Loader2, Send } from 'lucide-react';
 
 const feedbackSchema = z.object({
   // Section 1: General Information
@@ -110,6 +109,11 @@ const storageImportance = ["Not important", "Somewhat important", "Very importan
 const subscriptionInterests = ["Not interested", "Maybe", "Yes – I’d pay for a Premium tier", "Yes – I’d pay for a Corporate/Team tier"];
 const priceRanges = ["$0–5", "$6–10", "$11–20", "$20+"];
 
+const FEEDBACK_STORAGE_KEY = "laMusique_userFeedback";
+
+interface StoredFeedbackEntry extends FeedbackFormValues {
+  submittedAt: string; // ISO date string
+}
 
 const FeedbackForm: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -120,14 +124,14 @@ const FeedbackForm: FC = () => {
     defaultValues: {
       currentTools: "",
       futureFeaturesInterest: {
-        uploadRecordVocals: undefined,
-        generateFullAudio: undefined,
-        createMusicVideo: undefined,
-        exportAudioVideo: undefined,
-        shareSocialMedia: undefined,
-        aiSingingSamples: undefined,
-        aiCopilot: undefined,
-        collaborateRealTime: undefined,
+        uploadRecordVocals: "",
+        generateFullAudio: "",
+        createMusicVideo: "",
+        exportAudioVideo: "",
+        shareSocialMedia: "",
+        aiSingingSamples: "",
+        aiCopilot: "",
+        collaborateRealTime: "",
       },
       signupPreferenceOther: "",
       lovedFeatures: "",
@@ -141,15 +145,37 @@ const FeedbackForm: FC = () => {
 
   const onSubmit: SubmitHandler<FeedbackFormValues> = async (data) => {
     setIsLoading(true);
-    console.log("Feedback Submitted:", data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: "Feedback Received!",
-      description: "Thank you for helping us make La Musique better.",
-    });
-    form.reset();
-    setIsLoading(false);
+    
+    const feedbackEntry: StoredFeedbackEntry = {
+      ...data,
+      submittedAt: new Date().toISOString(),
+    };
+
+    try {
+      const existingFeedbackString = localStorage.getItem(FEEDBACK_STORAGE_KEY);
+      let allFeedback: StoredFeedbackEntry[] = [];
+      if (existingFeedbackString) {
+        allFeedback = JSON.parse(existingFeedbackString);
+      }
+      allFeedback.push(feedbackEntry);
+      localStorage.setItem(FEEDBACK_STORAGE_KEY, JSON.stringify(allFeedback));
+      
+      console.log("Feedback Submitted & Saved Locally:", feedbackEntry);
+      toast({
+        title: "Feedback Received!",
+        description: "Thank you! Your feedback has been saved locally in this browser.",
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error saving feedback to localStorage:", error);
+      toast({
+        title: "Submission Error",
+        description: "Could not save your feedback locally. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -517,3 +543,5 @@ const FeedbackForm: FC = () => {
 };
 
 export default FeedbackForm;
+
+    
