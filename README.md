@@ -14,7 +14,7 @@ La Musique is an adaptive song-writing application designed to be your creative 
     *   The generated melody description includes **instructions on how to manually sing the song**.
     *   The AI also provides **feedback and suggestions on the lyrics** used for melody generation.
     *   Includes an expanded list of music genres.
-    *   Includes an experimental AI-powered **scan for potential lyrical plagiarism** based on the generated or entered lyrics (currently a placeholder).
+    *   Includes an experimental AI-powered **scan for potential lyrical plagiarism** based on the generated or entered lyrics (currently a placeholder for a future feature).
 *   **Audio Input (Optional)**:
     *   Upload audio files (e.g., song ideas, vocal snippets). A default silent placeholder is used if no audio is explicitly provided. A text note indicates that scanning audio for plagiarism is a future feature.
     *   (Planned) Record audio directly using a microphone.
@@ -32,7 +32,7 @@ La Musique is an adaptive song-writing application designed to be your creative 
     *   A dedicated "Saved Songs" page (`/saved`) lists all saved work, allowing users to view details, load a song back into the main creation editor, or delete saved entries.
 *   **Feedback Submission**:
     *   A dedicated "Feedback" page (`/feedback`) allows users to submit detailed survey responses.
-    *   Currently, submitted feedback is saved to the user's browser `localStorage`. (Future enhancement: Store feedback centrally for admin review).
+    *   Currently, submitted feedback is saved to the user's browser `localStorage`. (Future enhancement: Store feedback centrally for admin review, see "Centralized Feedback System" in Future Enhancements).
 
 ## Getting Started
 
@@ -49,6 +49,7 @@ For the AI features (lyrics generation, melody composition, plagiarism checks vi
 *   **Create/Edit the `.env` file:** In the **root directory** of this project, you will find a file named `.env`. If it doesn't exist, create it.
 *   **Add your API key:** Open the `.env` file and ensure it has the following line, replacing `YOUR_ACTUAL_VALID_API_KEY_GOES_HERE` with your actual key:
     ```env
+    # IMPORTANT: Replace with your actual Google API Key for Gemini models
     GOOGLE_API_KEY="YOUR_ACTUAL_VALID_API_KEY_GOES_HERE"
     # Example: GOOGLE_API_KEY="Abc123XYZ"
     ```
@@ -84,7 +85,7 @@ The Genkit Developer UI is usually available at `http://localhost:4000`.
 ### **5. Explore the UI**
 *   The main page (`/`) is for song creation:
     *   The left panel contains all song creation tools (including theme selection from a scrollable list with custom input, emotion selection with mixed emotion options, direct lyrics input/editing, melody parameters), audio input, and export/share controls, organized into a single vertically scrollable view with sections. A "Save Current Song" button is available here. Individual cards within this panel will show horizontal scrollbars if their content overflows.
-    *   The right panel displays generated lyrics (with plagiarism scan option), melody information (including singing instructions and lyric feedback), and music video asset controls (with placeholder plagiarism scan option). Individual cards here will also show horizontal scrollbars if their content overflows.
+    *   The right panel displays generated lyrics (with placeholder plagiarism scan option), melody information (including singing instructions and lyric feedback), and music video asset controls (with placeholder plagiarism scan option). Individual cards here will also show horizontal scrollbars if their content overflows.
 *   The "Saved Songs" page (`/saved`), accessible from the header, allows management of locally saved songs.
 *   The "Feedback" page (`/feedback`), accessible from the header, provides a survey for user input.
 
@@ -188,11 +189,15 @@ The application is built with responsive design principles, aiming for usability
 *   **SongCrafter Form State on Load**: When loading a saved song from `localStorage`, only lyrics and melody are restored. The form inputs in `SongCrafter` (theme, keywords, genre, etc.) are not repopulated.
 *   **Advanced Plagiarism Detection**: The current plagiarism scans (lyrics, planned for visual assets) are basic and experimental. More sophisticated systems would require advanced techniques and access to larger content databases.
 *   **Melody Playback & Visualization**: Currently, melodies are generated as data (MusicXML) but not played back or visualized in detail.
-*   **Full Audio Functionality**: Implementing robust microphone recording, AI audio generation, and more detailed audio analysis.
+*   **Full Audio Functionality**: Implementing robust microphone recording, AI audio generation, and more detailed audio analysis. Audio plagiarism scanning is also a future feature.
 *   **Music Video Generation**: The music video generation feature itself is a placeholder and requires significant development beyond asset uploading.
 *   **Full Export Functionality**: Implementing actual file export in various audio formats (MP3, WAV, MIDI).
 *   **Social Media Integration**: Direct API integration for seamless sharing on social platforms.
-*   **Centralized Feedback System**: Currently, user feedback submitted via the survey is stored in the user's browser `localStorage`. For admin access to all feedback, a backend database (e.g., Firebase Firestore) and API endpoints would need to be implemented.
+*   **Centralized Feedback System**:
+    *   **Current State**: User feedback submitted via the survey is stored in the user's browser `localStorage`. This means only the user who submitted it can see it on that browser, and the admin cannot centrally view all submissions.
+    *   **Future Enhancement**: To allow admin access to all feedback and for permanent, anonymous storage, a backend database (e.g., Firebase Firestore) and API endpoints would need to be implemented. See "Implementing a Backend for Feedback (Firebase Firestore)" section below for guidance.
+*   **Admin View for Feedback Analysis**:
+    *   **Future Enhancement**: Once feedback is centrally stored, an admin-only interface could be developed to display aggregated feedback, including percentages for multiple-choice answers. This requires backend setup and authentication.
 *   **User Authentication & Cloud Storage**:
     *   Implement a full user authentication system (e.g., email/password, phone number, social media logins).
     *   Replace `localStorage` with cloud-based storage (e.g., Firestore) for saved songs, linked to user accounts. This would allow users to access their work across devices and sessions after logging in.
@@ -202,6 +207,150 @@ The application is built with responsive design principles, aiming for usability
     *   Introduce different subscription levels (e.g., Free, Premium, Corporate) with varied feature access or usage limits, once user accounts are in place.
 *   **Dark Mode Theme**: The current focus is on the light theme; a polished dark mode could be added.
 
-This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
+## Implementing a Backend for Feedback (Firebase Firestore)
 
-    
+To store user feedback permanently, anonymously, and allow admin access, you'll need a backend. Firebase Firestore is a good free-to-start option.
+
+**1. Set up Firebase:**
+   * Go to the [Firebase Console](https://console.firebase.google.com/).
+   * Create a new project or use an existing one.
+   * Add **Firestore Database** to your project.
+     * When prompted for security rules, start with "test mode" for easier development. **Remember to secure these rules before any public launch.**
+     * `rules_version = '2'; service cloud.firestore { match /databases/{database}/documents { match /{document=**} { allow read, write: if false; } } }` (default deny)
+     * You'll later change this to something like:
+       ```
+       rules_version = '2';
+       service cloud.firestore {
+         match /databases/{database}/documents {
+           // Allow anyone to submit feedback (write)
+           match /feedback/{feedbackId} {
+             allow create: if true; // Or add request.auth != null for authenticated users
+             // Allow only authenticated admins to read feedback
+             allow read, list, delete, update: if request.auth != null && request.auth.token.admin === true;
+           }
+         }
+       }
+       ```
+       (Implementing admin custom claims (`request.auth.token.admin === true`) requires additional Firebase setup.)
+
+**2. Add Firebase SDK to Your Project:**
+   * In your project's root directory, run:
+     ```bash
+     npm install firebase
+     ```
+
+**3. Configure Firebase in Your Next.js App:**
+   * Create a file, e.g., `src/lib/firebaseConfig.js` (or `.ts`):
+     ```javascript
+     // src/lib/firebaseConfig.js
+     import { initializeApp, getApps } from "firebase/app";
+     import { getFirestore } from "firebase/firestore";
+
+     const firebaseConfig = {
+       apiKey: "YOUR_API_KEY", // Get this from Firebase project settings
+       authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+       projectId: "YOUR_PROJECT_ID",
+       storageBucket: "YOUR_PROJECT_ID.appspot.com",
+       messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+       appId: "YOUR_APP_ID"
+     };
+
+     // Initialize Firebase
+     let app;
+     if (!getApps().length) {
+       app = initializeApp(firebaseConfig);
+     } else {
+       app = getApps()[0];
+     }
+
+     const db = getFirestore(app);
+
+     export { db };
+     ```
+   * Replace `YOUR_...` placeholders with your actual Firebase project credentials (Project Settings > General > Your apps > SDK setup and configuration).
+   * **Important for Security**: Store these Firebase client config keys securely. For local development, they can be in `.env.local` and accessed via `process.env.NEXT_PUBLIC_FIREBASE_API_KEY`, etc. For deployment (e.g., Vercel), set them as environment variables on your hosting platform. **Do not commit actual keys directly into your `firebaseConfig.js` file if it's part of your Git repository.**
+
+**4. Create an API Endpoint or Server Action to Submit Feedback:**
+   * **Using Next.js API Route (e.g., `src/app/api/submit-feedback/route.ts`):**
+     ```typescript
+     // src/app/api/submit-feedback/route.ts
+     import { NextResponse } from 'next/server';
+     import { db } from '@/lib/firebaseConfig'; // Adjust path if needed
+     import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+     export async function POST(request: Request) {
+       try {
+         const feedbackData = await request.json();
+         
+         // Add a server timestamp for when the feedback was received
+         const feedbackToSave = {
+           ...feedbackData,
+           submittedAt: serverTimestamp() 
+         };
+
+         const docRef = await addDoc(collection(db, "feedback"), feedbackToSave);
+         console.log("Feedback submitted to Firestore with ID: ", docRef.id);
+         return NextResponse.json({ message: "Feedback submitted successfully!", id: docRef.id }, { status: 201 });
+       } catch (error) {
+         console.error("Error submitting feedback to Firestore:", error);
+         let errorMessage = "Failed to submit feedback.";
+         if (error instanceof Error) {
+            errorMessage = error.message;
+         }
+         return NextResponse.json({ error: "Failed to submit feedback.", details: errorMessage }, { status: 500 });
+       }
+     }
+     ```
+   * **Using Next.js Server Action (within `FeedbackForm.tsx` or a separate actions file):**
+     Server Actions can directly interact with Firestore if the Firebase SDK is initialized appropriately for server-side use. This often involves using the Firebase Admin SDK if you need privileged operations, or carefully managing client-SDK initialization in server components. For simple writes from authenticated users (or anonymous with open rules), client-SDK usage within Server Actions is also possible.
+
+**5. Update `FeedbackForm.tsx` to Use the API/Action:**
+   * Modify the `onSubmit` handler:
+     ```tsx
+     // Inside FeedbackForm.tsx onSubmit function
+     // ...
+     setIsLoading(true);
+     try {
+       const response = await fetch('/api/submit-feedback', { // Or call your Server Action
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(data), // data is from react-hook-form
+       });
+
+       if (!response.ok) {
+         const errorResult = await response.json();
+         throw new Error(errorResult.details || 'Failed to submit feedback to server.');
+       }
+       
+       const result = await response.json();
+       console.log("Feedback Submitted via API:", result);
+       toast({
+         title: "Feedback Sent!",
+         description: "Thank you! Your feedback has been submitted.",
+       });
+       form.reset();
+       // Optionally, still save to localStorage as a backup or if offline submission is a goal
+       // localStorage.setItem(...) 
+     } catch (error) {
+       console.error("Error submitting feedback:", error);
+       toast({
+         title: "Submission Error",
+         description: (error as Error).message || "Could not submit your feedback. Please try again.",
+         variant: "destructive",
+       });
+     } finally {
+       setIsLoading(false);
+     }
+     // ...
+     ```
+
+**6. Admin Access to Feedback (Future Enhancement):**
+   * Create a new admin-only page (e.g., `/admin/feedback`).
+   * Implement authentication to protect this page.
+   * On this page, fetch data from the "feedback" collection in Firestore.
+   * Implement logic to aggregate the data (e.g., count answers, calculate percentages).
+   * Display the aggregated data using tables or charts.
+
+This provides a robust way to collect and manage feedback. Remember to prioritize security, especially with Firestore rules and API key management.
+
+This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
