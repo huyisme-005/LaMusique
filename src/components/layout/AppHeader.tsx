@@ -1,5 +1,5 @@
 
-import { Music, ListChecks } from 'lucide-react';
+import { Music, ListChecks, MessageSquareText } from 'lucide-react'; // Added MessageSquareText
 import type { FC } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,20 @@ const AppHeader: FC = () => {
           <Music size={32} />
           <h1 className="text-2xl font-bold tracking-tight">La Musique</h1>
         </Link>
-        <Link href="/saved" passHref>
-          <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
-            <ListChecks className="mr-2 h-5 w-5" />
-            Saved Songs
-          </Button>
-        </Link>
+        <nav className="flex items-center gap-2">
+          <Link href="/saved" passHref>
+            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+              <ListChecks className="mr-2 h-5 w-5" />
+              Saved Songs
+            </Button>
+          </Link>
+          <Link href="/feedback" passHref>
+            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+              <MessageSquareText className="mr-2 h-5 w-5" />
+              Feedback
+            </Button>
+          </Link>
+        </nav>
       </div>
     </header>
   );
