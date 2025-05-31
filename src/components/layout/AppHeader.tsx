@@ -1,5 +1,5 @@
 
-import { Music, ListChecks, MessageSquareText } from 'lucide-react'; // Added MessageSquareText
+import { Music, ListChecks, MessageSquareText, Home } from 'lucide-react'; // Added Home
 import type { FC } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,12 @@ const AppHeader: FC = () => {
           <h1 className="text-2xl font-bold tracking-tight">La Musique</h1>
         </Link>
         <nav className="flex items-center gap-2">
+          <Link href="/" passHref>
+            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+              <Home className="mr-2 h-5 w-5" />
+              Home
+            </Button>
+          </Link>
           <Link href="/saved" passHref>
             <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
               <ListChecks className="mr-2 h-5 w-5" />
