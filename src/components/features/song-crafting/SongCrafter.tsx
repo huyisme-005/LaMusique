@@ -81,37 +81,48 @@ const PREDEFINED_THEMES = [
 
 const INITIAL_THEMES_TO_SHOW = 6;
 
-// Helper function to create a user-friendly error description
 const getAIErrorMessage = (error: unknown, context: 'lyrics' | 'melody' | 'emotion' | 'crafting'): string => {
   let baseMessage = "An unexpected error occurred with the AI service.";
   if (context === 'lyrics') baseMessage = "Lyrics generation failed.";
-  if (context === 'melody') baseMessage = "Melody composition failed.";
-  if (context === 'emotion') baseMessage = "Emotion analysis failed.";
-  if (context === 'crafting') baseMessage = "AI song crafting failed.";
+  else if (context === 'melody') baseMessage = "Melody composition failed.";
+  else if (context === 'emotion') baseMessage = "Emotion analysis failed.";
+  else if (context === 'crafting') baseMessage = "AI song crafting failed.";
 
-
-  if (error instanceof Error) {
-    const errorMessageLower = error.message.toLowerCase();
-    if (errorMessageLower.includes("503") || errorMessageLower.includes("model is overloaded") || errorMessageLower.includes("service unavailable")) {
-      return `${baseMessage} The AI model is currently busy or unavailable. Please try again in a few moments.`;
-    }
-    if (errorMessageLower.includes("api key") && (errorMessageLower.includes("invalid") || errorMessageLower.includes("not valid"))) {
-      return `${baseMessage} There's an issue with the AI service API key. Please check configuration and contact support if it persists.`;
-    }
-    if (errorMessageLower.includes("billing") || errorMessageLower.includes("quota")) {
-        return `${baseMessage} The request could not be processed due to AI service limits (e.g., billing or quota). Please check your account or contact support.`;
-    }
-    // For other errors from the AI flows themselves like "The AI failed to generate..."
-    if (error.message.startsWith("The AI failed to")) {
-        return error.message + " Please check your inputs or try again.";
-    }
-    // Fallback to a shortened version of the original error if it's not too generic
-    if (error.message && !errorMessageLower.includes("unknown error") && !errorMessageLower.includes("something went wrong")) {
-        const conciseMessage = error.message.length > 150 ? error.message.substring(0, 147) + "..." : error.message;
-        return `${baseMessage} Details: ${conciseMessage}`;
-    }
+  let detailMessage = "";
+  if (error instanceof Error && typeof error.message === 'string') {
+    detailMessage = error.message;
+  } else if (typeof error === 'string') {
+    detailMessage = error;
+  } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+    detailMessage = (error as { message: string }).message;
+  } else {
+    console.warn("getAIErrorMessage received an error of unknown structure:", error);
   }
-  return `${baseMessage} Please try again. If the issue persists, contact support.`;
+
+  const detailMessageLower = detailMessage.toLowerCase();
+
+  if (detailMessageLower.includes("503") || detailMessageLower.includes("model is overloaded") || detailMessageLower.includes("service unavailable")) {
+    return `${baseMessage} The AI model is currently busy or unavailable. Please try again in a few moments.`;
+  }
+  if (detailMessageLower.includes("api key") && (detailMessageLower.includes("invalid") || detailMessageLower.includes("not valid") || detailMessageLower.includes("denied"))) {
+    return `${baseMessage} There's an issue with the AI service API key (it might be invalid, missing, or lack necessary permissions). Please check your GOOGLE_API_KEY environment variable and Google Cloud project settings.`;
+  }
+  if (detailMessageLower.includes("billing") || detailMessageLower.includes("quota")) {
+    return `${baseMessage} The request could not be processed due to AI service limits (e.g., billing or quota). Please check your Google Cloud project account or contact support.`;
+  }
+  // Check for errors thrown by the flows themselves
+  if (detailMessageLower.startsWith("the ai failed to generate song lyrics") || 
+      detailMessageLower.startsWith("the ai failed to generate a melody") ||
+      detailMessageLower.startsWith("failed to get a response from the ai for emotion analysis")) {
+      return detailMessage + " Please check your inputs or try again.";
+  }
+  
+  if (detailMessage) {
+    const conciseDetail = detailMessage.length > 150 ? detailMessage.substring(0, 147) + "..." : detailMessage;
+    return `${baseMessage} Details: ${conciseDetail}`;
+  }
+
+  return `${baseMessage} An unexpected error occurred. Please check the console for more details or try again.`;
 };
 
 
@@ -293,10 +304,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
           description: "AI has crafted new lyrics. They are now in the lyrics area.",
         });
       } else { 
-        // This case means we are likely trying to compose melody with existing/manual lyrics,
-        // but this action is "Generate Lyrics & Compose Melody". So, if no lyrics source, it's an issue.
-        // However, if currentLyrics exist, the melody part will use them.
-        // If lyricsForMelody is empty and no generation params, that's an issue for lyrics generation.
         if (!lyricsForMelody && (themeStringForAI.trim() === "" && (!data.keywords || data.keywords.trim() === ""))) {
            toast({ title: "Missing Lyrics Source", description: "Provide Themes/Keywords for AI lyrics regeneration or type lyrics manually.", variant: "default"});
            setIsLoading(false);
@@ -610,6 +617,8 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
+    
+
     
 
     
