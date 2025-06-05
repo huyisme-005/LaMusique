@@ -89,4 +89,3 @@ CMD ["node", "server.js"]
 # Note: Adjust the port in HEALTHCHECK if your app runs on a different one internally.
 # The /api/health endpoint is assumed to be present.
 
-```
