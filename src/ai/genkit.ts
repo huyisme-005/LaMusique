@@ -7,3 +7,6 @@ export const ai = genkit({
   plugins: [googleAI()],
   model: 'googleai/gemini-2.0-flash',
 });
+
+// If you want to use the backend API client in genkit.ts, import it here as well
+// import { saveSong, getSong, listSongs } from './backend/apiClient';
