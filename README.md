@@ -41,7 +41,7 @@ La Musique is an adaptive song-writing application designed to be your creative 
 
 ### **1. Crucial Step for AI and Firebase Functionality: Environment Variables**
 
-For the AI features (Genkit/Gemini) and Firebase features (Authentication) to work, you **MUST** have valid API keys and configuration.
+For the AI features (Genkit/Gemini) and Firebase Authentication to work, you **MUST** have valid API keys and configuration.
 
 **A. For Genkit AI Features (Lyrics Generation, Melody Composition, etc.):**
 *   **`GOOGLE_API_KEY`**: You need a Google API key enabled for the "Generative Language API" (which provides access to Gemini models).
@@ -49,8 +49,8 @@ For the AI features (Genkit/Gemini) and Firebase features (Authentication) to wo
         *   Go to [Google AI Studio](https://aistudio.google.com/).
         *   Sign in and follow instructions to "Get API key". Ensure it's enabled for the "Generative Language API".
 
-**B. For Firebase Features (Authentication, Future Database/Storage):**
-*   **Firebase Project Configuration Keys**: You need credentials from your Firebase project.
+**B. For Firebase Authentication:**
+*   **Firebase Project Configuration Keys**: You need credentials from your Firebase project to configure the client-side SDK for Authentication.
     *   **How to Obtain:**
         1.  Go to the [Firebase Console](https://console.firebase.google.com/) and select your project (or create one).
         2.  Ensure **Authentication** is set up (e.g., Email/Password and Google Sign-In methods enabled).
@@ -123,7 +123,7 @@ The Genkit Developer UI is usually available at `http://localhost:4000`.
 
 ### **Crucial Environment Variables for Deployment**
 
-For your deployed application to function correctly, especially its AI (Genkit/Gemini) and Firebase (Authentication, future Firestore) features, you **MUST** configure the following environment variables in your **hosting provider's settings** (e.g., Vercel, Firebase App Hosting).
+For your deployed application to function correctly, especially its AI (Genkit/Gemini) and Firebase Authentication features, you **MUST** configure the following environment variables in your **hosting provider's settings** (e.g., Vercel, Render).
 
 **1. For Genkit AI Features (Server-Side):**
 *   `GOOGLE_API_KEY`: Your Google API key enabled for the "Generative Language API" (Gemini). This is used by Genkit flows running on the server.
@@ -138,11 +138,11 @@ These variables are prefixed with `NEXT_PUBLIC_` to make them accessible to the 
 *   `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`: Your Firebase Messaging Sender ID.
 *   `NEXT_PUBLIC_FIREBASE_APP_ID`: Your Firebase Web App's App ID.
 *   `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID`: Your Firebase Web App's Measurement ID (optional, for Analytics).
-    *   Obtain these from your Firebase project settings as described in the "Getting Started" section (under "B. For Firebase Features").
+    *   Obtain these from your Firebase project settings as described in the "Getting Started" section (under "B. For Firebase Authentication").
 
 **Important Security Note for Deployment:**
 *   The `GOOGLE_API_KEY` (without `NEXT_PUBLIC_`) is treated as a server-side secret by hosting platforms.
-*   The `NEXT_PUBLIC_FIREBASE_...` keys are specifically prefixed to be bundled by Next.js for client-side use, which is necessary for the Firebase SDK to operate in the browser.
+*   The `NEXT_PUBLIC_FIREBASE_...` keys are specifically prefixed to be bundled by Next.js for client-side use, which is necessary for the Firebase SDK to operate in the browser for authentication.
 
 ### Setting Environment Variables on Hosting Platforms:
 
@@ -180,42 +180,6 @@ Vercel is an excellent platform for deploying Next.js applications.
     *   **Important:** Changes to environment variables on Vercel require a **new deployment** to take effect.
 9.  **Node.js Version**: Vercel typically uses a recent LTS version of Node.js. If you have specific requirements, you can configure this in `package.json` (`engines` field) or Vercel project settings, though defaults are usually fine (this project specifies Node.js >=20.0.0).
 
-#### Firebase App Hosting
-Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment target.
-1.  **Install Firebase CLI**:
-    ```bash
-    npm install -g firebase-tools
-    ```
-2.  **Login to Firebase**:
-    ```bash
-    firebase login
-    ```
-3.  **Initialize Firebase in your project** (if not already done):
-    *   Run `firebase init apphosting` in your project root.
-    *   Follow the prompts, selecting your Firebase project (or creating a new one) and configuring the App Hosting backend. It should detect your Next.js app.
-4.  **Configure Environment Variables for Firebase App Hosting**:
-    *   Go to your Firebase project in the [Firebase Console](https://console.firebase.google.com/).
-    *   Navigate to your App Hosting backend settings.
-    *   Add **ALL** the following environment variables (as listed in the "Crucial Environment Variables for Deployment" section above):
-        *   `GOOGLE_API_KEY`
-        *   `NEXT_PUBLIC_FIREBASE_API_KEY`
-        *   `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-        *   `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-        *   `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-        *   `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-        *   `NEXT_PUBLIC_FIREBASE_APP_ID`
-        *   `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (Optional)
-    *   **Note:** For `NEXT_PUBLIC_` prefixed variables, Firebase App Hosting will make these available to your Next.js application during build and runtime.
-5.  **Deploy**:
-    ```bash
-    firebase apphosting:backends:deploy
-    ```
-    Or, depending on your Firebase CLI version and setup:
-    ```bash
-    firebase deploy --only apphosting
-    ```
-    The CLI will provide a URL for your deployed application. After deployment, ensure all features (AI and Firebase Auth) are working, which depends on the correct environment variable setup.
-
 #### Deploying to Render
 1.  **Push to Git:** Ensure your project is pushed to a Git repository.
 2.  **New Web Service on Render:** On the Render dashboard, click "New +" -> "Web Service" and connect your Git repository.
@@ -247,6 +211,7 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 *   Genkit (for AI flow integration, using Google AI models like Gemini)
 *   Lucide Icons
 *   `localStorage` for saving song progress and submitted feedback.
+*   (For Future Backend Enhancement) Docker, Python (FastAPI), PostgreSQL, SQLAlchemy, Pydantic.
 
 The application is built with responsive design principles, aiming for usability across various screen sizes.
 
@@ -316,10 +281,10 @@ This architectural change is a significant undertaking but leads to a much more 
 *   **Full Export Functionality**: Implementing actual file export in various audio formats (MP3, WAV, MIDI).
 *   **Social Media Integration**: Direct API integration for seamless sharing on social platforms.
 *   **Centralized Feedback System**:
-    *   **Current State**: The in-app Feedback page has been temporarily replaced by an external Google Form link in the header due to ongoing issues with Firebase setup for Firestore. Originally, user feedback submitted via the in-app survey was stored in the user's browser `localStorage`.
-    *   **Future Enhancement**: Re-integrate the in-app feedback form and connect it to a backend database (e.g., PostgreSQL via a Python API as described above, or Firebase Firestore) for permanent, anonymous storage, allowing admin access.
+    *   **Current State**: The in-app Feedback page has been temporarily replaced by an external Google Form link in the header. Originally, user feedback submitted via the in-app survey was stored in the user's browser `localStorage`.
+    *   **Future Enhancement**: Re-integrate the in-app feedback form and connect it to a backend database (e.g., PostgreSQL via a Python API as described above) for permanent, anonymous storage, allowing admin access.
 *   **Admin View for Feedback Analysis**: Once feedback is centrally stored, an admin-only interface could be developed.
-*   **Cloud Storage for Saved Songs**: Replace `localStorage` with cloud-based storage (e.g., PostgreSQL or Firestore) for saved songs, linked to user accounts, allowing access across devices.
+*   **Cloud Storage for Saved Songs**: Replace `localStorage` with cloud-based storage (e.g., PostgreSQL as described in the backend architecture section) for saved songs, linked to user accounts, allowing access across devices.
 *   **Admin Accounts & Management**: Develop admin roles.
 *   **Tiered Plans & Subscriptions**: Introduce subscription levels.
 *   **Dark Mode Theme**: A polished dark mode could be added.
