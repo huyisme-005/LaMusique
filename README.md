@@ -150,12 +150,16 @@ The exact method depends on your hosting provider. Ensure you set **ALL** the va
 
 #### Deploying to Vercel
 Vercel is an excellent platform for deploying Next.js applications.
-1.  **Push to Git:** Ensure your project is pushed to a Git repository (GitHub, GitLab, Bitbucket). Vercel integrates directly with these.
-2.  **Import to Vercel:**
+1.  **Framework Preset**: Next.js (Vercel usually auto-detects this).
+2.  **Build Command**: `npm run build` (or `next build`). Vercel usually auto-detects this.
+3.  **Output Directory**: `.next` (Vercel usually auto-detects this).
+4.  **Install Command**: `npm install` (Vercel usually auto-detects or handles this).
+5.  **Push to Git:** Ensure your project is pushed to a Git repository (GitHub, GitLab, Bitbucket). Vercel integrates directly with these.
+6.  **Import to Vercel:**
     *   Go to your [Vercel dashboard](https://vercel.com/dashboard).
     *   Click "Add New..." -> "Project".
     *   Import your Git repository.
-3.  **Configure Project:**
+7.  **Configure Project:**
     *   Vercel should automatically detect it as a Next.js project and configure build settings appropriately.
     *   **Environment Variables (CRUCIAL):**
         *   Navigate to your project's "Settings" tab on Vercel.
@@ -170,11 +174,11 @@ Vercel is an excellent platform for deploying Next.js applications.
             *   `NEXT_PUBLIC_FIREBASE_APP_ID`
             *   `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (if you are using it)
         *   Ensure you select the appropriate environments (Production, Preview, Development) for each variable. Usually, they are needed in all.
-4.  **Deploy:**
+8.  **Deploy:**
     *   After configuring environment variables, go to the "Deployments" tab for your project.
     *   Trigger a new deployment (Vercel might do this automatically if you push changes to your connected Git branch, or you can manually redeploy).
     *   **Important:** Changes to environment variables on Vercel require a **new deployment** to take effect.
-5.  **Node.js Version**: Vercel typically uses a recent LTS version of Node.js. If you have specific requirements, you can configure this in `package.json` (`engines` field) or Vercel project settings, though defaults are usually fine.
+9.  **Node.js Version**: Vercel typically uses a recent LTS version of Node.js. If you have specific requirements, you can configure this in `package.json` (`engines` field) or Vercel project settings, though defaults are usually fine (this project specifies Node.js >=20.0.0).
 
 #### Firebase App Hosting
 Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment target.
@@ -246,6 +250,62 @@ Given the `apphosting.yaml` file, Firebase App Hosting is a suitable deployment 
 
 The application is built with responsive design principles, aiming for usability across various screen sizes.
 
+## Future Backend Architecture Enhancements (Pydantic, SQLAlchemy, PostgreSQL, Docker)
+
+The current application uses `localStorage` for data persistence, which is browser-based and has limitations (data is only on one browser, not easily shareable, limited storage). For a more robust, scalable, and production-ready backend, consider the following architecture:
+
+1.  **Separate Python Backend API**:
+    *   **Framework**: Use a Python web framework like **FastAPI** or Flask. FastAPI is highly recommended for its modern features, performance, and excellent integration with Pydantic.
+    *   **Purpose**: This backend service will handle all core business logic related to data management (creating, reading, updating, deleting songs, user profiles, feedback, etc.).
+    *   Your Next.js application will then act primarily as a frontend, making HTTP requests to this Python API.
+
+2.  **PostgreSQL for Data Storage**:
+    *   **Purpose**: A powerful, open-source relational database to securely store all application data (users, songs, feedback). This replaces `localStorage`.
+    *   **Benefits**: Data integrity, relationships between data (e.g., a user owns multiple songs), scalability, and robust querying capabilities.
+
+3.  **SQLAlchemy for ORM (Object-Relational Mapping)**:
+    *   **Purpose**: Used within the Python backend to interact with the PostgreSQL database using Python objects and methods instead of raw SQL.
+    *   **Models**: You'll define Python classes (e.g., `Song`, `User`) that map to your database tables and their columns.
+    *   **Operations**: SQLAlchemy will manage database sessions, transactions, and querying.
+
+4.  **Pydantic for Data Validation & Serialization**:
+    *   **Purpose**: Also used in the Python backend (especially with FastAPI) to define clear data schemas for API request bodies and responses.
+    *   **Validation**: Ensures incoming data conforms to expected structures and types before processing.
+    *   **Serialization**: Formats data correctly for API responses.
+    *   **API Documentation**: FastAPI can use Pydantic models to automatically generate interactive API documentation (e.g., Swagger UI/OpenAPI).
+
+5.  **Docker for Containerization**:
+    *   **Next.js Frontend**: Create a `Dockerfile` for your Next.js application to build and serve it. (A basic example is provided in the project root as `Dockerfile`).
+    *   **Python Backend API**: Create a separate `Dockerfile` for your Python (FastAPI/Flask) application.
+    *   **PostgreSQL**: Use the official PostgreSQL Docker image.
+    *   **`docker-compose.yml`**: This file will define and orchestrate all three services (Next.js, Python API, PostgreSQL), managing their networking, environment variables, and data persistence for the database.
+
+**High-Level Integration Steps:**
+
+1.  **Design API Endpoints**: Define the routes and data structures your Python API will expose (e.g., `POST /songs`, `GET /songs/:id`, `POST /feedback`).
+2.  **Develop Python Backend**:
+    *   Set up a new Python project using FastAPI.
+    *   Define SQLAlchemy models for your database tables (e.g., `songs`, `feedback_submissions`).
+    *   Define Pydantic schemas for request/response validation and serialization.
+    *   Implement API routes in FastAPI to handle CRUD operations, using SQLAlchemy to interact with PostgreSQL.
+3.  **Database Setup**:
+    *   Run PostgreSQL locally using Docker for development.
+    *   For production, use a managed PostgreSQL service (e.g., on AWS, Google Cloud, Heroku, or Vercel Postgres).
+4.  **Modify Next.js Frontend**:
+    *   Remove all `localStorage` logic for saving/loading songs and feedback.
+    *   Implement client-side functions (e.g., in a `services/api.ts` file) to make `fetch` or `axios` requests to your new Python API endpoints.
+    *   Update components like `SongCrafter.tsx`, `SavedSongsPage.tsx`, `FeedbackForm.tsx`, and the main `page.tsx` to use these API calls for data persistence and retrieval.
+    *   Firebase Authentication can remain, and you can pass user IDs or JWTs from the frontend to your Python backend to authorize requests and associate data with users.
+5.  **Containerize**:
+    *   Finalize the `Dockerfile` for the Next.js app.
+    *   Create a `Dockerfile` for the Python API.
+    *   Write a `docker-compose.yml` to run all services together.
+6.  **Environment Variables**:
+    *   The Python backend will need environment variables for database connection strings, any API secrets, etc.
+    *   The Next.js frontend will need an environment variable for the URL of the Python backend API (e.g., `NEXT_PUBLIC_API_BASE_URL`).
+
+This architectural change is a significant undertaking but leads to a much more robust and professional application structure. The Genkit AI flows can remain as server-side logic within your Next.js app or could also be migrated to the Python backend if they primarily interact with the data managed there.
+
 ## Known Issues & Future Enhancements
 
 *   **SongCrafter Form State on Load**: When loading a saved song from `localStorage`, only lyrics and melody are restored. The form inputs in `SongCrafter` (theme, keywords, genre, etc.) are not repopulated.
@@ -257,11 +317,13 @@ The application is built with responsive design principles, aiming for usability
 *   **Social Media Integration**: Direct API integration for seamless sharing on social platforms.
 *   **Centralized Feedback System**:
     *   **Current State**: The in-app Feedback page has been temporarily replaced by an external Google Form link in the header due to ongoing issues with Firebase setup for Firestore. Originally, user feedback submitted via the in-app survey was stored in the user's browser `localStorage`.
-    *   **Future Enhancement**: Re-integrate the in-app feedback form and connect it to a backend database (e.g., Firebase Firestore) for permanent, anonymous storage, allowing admin access.
+    *   **Future Enhancement**: Re-integrate the in-app feedback form and connect it to a backend database (e.g., PostgreSQL via a Python API as described above, or Firebase Firestore) for permanent, anonymous storage, allowing admin access.
 *   **Admin View for Feedback Analysis**: Once feedback is centrally stored, an admin-only interface could be developed.
-*   **Cloud Storage for Saved Songs**: Replace `localStorage` with cloud-based storage (e.g., Firestore) for saved songs, linked to user accounts, allowing access across devices.
+*   **Cloud Storage for Saved Songs**: Replace `localStorage` with cloud-based storage (e.g., PostgreSQL or Firestore) for saved songs, linked to user accounts, allowing access across devices.
 *   **Admin Accounts & Management**: Develop admin roles.
 *   **Tiered Plans & Subscriptions**: Introduce subscription levels.
 *   **Dark Mode Theme**: A polished dark mode could be added.
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
+
+```
