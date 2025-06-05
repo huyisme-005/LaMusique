@@ -25,12 +25,15 @@ const AppHeader: FC = () => {
               Saved Songs
             </Button>
           </Link>
-          <Link href="/feedback" passHref>
-            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
-              <MessageSquareText className="mr-2 h-5 w-5" />
-              Feedback
-            </Button>
-          </Link>
+          <a
+            href="https://docs.google.com/forms/d/1jMoKGx0hsz-1JHXecxFxZKWqgh4Cly72A-3jWO2Q2nk/edit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground"
+          >
+            <MessageSquareText className="mr-2 h-5 w-5" />
+            Feedback
+          </a>
         </nav>
       </div>
     </header>
