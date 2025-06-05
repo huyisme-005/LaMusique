@@ -1,0 +1,15 @@
+node_modules
+.dockerignore
+Dockerfile
+docs
+*.md
+.git
+.gitignore
+tsconfig.json
+*.log
+*.ts
+*.tsx
+*.mjs
+*.config.*
+*.env
+src/**/*.test.*
