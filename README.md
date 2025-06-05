@@ -1,4 +1,3 @@
-
 # La Musique
 
 **Author:** Huy Le
@@ -118,6 +117,123 @@ The Genkit Developer UI is usually available at `http://localhost:4000`.
 *   Authentication (Login/Signup) is available via the user icon in the header.
 *   The "Saved Songs" page (`/saved`), accessible from the header, allows management of locally saved songs.
 *   The "Feedback" link in the header navigates to an external Google Form.
+
+## Backend AI & Song Storage (Python, FastAPI, PostgreSQL)
+
+La Musique now supports secure, scalable song storage and feedback using a Python FastAPI backend and PostgreSQL database. This replaces localStorage for saved songs and feedback.
+
+### Backend Tech Stack
+- Python 3.10+
+- FastAPI
+- SQLAlchemy
+- Pydantic
+- PostgreSQL
+- Docker (recommended for deployment)
+
+### Backend Folder Structure
+- `src/ai/backend/` — Python backend (API, models, DB config)
+- `src/ai/flows/` — TypeScript AI flows (lyrics, melody, etc.)
+- `src/ai/backend/apiClient.ts` — TypeScript client for backend API
+
+### How to Run All Components Locally
+
+#### 1. Start PostgreSQL (Docker recommended)
+```powershell
+# In project root, start a local PostgreSQL instance (change password as needed)
+docker run --name lamusique-postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=songsdb -p 5432:5432 -d postgres:15
+```
+
+#### 2. Start the Python Backend
+```powershell
+cd src/ai/backend
+python -m venv env
+.\env\Scripts\activate
+pip install -r requirements.txt
+# Set environment variable for DB connection (PowerShell):
+$env:DATABASE_URL="postgresql://postgres:password@localhost/songsdb"
+uvicorn main:app --reload
+```
+
+#### 3. Start the Next.js App
+```powershell
+cd ../../../..
+npm install
+# Set backend API URL for the frontend (in .env):
+# BACKEND_API_URL=http://localhost:8000
+npm run dev
+```
+
+#### 4. Access
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+
+---
+
+## Fullstack Deployment Instructions
+
+### 1. Prepare Environment Variables
+- In your deployment environment, set:
+  - `GOOGLE_API_KEY` (for Genkit AI)
+  - `NEXT_PUBLIC_FIREBASE_*` (for Firebase Auth)
+  - `BACKEND_API_URL` (for frontend to reach backend)
+  - `DATABASE_URL` (for backend to reach PostgreSQL)
+
+### 2. Docker Compose (Recommended for Production)
+Create a `docker-compose.yml` in your project root:
+```yaml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: songsdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./src/ai/backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres/songsdb
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: .
+    environment:
+      BACKEND_API_URL: http://backend:8000
+      # ...other env vars (see above)...
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+```
+
+### 3. Build and Run All Services
+```powershell
+docker-compose up --build
+```
+
+- The frontend will be available at http://localhost:3000
+- The backend API at http://localhost:8000
+- PostgreSQL at port 5432
+
+### 4. Production Notes
+- Use managed PostgreSQL for production (e.g., AWS RDS, Vercel Postgres).
+- Set strong passwords and secure environment variables.
+- Use HTTPS in production.
+- Configure CORS in FastAPI backend as needed.
+
+---
 
 ## Deployment
 
@@ -291,4 +407,6 @@ This architectural change is a significant undertaking but leads to a much more 
 
 This project is built with Firebase Studio and aims to provide a foundation for a powerful AI-assisted music creation tool.
 
-```
+## References
+- See `src/ai/README.md` and `src/app/README.md` for more details on each part.
+- For advanced deployment, CI/CD, and scaling, consult Docker, FastAPI, and Next.js documentation.
