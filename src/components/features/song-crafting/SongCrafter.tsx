@@ -81,6 +81,39 @@ const PREDEFINED_THEMES = [
 
 const INITIAL_THEMES_TO_SHOW = 6;
 
+// Helper function to create a user-friendly error description
+const getAIErrorMessage = (error: unknown, context: 'lyrics' | 'melody' | 'emotion' | 'crafting'): string => {
+  let baseMessage = "An unexpected error occurred with the AI service.";
+  if (context === 'lyrics') baseMessage = "Lyrics generation failed.";
+  if (context === 'melody') baseMessage = "Melody composition failed.";
+  if (context === 'emotion') baseMessage = "Emotion analysis failed.";
+  if (context === 'crafting') baseMessage = "AI song crafting failed.";
+
+
+  if (error instanceof Error) {
+    const errorMessageLower = error.message.toLowerCase();
+    if (errorMessageLower.includes("503") || errorMessageLower.includes("model is overloaded") || errorMessageLower.includes("service unavailable")) {
+      return `${baseMessage} The AI model is currently busy or unavailable. Please try again in a few moments.`;
+    }
+    if (errorMessageLower.includes("api key") && (errorMessageLower.includes("invalid") || errorMessageLower.includes("not valid"))) {
+      return `${baseMessage} There's an issue with the AI service API key. Please check configuration and contact support if it persists.`;
+    }
+    if (errorMessageLower.includes("billing") || errorMessageLower.includes("quota")) {
+        return `${baseMessage} The request could not be processed due to AI service limits (e.g., billing or quota). Please check your account or contact support.`;
+    }
+    // For other errors from the AI flows themselves like "The AI failed to generate..."
+    if (error.message.startsWith("The AI failed to")) {
+        return error.message + " Please check your inputs or try again.";
+    }
+    // Fallback to a shortened version of the original error if it's not too generic
+    if (error.message && !errorMessageLower.includes("unknown error") && !errorMessageLower.includes("something went wrong")) {
+        const conciseMessage = error.message.length > 150 ? error.message.substring(0, 147) + "..." : error.message;
+        return `${baseMessage} Details: ${conciseMessage}`;
+    }
+  }
+  return `${baseMessage} Please try again. If the issue persists, contact support.`;
+};
+
 
 const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, onLyricsChange, onMelodyGenerated }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -260,16 +293,23 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
           description: "AI has crafted new lyrics. They are now in the lyrics area.",
         });
       } else { 
-        toast({ title: "Missing Lyrics Source", description: "Provide Themes/Keywords for AI lyrics regeneration or type lyrics manually.", variant: "default"});
-        setIsLoading(false);
-        return;
+        // This case means we are likely trying to compose melody with existing/manual lyrics,
+        // but this action is "Generate Lyrics & Compose Melody". So, if no lyrics source, it's an issue.
+        // However, if currentLyrics exist, the melody part will use them.
+        // If lyricsForMelody is empty and no generation params, that's an issue for lyrics generation.
+        if (!lyricsForMelody && (themeStringForAI.trim() === "" && (!data.keywords || data.keywords.trim() === ""))) {
+           toast({ title: "Missing Lyrics Source", description: "Provide Themes/Keywords for AI lyrics regeneration or type lyrics manually.", variant: "default"});
+           setIsLoading(false);
+           return;
+        }
       }
 
       await executeMelodyGeneration(lyricsForMelody, data.genre, data.key, data.tempo);
 
     } catch (error) {
       console.error("Error in song crafting (generate/regenerate lyrics & melody):", error);
-      toast({ title: "Error in Song Crafting", description: (error as Error).message || "Something went wrong.", variant: "destructive" });
+      const friendlyMessage = getAIErrorMessage(error, 'crafting');
+      toast({ title: "AI Crafting Error", description: friendlyMessage, variant: "destructive", duration: 7000 });
     } finally {
       setIsLoading(false);
     }
@@ -293,7 +333,8 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       await executeMelodyGeneration(currentLyrics, data.genre, data.key, data.tempo);
     } catch (error) {
       console.error("Error in song crafting (continue with lyrics):", error);
-      toast({ title: "Error Composing Melody", description: (error as Error).message || "Something went wrong.", variant: "destructive" });
+      const friendlyMessage = getAIErrorMessage(error, 'melody');
+      toast({ title: "AI Melody Error", description: friendlyMessage, variant: "destructive", duration: 7000 });
     } finally {
       setIsLoading(false);
     }
@@ -314,14 +355,13 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2"><Music className="text-primary" /> Lyrics & Melody</CardTitle>
-          {/* Info icon removed */}
         </div>
         <CardDescription>
           Craft lyrics with AI or input manually. Then, compose a melody.
         </CardDescription>
       </CardHeader>
       <ScrollArea>
-        <div className="min-w-max p-6 pt-0"> {/* min-w-max applied here */}
+        <div className="min-w-max p-6 pt-0">
           <Form {...form}>
             <form
               className="min-w-max space-y-4" 
@@ -331,7 +371,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel className="flex items-center gap-1"><ListChecks className="text-primary inline-block h-4 w-4" /> Themes</FormLabel>
-                  {/* Info icon removed */}
                 </div>
                 <FormDescUI>Select up to 3 themes. This will guide the AI if generating lyrics.</FormDescUI>
                 <div className="space-y-2 pt-1">
@@ -441,7 +480,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
                   <FormItem>
                     <div className="flex items-center justify-between">
                       <FormLabel className="flex items-center gap-1"><Smile className="text-primary inline-block h-4 w-4" /> Desired Emotion</FormLabel>
-                      {/* Info icon removed */}
                     </div>
                     <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value || "None"}>
                       <FormControl>
@@ -572,4 +610,6 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
+    
+
     
