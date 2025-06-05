@@ -1,7 +1,7 @@
 
 # La Musique
 
-**Author:** [Your Name/Organization Here]
+**Author:** Huy Le
 
 La Musique is an adaptive song-writing application designed to be your creative music partner. It leverages AI to generate song lyrics and fitting melodies based on user-provided themes, details, and a selected emotion. The app allows users to refine and manually edit their creations. It features integrated AI Copilot hints (via tooltips) within each section for better guidance and allows users to save their progress locally. Users can also submit detailed feedback via an in-app survey, which is currently saved to their browser's local storage.
 
