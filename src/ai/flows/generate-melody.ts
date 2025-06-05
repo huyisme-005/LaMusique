@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -11,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { saveSong } from '../backend/apiClient';
 
 const GenerateMelodyInputSchema = z.object({
   lyrics: z.string().describe('The lyrics of the song.'),
@@ -28,7 +28,19 @@ const GenerateMelodyOutputSchema = z.object({
 export type GenerateMelodyOutput = z.infer<typeof GenerateMelodyOutputSchema>;
 
 export async function generateMelody(input: GenerateMelodyInput): Promise<GenerateMelodyOutput> {
-  return generateMelodyFlow(input);
+  const result = await generateMelodyFlow(input);
+  // Save the generated song to backend
+  await saveSong({
+    title: 'Untitled', // You may want to pass a title from UI
+    lyrics: input.lyrics,
+    genre: input.genre,
+    key: input.key,
+    tempo: input.tempo,
+    melody: result.melody,
+    description: result.description,
+    lyric_feedback: result.lyricFeedback,
+  });
+  return result;
 }
 
 const prompt = ai.definePrompt({
