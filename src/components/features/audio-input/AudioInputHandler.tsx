@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, Tags, Loader2 } from 'lucide-react'; // Added Tags, Loader2
+import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, Tags, Loader2, Search } from 'lucide-react'; // Added Search
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { analyzeAudioGenre, type AnalyzeAudioGenreOutput } from '@/ai/flows/analyze-audio-genre'; // New import
+import { analyzeAudioGenre, type AnalyzeAudioGenreOutput } from '@/ai/flows/analyze-audio-genre';
+import { Separator } from '@/components/ui/separator';
 
 // A very short, silent WAV audio data URI to be used as a default
 const DEFAULT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAA";
@@ -21,6 +22,7 @@ interface AudioInputHandlerProps {
 const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const [onlineSearchQuery, setOnlineSearchQuery] = useState<string>("");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainCardViewportRef = useRef<HTMLDivElement>(null);
@@ -105,7 +107,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     try {
       const result: AnalyzeAudioGenreOutput = await analyzeAudioGenre({ audioDataUri });
       const genreText = result.genres.join(', ');
-      setIdentifiedGenresDisplay(genreText); // Store for potential display in card
+      setIdentifiedGenresDisplay(genreText); 
       toast({
         title: "Audio Genre Analysis Complete!",
         description: (
@@ -145,6 +147,24 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     }
   };
 
+  const handleOnlineSearch = () => {
+    if (!onlineSearchQuery.trim()) {
+      toast({
+        title: "Empty Search Query",
+        description: "Please enter a search term for online audio.",
+        variant: "default"
+      });
+      return;
+    }
+    toast({
+      title: "Online Search Not Implemented",
+      description: `Searching for "${onlineSearchQuery}" is a future feature. For now, please upload audio directly.`,
+      variant: "default",
+    });
+    // Here you would eventually call an API or service to search for audio
+    // and then allow the user to select a result to use (onAudioPrepared).
+  };
+
   return (
     <Card className="min-w-0 overflow-x-auto">
       <CardHeader>
@@ -152,7 +172,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
         </div>
         <CardDescription>
-          Optionally, upload an audio file. You can then try to identify its genre. Audio recording and AI generation are future features.
+          Upload local audio, use microphone/AI (future), or search online (future). Then, identify its genre.
           {identifiedGenresDisplay && <span className="block mt-1 text-xs">Previously identified genres: {identifiedGenresDisplay}</span>}
         </CardDescription>
       </CardHeader>
@@ -180,6 +200,30 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                 {audioFile && <p className="text-xs text-muted-foreground mt-1">Selected: {audioFile.name}</p>}
               </div>
 
+              <Separator />
+
+              <div>
+                <Label htmlFor="online-audio-search">Search Online Audio (Future Feature)</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    id="online-audio-search"
+                    type="text"
+                    placeholder="e.g., 'Acoustic guitar melody in C major'"
+                    value={onlineSearchQuery}
+                    onChange={(e) => setOnlineSearchQuery(e.target.value)}
+                    className="flex-grow"
+                  />
+                  <Button variant="outline" onClick={handleOnlineSearch}>
+                    <Search className="mr-2 h-4 w-4" /> Search
+                  </Button>
+                </div>
+                 <p className="text-xs text-muted-foreground mt-1">
+                    Search results will appear here.
+                </p>
+              </div>
+              
+              <Separator />
+
               <Button
                 onClick={handleIdentifyGenre}
                 variant="outline"
@@ -187,7 +231,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                 disabled={isIdentifyingGenre || !audioDataUri || audioDataUri === DEFAULT_AUDIO_DATA_URI}
               >
                 {isIdentifyingGenre ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tags className="mr-2 h-4 w-4" />}
-                Identify Genre from Audio
+                Identify Genre from Current Audio
               </Button>
 
               <Button onClick={handleRecordAudio} variant="outline" className="w-full">
@@ -202,7 +246,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       </CardContent>
       <CardFooter className="pt-4 border-t">
         <p className="text-xs text-muted-foreground">
-          Note: Scanning audio for plagiarism is a planned future feature. AI Genre identification is experimental.
+          Note: Scanning audio for plagiarism is planned. AI Genre identification is experimental. Online search is a future feature.
         </p>
       </CardFooter>
     </Card>
@@ -210,3 +254,4 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 };
 
 export default AudioInputHandler;
+
