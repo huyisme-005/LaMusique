@@ -20,7 +20,7 @@ interface AudioInputHandlerProps {
 
 const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
+  const [audioDataUri, setAudioDataUri] = useState<string>(DEFAULT_AUDIO_DATA_URI); // Initialize with default
   const [onlineSearchQuery, setOnlineSearchQuery] = useState<string>("");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,11 +32,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null); // null: unknown, true: granted, false: denied
+  const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
-
-  const stopCurrentRecording = () => {
+  const stopCurrentRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
@@ -45,14 +44,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       mediaStreamRef.current = null;
     }
     setIsRecording(false);
-    setMediaRecorder(null);
-  };
+    mediaRecorderRef.current = null; // Explicitly nullify after stopping
+  }, []);
   
-  const setMediaRecorder = (recorder: MediaRecorder | null) => {
-    mediaRecorderRef.current = recorder;
-  }
-
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isRecording) {
       stopCurrentRecording();
@@ -68,7 +62,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
         setAudioFile(null);
-        setAudioDataUri(null);
+        setAudioDataUri(DEFAULT_AUDIO_DATA_URI);
         onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
         return;
       }
@@ -82,17 +76,17 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       reader.readAsDataURL(file);
     } else {
       setAudioFile(null);
-      setAudioDataUri(null);
+      setAudioDataUri(DEFAULT_AUDIO_DATA_URI);
       onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
     }
   };
 
-  const handleRemoveAudio = () => {
+  const handleRemoveAudio = useCallback(() => {
     if (isRecording) {
       stopCurrentRecording();
     }
     setAudioFile(null);
-    setAudioDataUri(null);
+    setAudioDataUri(DEFAULT_AUDIO_DATA_URI);
     setIdentifiedGenresDisplay(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -100,9 +94,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
     toast({
       title: "Audio Cleared",
-      description: "The uploaded audio file has been removed.",
+      description: "The active audio has been cleared.",
     });
-  };
+  }, [isRecording, stopCurrentRecording, onAudioPrepared, toast]);
 
   const startRecording = async () => {
     handleRemoveAudio(); // Clear any existing audio first
@@ -119,17 +113,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       mediaStreamRef.current = stream;
       setHasMicPermission(true);
       
-      const options = { mimeType: 'audio/webm' }; // Specify a common mimeType
+      const options = { mimeType: 'audio/webm' };
       let recorder: MediaRecorder;
       try {
         recorder = new MediaRecorder(stream, options);
       } catch (e) {
-        // Fallback if specified mimeType is not supported (though webm is widely supported)
         console.warn("mimeType audio/webm not supported, trying default");
         recorder = new MediaRecorder(stream);
       }
 
-      setMediaRecorder(recorder);
+      mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
 
       recorder.ondataavailable = (event) => {
@@ -139,13 +132,14 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       };
 
       recorder.onstop = () => {
-        const mimeType = recorder.mimeType || 'audio/webm';
+        const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64Audio = reader.result as string;
           setAudioDataUri(base64Audio);
           onAudioPrepared(base64Audio);
+          setAudioFile(null); // Ensure audioFile is null for recorded audio
           toast({ title: "Recording Complete", description: "Audio recorded successfully." });
         };
         reader.readAsDataURL(audioBlob);
@@ -154,7 +148,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           mediaStreamRef.current.getTracks().forEach(track => track.stop());
           mediaStreamRef.current = null;
         }
-        setIsRecording(false); // Ensure isRecording is false after stop
+        setIsRecording(false);
+        mediaRecorderRef.current = null;
       };
 
       recorder.start();
@@ -176,23 +171,27 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         }
       }
       toast({ title: "Microphone Error", description: message, variant: "destructive", duration: 7000 });
-      setIsRecording(false); // Ensure isRecording is false on error
+      setIsRecording(false);
+      if (mediaStreamRef.current) { // Ensure stream is stopped on error too
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+      mediaRecorderRef.current = null;
     }
   };
-
-  const stopRecordingAndProcess = () => { // Renamed for clarity
+  
+  const stopRecordingAndProcess = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop(); // This will trigger 'onstop' which handles cleanup and processing
+      mediaRecorderRef.current.stop(); 
     } else {
-      // If somehow stop is called when not actively recording but mediaRecorder exists
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
       }
       setIsRecording(false);
+      mediaRecorderRef.current = null;
     }
-    // Note: setIsRecording(false) is now primarily handled in onstop or error paths of startRecording
-  };
+  }, []);
   
   const handleRecordButtonClick = () => {
     if (isRecording) {
@@ -201,7 +200,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       startRecording();
     }
   };
-
 
   const handleGenerateAudio = () => {
     toast({
@@ -222,7 +220,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     }
 
     setIsIdentifyingGenre(true);
-    // Keep existing identifiedGenresDisplay until new result or error
     try {
       const result: AnalyzeAudioGenreOutput = await analyzeAudioGenre({ audioDataUri });
       const genreText = result.genres.join(', ');
@@ -281,18 +278,17 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     });
   };
 
-  // Cleanup effect for active recording when component unmounts
   useEffect(() => {
     return () => {
       stopCurrentRecording();
     };
-  }, []);
-
+  }, [stopCurrentRecording]);
 
   let micStatusMessage = "Recording requires microphone permission.";
   if (hasMicPermission === true) micStatusMessage = "Microphone access: Granted.";
   else if (hasMicPermission === false) micStatusMessage = "Microphone access: Denied. Please check browser settings and refresh.";
 
+  const hasActiveAudio = audioDataUri && audioDataUri !== DEFAULT_AUDIO_DATA_URI;
 
   return (
     <Card className="min-w-0 overflow-x-auto">
@@ -321,13 +317,14 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                     className="flex-grow"
                     disabled={isRecording}
                   />
-                  {audioFile && (
-                    <Button variant="outline" size="icon" onClick={handleRemoveAudio} aria-label="Remove audio file" disabled={isRecording}>
+                  {hasActiveAudio && (
+                    <Button variant="outline" size="icon" onClick={handleRemoveAudio} aria-label="Remove active audio" disabled={isRecording}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>
                 {audioFile && <p className="text-xs text-muted-foreground mt-1">Selected: {audioFile.name}</p>}
+                {!audioFile && hasActiveAudio && <p className="text-xs text-muted-foreground mt-1">Recorded audio is active.</p>}
               </div>
 
               <Separator />
@@ -371,7 +368,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                 onClick={handleIdentifyGenre}
                 variant="outline"
                 className="w-full"
-                disabled={isIdentifyingGenre || !audioDataUri || audioDataUri === DEFAULT_AUDIO_DATA_URI || isRecording}
+                disabled={isIdentifyingGenre || !hasActiveAudio || isRecording}
               >
                 {isIdentifyingGenre ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tags className="mr-2 h-4 w-4" />}
                 Identify Genre from Current Audio
