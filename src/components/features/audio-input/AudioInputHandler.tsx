@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Mic, UploadCloud, FileAudio, Sparkles, Trash2 } from 'lucide-react';
+import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, Tags, Loader2 } from 'lucide-react'; // Added Tags, Loader2
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { analyzeAudioGenre, type AnalyzeAudioGenreOutput } from '@/ai/flows/analyze-audio-genre'; // New import
 
 // A very short, silent WAV audio data URI to be used as a default
 const DEFAULT_AUDIO_DATA_URI = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAA";
@@ -24,8 +25,13 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mainCardViewportRef = useRef<HTMLDivElement>(null);
 
+  const [isIdentifyingGenre, setIsIdentifyingGenre] = useState(false);
+  const [identifiedGenresDisplay, setIdentifiedGenresDisplay] = useState<string | null>(null);
+
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    setIdentifiedGenresDisplay(null); // Clear previous genre results
     if (file) {
       if (!file.type.startsWith('audio/')) {
         toast({
@@ -57,6 +63,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const handleRemoveAudio = () => {
     setAudioFile(null);
     setAudioDataUri(null);
+    setIdentifiedGenresDisplay(null); // Clear previous genre results
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -83,6 +90,61 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     });
   };
 
+  const handleIdentifyGenre = async () => {
+    if (!audioDataUri || audioDataUri === DEFAULT_AUDIO_DATA_URI) {
+      toast({
+        title: "No Audio to Analyze",
+        description: "Please upload or provide an audio file first.",
+        variant: "default",
+      });
+      return;
+    }
+
+    setIsIdentifyingGenre(true);
+    setIdentifiedGenresDisplay(null);
+    try {
+      const result: AnalyzeAudioGenreOutput = await analyzeAudioGenre({ audioDataUri });
+      const genreText = result.genres.join(', ');
+      setIdentifiedGenresDisplay(genreText); // Store for potential display in card
+      toast({
+        title: "Audio Genre Analysis Complete!",
+        description: (
+          <div className="text-sm">
+            <p className="font-semibold">Identified Genre(s): {genreText}</p>
+            {result.confidence && <p>Confidence: {(result.confidence * 100).toFixed(0)}%</p>}
+            {result.reasoning && <p className="text-xs mt-1 italic text-muted-foreground">Reasoning: {result.reasoning}</p>}
+          </div>
+        ),
+        duration: 10000, 
+      });
+    } catch (error) {
+      console.error("Error identifying audio genre:", error);
+      let errorMessage = "An unknown error occurred during genre analysis.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      if (errorMessage.includes("model is overloaded") || errorMessage.includes("503 Service Unavailable")) {
+        errorMessage = "The AI model for genre analysis is currently busy or unavailable. Please try again later.";
+      } else if (errorMessage.includes("API key") || errorMessage.includes("auth")) {
+        errorMessage = "There's an issue with the AI service configuration for genre analysis. Please check API keys or permissions.";
+      } else if (errorMessage.includes("Meaningful audio data URI is required") || errorMessage.includes("data seems too short")) {
+        errorMessage = "The provided audio data is too short or invalid for genre analysis. Please upload a more substantial audio file.";
+      }
+
+
+      toast({
+        title: "Genre Analysis Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsIdentifyingGenre(false);
+    }
+  };
+
   return (
     <Card className="min-w-0 overflow-x-auto">
       <CardHeader>
@@ -90,7 +152,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
         </div>
         <CardDescription>
-          Optionally, upload an audio file. Audio recording and AI generation are future features.
+          Optionally, upload an audio file. You can then try to identify its genre. Audio recording and AI generation are future features.
+          {identifiedGenresDisplay && <span className="block mt-1 text-xs">Previously identified genres: {identifiedGenresDisplay}</span>}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
@@ -117,6 +180,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                 {audioFile && <p className="text-xs text-muted-foreground mt-1">Selected: {audioFile.name}</p>}
               </div>
 
+              <Button
+                onClick={handleIdentifyGenre}
+                variant="outline"
+                className="w-full"
+                disabled={isIdentifyingGenre || !audioDataUri || audioDataUri === DEFAULT_AUDIO_DATA_URI}
+              >
+                {isIdentifyingGenre ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tags className="mr-2 h-4 w-4" />}
+                Identify Genre from Audio
+              </Button>
+
               <Button onClick={handleRecordAudio} variant="outline" className="w-full">
                 <Mic className="mr-2" /> Record Audio (Future Feature)
               </Button>
@@ -129,7 +202,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       </CardContent>
       <CardFooter className="pt-4 border-t">
         <p className="text-xs text-muted-foreground">
-          Note: Scanning audio for plagiarism is a planned future feature.
+          Note: Scanning audio for plagiarism is a planned future feature. AI Genre identification is experimental.
         </p>
       </CardFooter>
     </Card>
