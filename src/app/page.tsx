@@ -1,7 +1,7 @@
-
 "use client";
 
 import React, { useState, type FC, useEffect, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import AppHeader from '@/components/layout/AppHeader';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from '@/components/ui/separator';
@@ -11,12 +11,17 @@ import ShareControls from '@/components/features/export-share/ShareControls';
 import SongOutputDisplay from '@/components/features/output/SongOutputDisplay';
 import MusicVideoControls from '@/components/features/output/MusicVideoControls';
 import AudioInputHandler from '@/components/features/audio-input/AudioInputHandler';
-import SongLoader from '@/components/features/song-loading/SongLoader';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
+
+// Dynamically import SongLoader with client-side only rendering
+const SongLoader = dynamic(
+  () => import('@/components/features/song-loading/SongLoader'),
+  { ssr: false }
+);
 
 export interface SavedSong {
   id: string;
