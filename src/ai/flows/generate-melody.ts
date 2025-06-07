@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -29,17 +30,37 @@ export type GenerateMelodyOutput = z.infer<typeof GenerateMelodyOutputSchema>;
 
 export async function generateMelody(input: GenerateMelodyInput): Promise<GenerateMelodyOutput> {
   const result = await generateMelodyFlow(input);
-  // Save the generated song to backend
-  await saveSong({
-    title: 'Untitled', // You may want to pass a title from UI
-    lyrics: input.lyrics,
-    genre: input.genre,
-    key: input.key,
-    tempo: input.tempo,
-    melody: result.melody,
-    description: result.description,
-    lyric_feedback: result.lyricFeedback,
-  });
+
+  // Attempt to save the generated song to the backend only if BACKEND_API_URL is configured
+  if (process.env.BACKEND_API_URL) {
+    try {
+      console.log(`Attempting to save song to backend at ${process.env.BACKEND_API_URL}`);
+      // You might want to pass a more dynamic title, perhaps from user input or derived from lyrics
+      const songTitle = `Song for lyrics: "${input.lyrics.substring(0, 30)}..."`;
+      
+      await saveSong({
+        title: songTitle,
+        lyrics: input.lyrics,
+        genre: input.genre,
+        key: input.key,
+        tempo: input.tempo,
+        melody: result.melody,
+        description: result.description,
+        lyric_feedback: result.lyricFeedback,
+      });
+      console.log('Song successfully saved to backend.');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`WARN: Could not save song to backend. Melody generation was successful, but saving failed. 
+        Error: ${errorMessage}. 
+        Please ensure your backend server (Python/FastAPI) is running at the configured BACKEND_API_URL (${process.env.BACKEND_API_URL || 'default http://localhost:8000'}) and is accessible.
+        If you haven't configured BACKEND_API_URL, it defaults to http://localhost:8000.
+        Check the README for instructions on running the backend services (FastAPI, PostgreSQL).`);
+      // The flow continues and returns the melody result even if saving fails.
+    }
+  } else {
+    console.log('BACKEND_API_URL environment variable is not set. Skipping save song to backend. Generated melody will not be persisted to the database.');
+  }
   return result;
 }
 
