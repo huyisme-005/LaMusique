@@ -1,8 +1,7 @@
-
 "use client";
 
 import type { FC } from 'react';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import type { SavedSong } from '@/app/page';
@@ -11,10 +10,11 @@ import type { GenerateMelodyOutput } from '@/ai/flows/generate-melody';
 interface SongLoaderProps {
   onSongLoaded: (lyrics: string, melody: GenerateMelodyOutput | null, songName: string) => void;
   isClient: boolean;
-  localStorageKey: string; // Added prop for localStorage key
+  localStorageKey: string;
 }
 
-const SongLoader: FC<SongLoaderProps> = ({ onSongLoaded, isClient, localStorageKey }) => {
+// Separate component that uses useSearchParams
+const SongLoaderInner: FC<SongLoaderProps> = ({ onSongLoaded, isClient, localStorageKey }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -54,6 +54,15 @@ const SongLoader: FC<SongLoaderProps> = ({ onSongLoaded, isClient, localStorageK
   }, [isClient, searchParams, router, toast, onSongLoaded, localStorageKey]);
 
   return null;
+};
+
+// Main component wrapped with Suspense
+const SongLoader: FC<SongLoaderProps> = (props) => {
+  return (
+    <Suspense fallback={null}>
+      <SongLoaderInner {...props} />
+    </Suspense>
+  );
 };
 
 export default SongLoader;

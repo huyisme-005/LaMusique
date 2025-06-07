@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, type FC, useEffect, Suspense } from 'react';
@@ -33,7 +32,6 @@ const SongLoaderFallback: FC = () => {
     </div>
   );
 };
-
 
 const LaMusiquePage: FC = () => {
   const [lyrics, setLyrics] = useState<string>("");
@@ -119,9 +117,7 @@ const LaMusiquePage: FC = () => {
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
       {isClient && (
-        <Suspense fallback={<SongLoaderFallback />}>
-          <SongLoader onSongLoaded={handleSongLoaded} isClient={isClient} localStorageKey="laMusique_savedSongs" />
-        </Suspense>
+        <SongLoader onSongLoaded={handleSongLoaded} isClient={isClient} localStorageKey="laMusique_savedSongs" />
       )}
       <main className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:gap-6 md:p-6">
         <div className="bg-card text-card-foreground rounded-xl shadow-xl flex flex-col">
