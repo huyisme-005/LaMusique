@@ -29,7 +29,7 @@ interface StoredAudioItem {
   name: string;
   type: 'upload' | 'recording' | 'ai';
   dataUri: string;
-  fileObject?: File; 
+  fileObject?: File;
   identifiedGenres?: string | null;
   analysisReasoning?: string | null;
   analysisConfidence?: number | null;
@@ -43,14 +43,14 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const [storedAudios, setStoredAudios] = useState<StoredAudioItem[]>([]);
   const [selectedAudioId, setSelectedAudioId] = useState<string | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
-  
+
   const [onlineSearchQuery, setOnlineSearchQuery] = useState<string>("");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-  
+
   const [isIdentifyingGenre, setIsIdentifyingGenre] = useState(false);
-  
+
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -58,40 +58,43 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const stopCurrentActivities = useCallback(() => {
+    // isRecording is read from state here, so it will be the latest value
     if (isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop(); 
+      mediaRecorderRef.current.stop();
       // setIsRecording will be set to false in the onstop handler
-    } else if (!isRecording && mediaStreamRef.current) { 
+    } else if (!isRecording && mediaStreamRef.current) {
+        // This case handles cleanup if permission was granted but recording wasn't started/failed,
+        // or if called explicitly when not recording.
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
     }
-    
+
     if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
       audioPlayerRef.current.pause();
       // Clear src to ensure it stops loading/playing any previous source
       // And to prevent errors if the audio item associated with src is deleted
-      audioPlayerRef.current.src = ''; 
+      audioPlayerRef.current.src = '';
       audioPlayerRef.current.load(); // Resets the media element to its initial state
     }
     if (playingAudioId) {
         setPlayingAudioId(null);
     }
-  }, [playingAudioId, isRecording]); // Added isRecording
+  }, [playingAudioId]); // Removed isRecording from dependencies
 
   useEffect(() => {
     const player = new Audio();
     player.volume = 1; // Ensure volume is set
-  
+
     const handleEnded = () => {
       setPlayingAudioId(null);
     };
-  
+
     const handleError = (e: Event) => {
       console.error('Audio player error event:', e);
       const errorTarget = e.target as HTMLAudioElement;
       const mediaError = errorTarget.error;
       let errorMessage = "The audio could not be played.";
-  
+
       if (mediaError) {
         switch (mediaError.code) {
           case MediaError.MEDIA_ERR_ABORTED: errorMessage = 'Playback aborted by the user.'; break;
@@ -106,9 +109,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       } else if ((e as ErrorEvent).message) {
         errorMessage = (e as ErrorEvent).message;
       }
-      
+
       // Try to find the item that was supposed to be playing to include its name in the toast
-      const currentPlayingItem = storedAudios.find(item => item.id === playingAudioId); 
+      const currentPlayingItem = storedAudios.find(item => item.id === playingAudioId);
       toast({
         title: "Playback Error",
         description: `Could not play "${currentPlayingItem?.name || 'selected audio'}". ${errorMessage}`,
@@ -117,11 +120,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       });
       setPlayingAudioId(null); // Ensure playing state is reset
     };
-  
+
     player.addEventListener('ended', handleEnded);
     player.addEventListener('error', handleError);
     audioPlayerRef.current = player;
-  
+
     return () => { // Cleanup function
       if (audioPlayerRef.current) {
         audioPlayerRef.current.removeEventListener('ended', handleEnded);
@@ -133,8 +136,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         audioPlayerRef.current.load(); // Good practice to reset after removing src
       }
     };
-  }, [toast, storedAudios, playingAudioId]); // Added storedAudios and playingAudioId to dependencies
-  
+  }, [toast, storedAudios, playingAudioId]);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     stopCurrentActivities();
     const file = event.target.files?.[0];
@@ -144,7 +147,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
@@ -158,7 +161,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             };
             setStoredAudios(prev => [newAudioItem, ...prev]);
             setSelectedAudioId(newAudioItem.id);
-            onAudioPrepared(result); 
+            onAudioPrepared(result);
             toast({ title: "Audio Uploaded", description: `"${file.name}" added to stored audio.` });
         } else {
             toast({ title: "File Read Error", description: "Could not read a valid audio data URI from the file. The file might be empty or corrupted.", variant: "destructive" });
@@ -205,14 +208,12 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         track.onmute = () => console.warn("[AudioInputHandler] A media track was muted.");
         track.onunmute = () => console.log("[AudioInputHandler] A media track was unmuted.");
       });
-      
+
       const mimeTypesToTry = [
         'audio/webm;codecs=opus',
         'audio/ogg;codecs=opus',
         'audio/webm', // Broader webm without specific codecs
         'audio/ogg',  // Broader ogg without specific codecs
-        // 'audio/mp4', // MP4 might require specific licensing or not be universally supported for recording
-        // 'audio/aac',
       ];
       let supportedMimeType: string | undefined = undefined;
       for (const mimeType of mimeTypesToTry) {
@@ -225,7 +226,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
       const options = supportedMimeType ? { mimeType: supportedMimeType } : {};
       const recorder = new MediaRecorder(stream, options);
-      
+
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = []; // Clear previous chunks
 
@@ -243,10 +244,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         console.log("[AudioInputHandler] MediaRecorder onstop event. State at stop:", mediaRecorderRef.current?.state, "Stream active:", mediaStreamRef.current?.active);
         const actualMimeType = mediaRecorderRef.current?.mimeType || audioChunksRef.current[0]?.type || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
-        
+
         console.log('[AudioInputHandler] Recorded Audio Blob size:', audioBlob.size, 'type:', audioBlob.type);
 
-        // More robust check for effectively empty audio
         if (audioBlob.size < 1024) { // If less than 1KB, likely not enough data
           if (audioChunksRef.current.length === 0) {
             toast({
@@ -259,25 +259,23 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
              toast({
                 title: "Recording Issue: Very Short/Silent Recording",
                 description: "Very little audio data was captured. The recording might be too short or mostly silent. Please try recording for a longer duration.",
-                variant: "default", // Changed to default from destructive as some data was present
+                variant: "default",
                 duration: 7000,
             });
           }
-          // Cleanup even if recording was very short
           if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
             mediaStreamRef.current = null;
           }
           setIsRecording(false);
-          onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Signal no valid audio prepared
+          onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
           return; // Important: return early
         }
-        
+
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64Audio = reader.result as string;
-          
-          // Log details for debugging the base64 string
+
           console.log('[AudioInputHandler] FileReader onloadend:');
           console.log('[AudioInputHandler] typeof reader.result:', typeof reader.result);
           console.log('[AudioInputHandler] reader.result (first 250 chars):', base64Audio ? base64Audio.substring(0, 250) : 'reader.result is null/undefined');
@@ -286,7 +284,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           const validationCondition = base64Audio && base64Audio.length > 200 && base64Audio !== DEFAULT_AUDIO_DATA_URI;
           console.log('[AudioInputHandler] Condition (base64Audio && base64Audio.length > 200 && base64Audio !== DEFAULT_AUDIO_DATA_URI):', validationCondition);
 
-          if (validationCondition) { // Stricter check
+          if (validationCondition) {
               const recordingName = `Recording ${new Date().toLocaleString()}`;
               const newAudioItem: StoredAudioItem = {
                 id: crypto.randomUUID(),
@@ -296,32 +294,31 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
               };
               setStoredAudios(prev => [newAudioItem, ...prev]);
               setSelectedAudioId(newAudioItem.id);
-              onAudioPrepared(base64Audio); 
+              onAudioPrepared(base64Audio);
               toast({ title: "Recording Complete", description: `"${recordingName}" added to stored audio.` });
           } else {
               toast({ title: "Recording Processing Error", description: "Could not process the recorded audio data. The data URI was invalid or too short.", variant: "destructive"});
-              onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Signal no valid audio prepared
+              onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
           }
         };
         reader.onerror = () => {
           toast({ title: "Recording Processing Error", description: "Error reading recorded audio data.", variant: "destructive"});
-          onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Signal no valid audio prepared
+          onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
         };
         reader.readAsDataURL(audioBlob);
-        
-        // Clean up the stream after processing
+
         if (mediaStreamRef.current) {
           mediaStreamRef.current.getTracks().forEach(track => track.stop());
           mediaStreamRef.current = null;
         }
-        setIsRecording(false); // Set recording state to false *after* processing
+        setIsRecording(false);
       };
-      
+
       recorder.onerror = (event) => {
         const error = (event as MediaRecorderErrorEvent).error;
         console.error("!!! [AudioInputHandler] MediaRecorder ONERROR event:", event);
         console.error("!!! [AudioInputHandler] MediaRecorder DOMException details:", error);
-        
+
         let errorName = error?.name || "UnknownRecorderError";
         let errorMessageDetails = error?.message || "No specific error message from recorder.";
 
@@ -331,16 +328,15 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           variant: "destructive",
           duration: 10000,
         });
-        if (mediaStreamRef.current) { // Ensure stream is stopped on error
+        if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
             mediaStreamRef.current = null;
         }
-        setIsRecording(false); // Reset recording state
+        setIsRecording(false);
       };
 
       console.log("[AudioInputHandler] Attempting to start MediaRecorder with options:", options);
-      recorder.start(); // Start recording
-      // setIsRecording(true) and toast are now handled by recorder.onstart
+      recorder.start();
     } catch (err) {
       console.error("[AudioInputHandler] Error accessing microphone or starting recording:", err);
       setHasMicPermission(false);
@@ -350,32 +346,27 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           message = "Microphone permission denied. Please enable it in your browser settings and refresh.";
         } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
           message = "No microphone found. Please connect a microphone and try again.";
-        } else if (err.name === "NotReadableError" || err.name === "OverconstrainedError" || err.name === "TrackStartError") { 
-            // TrackStartError can happen if the mic is already in use by another tab/app
-            // NotReadableError can happen due to hardware issues or OS-level permissions
+        } else if (err.name === "NotReadableError" || err.name === "OverconstrainedError" || err.name === "TrackStartError") {
             message = "Microphone is already in use, a hardware error occurred, or the requested settings (e.g. sample rate) are not supported by your microphone.";
         } else {
           message = `Microphone access error: ${err.name} - ${err.message}`;
         }
       }
       toast({ title: "Microphone Error", description: message, variant: "destructive", duration: 7000 });
-      setIsRecording(false); // Ensure recording state is false
-      if (mediaStreamRef.current) { // Clean up stream if obtained but failed later
+      setIsRecording(false);
+      if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
       }
     }
   };
-  
+
   const handleRecordButtonClick = () => {
     if (isRecording) {
-      // This is the "Stop Recording" action
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-        mediaRecorderRef.current.stop(); 
-        // Actual state change to isRecording=false will happen in recorder.onstop
+        mediaRecorderRef.current.stop();
       }
     } else {
-      // This is the "Start Recording" action
       startRecording();
     }
   };
@@ -410,8 +401,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
     const newName = window.prompt("Enter new name for the audio item:", itemToRename.name);
     if (newName && newName.trim() !== "") {
-      setStoredAudios(prev => 
-        prev.map(item => 
+      setStoredAudios(prev =>
+        prev.map(item =>
           item.id === idToRename ? { ...item, name: newName.trim() } : item
         )
       );
@@ -423,39 +414,35 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
   const handleSelectAudioItem = (item: StoredAudioItem) => {
     setSelectedAudioId(item.id);
-    // Ensure onAudioPrepared is called with valid data or default
     if (item.dataUri && item.dataUri !== DEFAULT_AUDIO_DATA_URI && item.dataUri.length > 200) {
-      onAudioPrepared(item.dataUri); 
+      onAudioPrepared(item.dataUri);
     } else {
-      onAudioPrepared(DEFAULT_AUDIO_DATA_URI); 
+      onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
     }
   };
 
   const handlePlayPauseAudio = (item: StoredAudioItem) => {
     if (!audioPlayerRef.current) return;
-  
-    // Always get the latest version of the item from state, in case its dataUri was updated (e.g. re-recorded)
-    const currentItemVersion = storedAudios.find(i => i.id === item.id); 
+
+    const currentItemVersion = storedAudios.find(i => i.id === item.id);
     if (!currentItemVersion || !currentItemVersion.dataUri || currentItemVersion.dataUri === DEFAULT_AUDIO_DATA_URI || currentItemVersion.dataUri.length < 200) {
       toast({
           title: "Cannot Play Audio",
           description: `Audio item "${item.name}" is a placeholder, empty, or invalid and cannot be played. Please upload or record valid audio.`,
-          variant: "default" // Changed to default as it's a user guidance, not a hard error
+          variant: "default"
       });
       return;
     }
-  
-    if (playingAudioId === item.id) { // If this item is currently playing, pause it
+
+    if (playingAudioId === item.id) {
       audioPlayerRef.current.pause();
       setPlayingAudioId(null);
-    } else { // If a different item or no item is playing, play this one
-      // Pause any currently playing audio first
-      if (playingAudioId && audioPlayerRef.current && !audioPlayerRef.current.paused) { 
+    } else {
+      if (playingAudioId && audioPlayerRef.current && !audioPlayerRef.current.paused) {
         audioPlayerRef.current.pause();
       }
       console.log(`[AudioInputHandler] Attempting to play: ${currentItemVersion.name}, URI starts with: ${currentItemVersion.dataUri.substring(0,100)}`);
-      
-      // Reset src and load to ensure fresh state for the new audio source
+
       audioPlayerRef.current.src = '';
       audioPlayerRef.current.load();
 
@@ -464,12 +451,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          // Playback started successfully
           setPlayingAudioId(item.id);
         })
         .catch(err => {
           console.error(`[AudioInputHandler] Error playing audio ${item.name}:`, err);
-          setPlayingAudioId(null); // Reset playing state on error
+          setPlayingAudioId(null);
           let playErrorMessage = "Could not play the audio.";
           if (err instanceof Error) {
             if (err.name === "NotAllowedError") {
@@ -492,7 +478,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
   const handleIdentifyGenre = async () => {
     const audioToAnalyze = storedAudios.find(item => item.id === selectedAudioId);
-    // Stricter check before analysis
     if (!audioToAnalyze || !audioToAnalyze.dataUri || audioToAnalyze.dataUri === DEFAULT_AUDIO_DATA_URI || audioToAnalyze.dataUri.length < 200) {
       toast({ title: "No Valid Audio Selected", description: "Please select a valid audio item from the list to analyze. Upload or record audio first.", variant: "default" });
       return;
@@ -502,13 +487,13 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     try {
       const result: AnalyzeAudioGenreOutput = await analyzeAudioGenre({ audioDataUri: audioToAnalyze.dataUri });
       const genreText = result.genres.join(', ');
-      
-      setStoredAudios(prev => prev.map(item => 
-        item.id === selectedAudioId ? { 
-            ...item, 
+
+      setStoredAudios(prev => prev.map(item =>
+        item.id === selectedAudioId ? {
+            ...item,
             identifiedGenres: genreText,
             analysisReasoning: result.reasoning,
-            analysisConfidence: result.confidence 
+            analysisConfidence: result.confidence
         } : item
       ));
 
@@ -521,15 +506,14 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             {result.reasoning && <p className="text-xs mt-1 italic text-muted-foreground">Reasoning: {result.reasoning}</p>}
           </div>
         ),
-        duration: 10000, // Longer duration for results
+        duration: 10000,
       });
     } catch (error) {
       console.error("[AudioInputHandler] Error identifying audio genre:", error);
       let errorMessage = "An unknown error occurred during genre analysis.";
       if (error instanceof Error) errorMessage = error.message;
       else if (typeof error === 'string') errorMessage = error;
-      
-      // More user-friendly error messages
+
       if (errorMessage.includes("model is overloaded") || errorMessage.includes("503")) errorMessage = "The AI model for genre analysis is currently busy. Please try again later.";
       else if (errorMessage.includes("API key") || errorMessage.includes("auth")) errorMessage = "AI service configuration error for genre analysis.";
       else if (errorMessage.includes("Meaningful audio data") || errorMessage.includes("data seems too short")) errorMessage = "The audio data is too short or invalid for analysis. Record for a longer duration or ensure the selected audio has content.";
@@ -553,18 +537,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     });
   };
 
-  // Cleanup effect for component unmount
   useEffect(() => {
     return () => {
-      stopCurrentActivities(); // Stop recording/playback
-       if (mediaStreamRef.current) { // Ensure stream is released
+      stopCurrentActivities();
+       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
       }
     };
-  }, [stopCurrentActivities]); // stopCurrentActivities is memoized
+  }, [stopCurrentActivities]);
 
-  // UI Helper
   let micStatusMessage = "Recording requires microphone permission.";
   if (hasMicPermission === true) micStatusMessage = "Microphone access: Granted.";
   else if (hasMicPermission === false) micStatusMessage = "Microphone access: Denied. Check browser settings.";
@@ -572,7 +554,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const currentSelectedAudio = storedAudios.find(item => item.id === selectedAudioId);
 
   return (
-    <Card className="min-w-0 overflow-x-auto"> 
+    <Card className="min-w-0 overflow-x-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
         <CardDescription>
@@ -584,7 +566,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           <Label htmlFor="audio-upload" className="flex items-center gap-1"><UploadCloud size={16} /> Upload Audio File</Label>
           <Input id="audio-upload" type="file" accept="audio/*" onChange={handleFileChange} ref={fileInputRef} disabled={isRecording || isIdentifyingGenre} />
         </div>
-        
+
         <div className="space-y-2">
           <Label className="flex items-center gap-1"><Mic size={16} /> Record Audio</Label>
           <Button onClick={handleRecordButtonClick} variant={isRecording ? "destructive" : "outline"} className="w-full" disabled={(hasMicPermission === false && !isRecording) || isIdentifyingGenre}>
@@ -620,32 +602,32 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             <ScrollArea className="h-[200px] w-full rounded-md border p-3 bg-muted/20">
               <div className="space-y-2">
                 {storedAudios.map(item => (
-                  <div 
-                    key={item.id} 
+                  <div
+                    key={item.id}
                     className={`flex items-center justify-between p-2 rounded-md transition-colors ${selectedAudioId === item.id ? 'bg-primary/20 border border-primary' : 'hover:bg-primary/10'}`}
                   >
-                    <div className="flex items-center gap-2 overflow-hidden min-w-0"> {/* Added min-w-0 for better truncation */}
+                    <div className="flex items-center gap-2 overflow-hidden min-w-0">
                        <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handlePlayPauseAudio(item)}
                           className={`h-7 w-7 flex-shrink-0 ${playingAudioId === item.id ? 'text-red-500 hover:bg-red-500/10' : 'text-green-600 hover:bg-green-600/10'}`}
-                          disabled={isRecording || isIdentifyingGenre || item.dataUri === DEFAULT_AUDIO_DATA_URI || item.dataUri.length < 200} // Disable if recording or default/invalid URI
+                          disabled={isRecording || isIdentifyingGenre || item.dataUri === DEFAULT_AUDIO_DATA_URI || item.dataUri.length < 200}
                           title={playingAudioId === item.id ? "Pause" : "Play"}
                         >
                           {playingAudioId === item.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         </Button>
-                      <div className="flex flex-col min-w-0"> {/* Added min-w-0 here too */}
+                      <div className="flex flex-col min-w-0">
                         <span className="text-sm font-medium truncate" title={item.name}>{item.name}</span>
                         <Badge variant={selectedAudioId === item.id ? "default" : "secondary"} className="text-xs capitalize w-fit h-fit px-1.5 py-0.5">{item.type}</Badge>
                       </div>
                     </div>
-                    <div className="flex gap-1 flex-shrink-0 ml-2"> {/* Ensure this doesn't shrink too much */}
-                      <Button 
-                        variant={selectedAudioId === item.id ? "default" : "outline"} 
-                        size="sm" 
+                    <div className="flex gap-1 flex-shrink-0 ml-2">
+                      <Button
+                        variant={selectedAudioId === item.id ? "default" : "outline"}
+                        size="sm"
                         onClick={() => handleSelectAudioItem(item)}
-                        className="h-8 px-2 text-xs" // Smaller button
+                        className="h-8 px-2 text-xs"
                         disabled={isRecording || isIdentifyingGenre}
                       >
                          {selectedAudioId === item.id ? <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> : null}
@@ -664,9 +646,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             </ScrollArea>
           )}
         </div>
-        
+
         <Separator />
-        
+
         <div>
             {currentSelectedAudio && (currentSelectedAudio.dataUri !== DEFAULT_AUDIO_DATA_URI && currentSelectedAudio.dataUri.length > 200) && (
                  <div className="text-sm text-muted-foreground mb-2 space-y-1">
@@ -704,5 +686,3 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 };
 
 export default AudioInputHandler;
-    
-
