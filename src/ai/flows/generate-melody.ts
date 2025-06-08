@@ -9,10 +9,13 @@
  * - GenerateMelodyOutput - The return type for the generateMelody function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { saveSong } from '../backend/apiClient';
+import {ai} from '@/ai/genkit'; // Import the ai object from your Genkit setup
+import {z} from 'genkit'; //
+import { saveSong } from '../backend/apiClient'; // Import the saveSong function from your backend API client
 
+/**
+ * Schema for the input to the melody generation function.
+ */
 const GenerateMelodyInputSchema = z.object({
   lyrics: z.string().describe('The lyrics of the song.'),
   genre: z.string().describe('The genre of the song.'),
@@ -21,6 +24,10 @@ const GenerateMelodyInputSchema = z.object({
 });
 export type GenerateMelodyInput = z.infer<typeof GenerateMelodyInputSchema>;
 
+/*
+  * Schema for the output of the melody generation function.
+  * This includes the generated melody, a description with singing instructions, and feedback on the lyrics.
+*/ 
 const GenerateMelodyOutputSchema = z.object({
   melody: z.string().describe('The generated melody in a suitable format (e.g., MusicXML, MIDI data URI).'),
   description: z.string().describe('A description of the generated melody, including musical considerations and instructions on how to sing the main vocal line.'),
@@ -28,6 +35,11 @@ const GenerateMelodyOutputSchema = z.object({
 });
 export type GenerateMelodyOutput = z.infer<typeof GenerateMelodyOutputSchema>;
 
+/**
+ * @param input - The input for the melody generation function, including lyrics, genre, key, and tempo.
+ * @throws Will throw an error if the AI fails to generate a melody or provide lyric feedback.
+ * @returns The generated melody and feedback on the lyrics.
+ */
 export async function generateMelody(input: GenerateMelodyInput): Promise<GenerateMelodyOutput> {
   const result = await generateMelodyFlow(input);
 
@@ -38,6 +50,7 @@ export async function generateMelody(input: GenerateMelodyInput): Promise<Genera
       // You might want to pass a more dynamic title, perhaps from user input or derived from lyrics
       const songTitle = `Song for lyrics: "${input.lyrics.substring(0, 30)}..."`;
       
+      // Save the song to the backend using the saveSong function
       await saveSong({
         title: songTitle,
         lyrics: input.lyrics,
@@ -64,6 +77,9 @@ export async function generateMelody(input: GenerateMelodyInput): Promise<Genera
   return result;
 }
 
+/**
+ * AI prompt definition for generating a melody and providing lyric feedback.
+ */
 const prompt = ai.definePrompt({
   name: 'generateMelodyPrompt',
   input: {schema: GenerateMelodyInputSchema},
@@ -101,6 +117,9 @@ Lyric Feedback:
 `,
 });
 
+/**
+ * AI flow definition for generating a melody and providing lyric feedback.
+ */
 const generateMelodyFlow = ai.defineFlow(
   {
     name: 'generateMelodyFlow',
