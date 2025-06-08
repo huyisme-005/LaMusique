@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, Tags, Loader2, Search, MicOff, ListMusic, CheckCircle2, PlayCircle, Pencil } from 'lucide-react';
+import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, Tags, Loader2, Search, MicOff, ListMusic, CheckCircle2, PlayCircle, Pencil, Play, Pause } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { analyzeAudioGenre, type AnalyzeAudioGenreOutput } from '@/ai/flows/analyze-audio-genre';
 import { Separator } from '@/components/ui/separator';
@@ -20,21 +20,23 @@ interface StoredAudioItem {
   name: string;
   type: 'upload' | 'recording' | 'ai';
   dataUri: string;
-  fileObject?: File; // For uploaded files, to potentially re-access original
+  fileObject?: File; 
   identifiedGenres?: string | null;
 }
 
 interface AudioInputHandlerProps {
-  onAudioPrepared: (audioDataUri: string) => void;
+  onAudioPrepared: (audioDataUri: string) => void; // This might be less relevant now with stored audio
 }
 
 const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const [storedAudios, setStoredAudios] = useState<StoredAudioItem[]>([]);
   const [selectedAudioId, setSelectedAudioId] = useState<string | null>(null);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   
   const [onlineSearchQuery, setOnlineSearchQuery] = useState<string>("");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   
   const [isIdentifyingGenre, setIsIdentifyingGenre] = useState(false);
   
@@ -43,6 +45,36 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const audioChunksRef = useRef<Blob[]>([]);
   const [hasMicPermission, setHasMicPermission] = useState<boolean | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    // Initialize audio player and add event listeners
+    if (!audioPlayerRef.current) {
+      const player = new Audio();
+      player.addEventListener('ended', () => {
+        setPlayingAudioId(null);
+      });
+      player.addEventListener('error', (e) => {
+        console.error('Audio player error:', e);
+        const currentPlayingItem = storedAudios.find(item => item.id === playingAudioId);
+        toast({
+          title: "Playback Error",
+          description: `Could not play "${currentPlayingItem?.name || 'selected audio'}".`,
+          variant: "destructive",
+        });
+        setPlayingAudioId(null);
+      });
+      audioPlayerRef.current = player;
+    }
+  
+    // Cleanup function
+    return () => {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.removeAttribute('src'); // More robust for releasing resources
+        audioPlayerRef.current.load(); // Resets the audio element
+      }
+    };
+  }, [storedAudios, playingAudioId, toast]);
 
   const stopCurrentRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
@@ -58,6 +90,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isRecording) stopCurrentRecording();
+    if (playingAudioId && audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        setPlayingAudioId(null);
+    }
 
     const file = event.target.files?.[0];
     if (file) {
@@ -77,9 +113,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           dataUri: result,
           fileObject: file,
         };
-        setStoredAudios(prev => [...prev, newAudioItem]);
+        setStoredAudios(prev => [newAudioItem, ...prev]); // Add to the beginning
         setSelectedAudioId(newAudioItem.id);
-        onAudioPrepared(result);
+        onAudioPrepared(result); // Keep for now, might be useful for other components
         toast({ title: "Audio Uploaded", description: `"${file.name}" added to stored audio.` });
       };
       reader.readAsDataURL(file);
@@ -89,6 +125,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
   const startRecording = async () => {
     if (isRecording) stopCurrentRecording();
+    if (playingAudioId && audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        setPlayingAudioId(null);
+    }
     setHasMicPermission(null);
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -102,13 +142,18 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       mediaStreamRef.current = stream;
       setHasMicPermission(true);
       
-      const options = { mimeType: 'audio/webm' };
+      const options = { mimeType: 'audio/webm;codecs=opus' }; //opus is generally good
       let recorder: MediaRecorder;
       try {
         recorder = new MediaRecorder(stream, options);
       } catch (e) {
-        console.warn("mimeType audio/webm not supported, trying default");
-        recorder = new MediaRecorder(stream);
+        console.warn("mimeType audio/webm;codecs=opus not supported, trying default audio/webm");
+        try {
+            recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        } catch (e2) {
+            console.warn("mimeType audio/webm not supported, trying default (no mimeType)");
+            recorder = new MediaRecorder(stream);
+        }
       }
       
       mediaRecorderRef.current = recorder;
@@ -131,9 +176,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             type: 'recording',
             dataUri: base64Audio,
           };
-          setStoredAudios(prev => [...prev, newAudioItem]);
+          setStoredAudios(prev => [newAudioItem, ...prev]); // Add to the beginning
           setSelectedAudioId(newAudioItem.id);
-          onAudioPrepared(base64Audio);
+          onAudioPrepared(base64Audio); // Keep for now
           toast({ title: "Recording Complete", description: `"${recordingName}" added to stored audio.` });
         };
         reader.readAsDataURL(audioBlob);
@@ -183,6 +228,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
 
   const handleGenerateAIAudio = () => {
+    if (playingAudioId && audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        setPlayingAudioId(null);
+    }
     toast({
       title: "AI Audio Generation Not Implemented",
       description: "This feature will be available in a future update. Generated audio will appear in the 'Stored Audio' list.",
@@ -191,10 +240,15 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
 
   const handleDeleteAudioItem = (idToDelete: string) => {
+    if (playingAudioId === idToDelete && audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.src = '';
+      setPlayingAudioId(null);
+    }
     setStoredAudios(prev => prev.filter(item => item.id !== idToDelete));
     if (selectedAudioId === idToDelete) {
       setSelectedAudioId(null);
-      onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
+      onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Reset to default if selected was deleted
     }
     toast({ title: "Audio Item Deleted", description: "The audio item has been removed from the list." });
   };
@@ -211,14 +265,50 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         )
       );
       toast({ title: "Audio Renamed", description: `"${itemToRename.name}" renamed to "${newName.trim()}".` });
-    } else if (newName !== null) { // User didn't cancel, but provided empty name
+    } else if (newName !== null) { 
       toast({ title: "Rename Cancelled", description: "Audio name cannot be empty.", variant: "default" });
     }
   };
 
   const handleSelectAudioItem = (item: StoredAudioItem) => {
     setSelectedAudioId(item.id);
-    onAudioPrepared(item.dataUri);
+    onAudioPrepared(item.dataUri); // Keep for now
+  };
+
+  const handlePlayPauseAudio = (item: StoredAudioItem) => {
+    if (!audioPlayerRef.current) return;
+
+    if (item.dataUri === DEFAULT_AUDIO_DATA_URI) {
+      toast({
+          title: "Cannot Play Audio",
+          description: "This audio item is a placeholder and cannot be played.",
+          variant: "default"
+      });
+      return;
+    }
+  
+    if (playingAudioId === item.id) {
+      audioPlayerRef.current.pause();
+      setPlayingAudioId(null);
+    } else {
+      if (playingAudioId) { // If another item is playing, pause it
+        audioPlayerRef.current.pause();
+      }
+      audioPlayerRef.current.src = item.dataUri;
+      audioPlayerRef.current.play()
+        .then(() => {
+          setPlayingAudioId(item.id);
+        })
+        .catch(err => {
+          console.error(`Error playing audio ${item.name}:`, err);
+          setPlayingAudioId(null);
+          toast({
+            title: "Playback Error",
+            description: `Could not play "${item.name}". Format might be unsupported or file corrupted.`,
+            variant: "destructive",
+          });
+        });
+    }
   };
 
   const handleIdentifyGenre = async () => {
@@ -265,6 +355,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
 
   const handleOnlineSearch = () => {
+    if (playingAudioId && audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        setPlayingAudioId(null);
+    }
     if (!onlineSearchQuery.trim()) {
       toast({ title: "Empty Search Query", description: "Please enter a search term.", variant: "default" });
       return;
@@ -277,8 +371,13 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
 
   useEffect(() => {
+    // Stop recording if component unmounts
     return () => {
       stopCurrentRecording();
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.src = '';
+      }
     };
   }, [stopCurrentRecording]);
 
@@ -293,7 +392,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
         <CardDescription>
-          Upload, record, or search for audio. Manage your audio sources below and select one for genre analysis.
+          Upload, record, or search for audio. Manage your audio sources below. Select an audio to enable genre identification.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -342,7 +441,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                     className={`flex items-center justify-between p-2 rounded-md transition-colors ${selectedAudioId === item.id ? 'bg-primary/20 border border-primary' : 'hover:bg-primary/10'}`}
                   >
                     <div className="flex items-center gap-2 overflow-hidden min-w-0">
-                      {selectedAudioId === item.id ? <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" /> : <PlayCircle className="h-5 w-5 text-muted-foreground flex-shrink-0"/>}
+                       <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handlePlayPauseAudio(item)}
+                          className={`h-7 w-7 flex-shrink-0 ${playingAudioId === item.id ? 'text-red-500 hover:bg-red-500/10' : 'text-green-600 hover:bg-green-600/10'}`}
+                          disabled={item.dataUri === DEFAULT_AUDIO_DATA_URI}
+                          title={playingAudioId === item.id ? "Pause" : "Play"}
+                        >
+                          {playingAudioId === item.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </Button>
                       <div className="flex flex-col min-w-0">
                         <span className="text-sm font-medium truncate" title={item.name}>{item.name}</span>
                         <Badge variant={selectedAudioId === item.id ? "default" : "secondary"} className="text-xs capitalize w-fit h-fit px-1.5 py-0.5">{item.type}</Badge>
@@ -353,8 +461,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                         variant={selectedAudioId === item.id ? "default" : "outline"} 
                         size="sm" 
                         onClick={() => handleSelectAudioItem(item)}
-                        className="h-8 px-2"
+                        className="h-8 px-2 text-xs"
                       >
+                         {selectedAudioId === item.id ? <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> : null}
                          Select
                       </Button>
                        <Button variant="ghost" size="icon" onClick={() => handleRenameAudioItem(item.id)} className="h-8 w-8 text-blue-600 hover:bg-blue-600/10">
@@ -395,6 +504,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       <CardFooter className="pt-4 border-t flex-col items-start text-xs text-muted-foreground space-y-1">
         <p>{micStatusMessage}</p>
         <p>Note: AI Genre identification is experimental. Online search & AI generation are future features.</p>
+        <p>Playback functionality uses your browser's built-in audio capabilities.</p>
       </CardFooter>
     </Card>
   );
