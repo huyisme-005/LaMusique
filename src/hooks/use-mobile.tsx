@@ -1,3 +1,10 @@
+/**
+ * @fileOverview Custom React hook `useIsMobile`.
+ * This hook determines if the current viewport width corresponds to a mobile screen size.
+ * It listens to window resize events to update its state.
+ *
+ * @exports useIsMobile - A hook that returns `true` if the screen is considered mobile, `false` otherwise.
+ */
 import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768

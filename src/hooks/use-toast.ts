@@ -1,3 +1,12 @@
+/**
+ * @fileOverview Custom React hook `useToast` and `toast` function.
+ * Inspired by react-hot-toast, this system provides a way to manage and display
+ * toast notifications within the application. It includes a reducer for state
+ * management, and functions to add, update, dismiss, and remove toasts.
+ *
+ * @exports useToast - Hook to access toast state and dispatch actions.
+ * @exports toast - Function to programmatically create and show toasts.
+ */
 "use client"
 
 // Inspired by react-hot-toast library

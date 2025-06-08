@@ -1,4 +1,12 @@
-
+/**
+ * @fileOverview SongLoader component for La Musique.
+ * This client-side component is responsible for checking URL search parameters
+ * for a 'loadSongId'. If found, it attempts to load the corresponding saved song
+ * from localStorage and updates the main application state via the `onSongLoaded` callback.
+ * It then removes the 'loadSongId' from the URL.
+ *
+ * @exports SongLoader - The React functional component for loading songs.
+ */
 "use client";
 
 import type { FC } from 'react';

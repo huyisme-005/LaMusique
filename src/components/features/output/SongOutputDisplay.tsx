@@ -1,4 +1,12 @@
-
+/**
+ * @fileOverview SongOutputDisplay component for La Musique.
+ * This component is responsible for displaying the outputs of the song creation process,
+ * including the generated lyrics, melody details (description, singing instructions,
+ * MusicXML representation), and AI-generated lyric feedback. It uses sectioned cards
+ * for organized presentation.
+ *
+ * @exports SongOutputDisplay - The React functional component for displaying song outputs.
+ */
 "use client";
 
 import React, { type FC, useState, useEffect, useRef, useCallback } from 'react';

@@ -1,4 +1,8 @@
-
+/**
+ * @fileOverview Configuration file for Next.js.
+ * Defines settings for the Next.js application, including image optimization,
+ * build configurations, and other framework-specific options.
+ */
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {

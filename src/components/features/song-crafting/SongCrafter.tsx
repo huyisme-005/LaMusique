@@ -1,4 +1,14 @@
-
+/**
+ * @fileOverview SongCrafter component for La Musique.
+ * This is the core component for song creation, allowing users to:
+ * - Input song parameters (theme, keywords, genre, emotion, key, tempo).
+ * - Generate lyrics using AI based on these parameters.
+ * - Manually edit lyrics in an integrated textarea.
+ * - Generate a melody (and AI lyric feedback) based on the current lyrics and musical parameters.
+ * It manages form state, AI interactions for lyrics and melody, and provides UI for all inputs.
+ *
+ * @exports SongCrafter - The React functional component for the main song crafting interface.
+ */
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react'; // Ensure React and hooks are imported
@@ -572,4 +582,3 @@ const SongCrafter: FC<SongCrafterProps> = ({ currentLyrics, onLyricsGenerated, o
 };
 
 export default SongCrafter;
-    
