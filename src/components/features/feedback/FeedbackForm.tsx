@@ -1,4 +1,12 @@
-
+/**
+ * @fileOverview FeedbackForm component for La Musique.
+ * This component renders a detailed survey form for users to provide feedback
+ * on various aspects of the application, including current features, future
+ * feature interest, and overall user experience. Submitted feedback is currently
+ * saved to the user's browser localStorage.
+ *
+ * @exports FeedbackForm - The React functional component for the feedback survey.
+ */
 "use client";
 
 import type { FC } from 'react';
@@ -543,5 +551,3 @@ const FeedbackForm: FC = () => {
 };
 
 export default FeedbackForm;
-
-    

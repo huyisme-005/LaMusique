@@ -1,3 +1,9 @@
+/**
+ * @fileOverview Tailwind CSS configuration file.
+ * Defines the theme, content paths, plugins, and other settings
+ * for Tailwind CSS used in the La Musique application.
+ * It includes custom color definitions based on CSS variables for theming.
+ */
 import type { Config } from "tailwindcss";
 
 export default {

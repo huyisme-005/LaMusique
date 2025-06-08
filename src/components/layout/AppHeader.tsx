@@ -1,4 +1,11 @@
-
+/**
+ * @fileOverview AppHeader component for La Musique.
+ * This component renders the main application header, including the app title/logo
+ * and navigation links to different sections like Home, Saved Songs, and Feedback.
+ * It is designed to be responsive, adjusting layout for mobile and desktop screens.
+ *
+ * @exports AppHeader - The React functional component for the application header.
+ */
 import { Music, ListChecks, MessageSquareText, Home } from 'lucide-react'; // Added Home
 import type { FC } from 'react';
 import Link from 'next/link';

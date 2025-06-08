@@ -1,4 +1,11 @@
-
+/**
+ * @fileOverview Saved Songs page component for La Musique.
+ * This page displays a list of songs previously saved by the user to localStorage.
+ * It allows users to view song details, load a song back into the main editor,
+ * or delete saved entries.
+ *
+ * @exports SavedProgressPage - The React functional component for the saved songs page.
+ */
 "use client";
 
 import React, { type FC, useState, useEffect } from 'react';

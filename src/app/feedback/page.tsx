@@ -1,4 +1,10 @@
-
+/**
+ * @fileOverview Feedback page component for La Musique.
+ * This page allows users to submit feedback about the application.
+ * It renders the AppHeader and the FeedbackForm component within a scrollable area.
+ *
+ * @exports FeedbackPage - The React functional component for the feedback page.
+ */
 "use client";
 
 import type { FC } from 'react';

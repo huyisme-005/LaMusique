@@ -1,4 +1,11 @@
-
+/**
+ * @fileOverview ShareControls component for La Musique.
+ * This component provides UI elements for users to share their created songs
+ * on various social media platforms. Currently, these are placeholders for
+ * future direct API integration.
+ *
+ * @exports ShareControls - The React functional component for social media sharing controls.
+ */
 "use client";
 
 import type { FC } from 'react';

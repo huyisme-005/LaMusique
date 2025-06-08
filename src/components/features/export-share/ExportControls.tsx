@@ -1,4 +1,12 @@
-
+/**
+ * @fileOverview ExportControls component for La Musique.
+ * This component provides UI elements for users to export their created songs.
+ * Currently, it supports exporting lyrics, melody description, and AI lyric feedback
+ * as a PDF via the browser's print functionality. Placeholders exist for future
+ * audio format exports (MP3, WAV, MIDI).
+ *
+ * @exports ExportControls - The React functional component for export controls.
+ */
 "use client";
 import React, { type FC, useRef } from 'react';
 import { Button } from '@/components/ui/button';

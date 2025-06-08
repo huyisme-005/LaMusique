@@ -1,3 +1,13 @@
+/**
+ * @fileOverview Main page component for the La Musique application.
+ * This page serves as the primary interface for song creation, featuring components
+ * for lyrics generation/editing (SongCrafter), audio input (AudioInputHandler),
+ * song output display (SongOutputDisplay), music video controls, export/share controls,
+ * and song saving/loading functionality.
+ *
+ * @exports LaMusiquePage - The main React functional component for the application.
+ * @exports SavedSong - Interface for the structure of a saved song object.
+ */
 "use client";
 
 import React, { useState, type FC, useEffect, Suspense } from 'react';

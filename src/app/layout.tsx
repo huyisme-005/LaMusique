@@ -1,4 +1,12 @@
-
+/**
+ * @fileOverview Root layout component for the La Musique application.
+ * This file defines the main HTML structure, including metadata, fonts,
+ * global styles, Toaster for notifications, and Vercel Analytics.
+ * It wraps all page content.
+ *
+ * @exports RootLayout - The main layout React component.
+ * @exports metadata - The default metadata for the application.
+ */
 import type {Metadata} from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';

@@ -1,3 +1,9 @@
+/**
+ * @fileOverview Genkit AI configuration and initialization.
+ * This file sets up and exports the primary Genkit `ai` instance,
+ * configured with necessary plugins (e.g., Google AI) and default models.
+ * It requires the `GOOGLE_API_KEY` environment variable for Google AI services.
+ */
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 
