@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, Tags, Loader2, Search, MicOff, ListMusic, CheckCircle2, PlayCircle, Pencil, Play, Pause } from 'lucide-react';
+import { Mic, UploadCloud, FileAudio, Sparkles, Trash2, Tags, Loader2, Search, MicOff, ListMusic, CheckCircle2, Play, Pause, Pencil } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { analyzeAudioGenre, type AnalyzeAudioGenreOutput } from '@/ai/flows/analyze-audio-genre';
 import { Separator } from '@/components/ui/separator';
@@ -20,12 +20,14 @@ interface StoredAudioItem {
   name: string;
   type: 'upload' | 'recording' | 'ai';
   dataUri: string;
-  fileObject?: File; 
+  fileObject?: File;
   identifiedGenres?: string | null;
+  analysisReasoning?: string | null;
+  analysisConfidence?: number | null;
 }
 
 interface AudioInputHandlerProps {
-  onAudioPrepared: (audioDataUri: string) => void; // This might be less relevant now with stored audio
+  onAudioPrepared: (audioDataUri: string) => void;
 }
 
 const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
@@ -47,18 +49,20 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    // Initialize audio player and add event listeners
     if (!audioPlayerRef.current) {
       const player = new Audio();
+      player.volume = 1; // Ensure volume is at max
       player.addEventListener('ended', () => {
         setPlayingAudioId(null);
       });
       player.addEventListener('error', (e) => {
         console.error('Audio player error:', e);
+        const errorEvent = e as ErrorEvent;
+        const errorMessage = errorEvent.message || "The audio could not be played.";
         const currentPlayingItem = storedAudios.find(item => item.id === playingAudioId);
         toast({
           title: "Playback Error",
-          description: `Could not play "${currentPlayingItem?.name || 'selected audio'}".`,
+          description: `Could not play "${currentPlayingItem?.name || 'selected audio'}". ${errorMessage}`,
           variant: "destructive",
         });
         setPlayingAudioId(null);
@@ -66,17 +70,17 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       audioPlayerRef.current = player;
     }
   
-    // Cleanup function
     return () => {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
-        audioPlayerRef.current.removeAttribute('src'); // More robust for releasing resources
-        audioPlayerRef.current.load(); // Resets the audio element
+        audioPlayerRef.current.removeAttribute('src'); 
+        audioPlayerRef.current.load(); 
       }
     };
-  }, [storedAudios, playingAudioId, toast]);
+  }, [playingAudioId, storedAudios, toast]); // Added storedAudios to ensure player is robust if list changes
 
-  const stopCurrentRecording = useCallback(() => {
+  const stopCurrentActivities = useCallback(() => {
+    // Stop recording
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
@@ -85,16 +89,15 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       mediaStreamRef.current = null;
     }
     setIsRecording(false);
-    mediaRecorderRef.current = null;
+    // Stop playback
+    if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
+      audioPlayerRef.current.pause();
+      setPlayingAudioId(null);
+    }
   }, []);
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (isRecording) stopCurrentRecording();
-    if (playingAudioId && audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        setPlayingAudioId(null);
-    }
-
+    stopCurrentActivities();
     const file = event.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('audio/')) {
@@ -113,9 +116,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           dataUri: result,
           fileObject: file,
         };
-        setStoredAudios(prev => [newAudioItem, ...prev]); // Add to the beginning
+        setStoredAudios(prev => [newAudioItem, ...prev]);
         setSelectedAudioId(newAudioItem.id);
-        onAudioPrepared(result); // Keep for now, might be useful for other components
+        onAudioPrepared(result);
         toast({ title: "Audio Uploaded", description: `"${file.name}" added to stored audio.` });
       };
       reader.readAsDataURL(file);
@@ -124,11 +127,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
 
   const startRecording = async () => {
-    if (isRecording) stopCurrentRecording();
-    if (playingAudioId && audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        setPlayingAudioId(null);
-    }
+    stopCurrentActivities();
     setHasMicPermission(null);
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -142,16 +141,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       mediaStreamRef.current = stream;
       setHasMicPermission(true);
       
-      const options = { mimeType: 'audio/webm;codecs=opus' }; //opus is generally good
+      const options = { mimeType: 'audio/webm;codecs=opus' };
       let recorder: MediaRecorder;
       try {
         recorder = new MediaRecorder(stream, options);
       } catch (e) {
-        console.warn("mimeType audio/webm;codecs=opus not supported, trying default audio/webm");
+        console.warn("MIME type audio/webm;codecs=opus not supported, trying default audio/webm", e);
         try {
             recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
         } catch (e2) {
-            console.warn("mimeType audio/webm not supported, trying default (no mimeType)");
+            console.warn("MIME type audio/webm not supported, trying default (no MIME type)", e2);
             recorder = new MediaRecorder(stream);
         }
       }
@@ -176,9 +175,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             type: 'recording',
             dataUri: base64Audio,
           };
-          setStoredAudios(prev => [newAudioItem, ...prev]); // Add to the beginning
+          setStoredAudios(prev => [newAudioItem, ...prev]);
           setSelectedAudioId(newAudioItem.id);
-          onAudioPrepared(base64Audio); // Keep for now
+          onAudioPrepared(base64Audio);
           toast({ title: "Recording Complete", description: `"${recordingName}" added to stored audio.` });
         };
         reader.readAsDataURL(audioBlob);
@@ -188,7 +187,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           mediaStreamRef.current = null;
         }
         setIsRecording(false);
-        mediaRecorderRef.current = null;
       };
 
       recorder.start();
@@ -215,23 +213,19 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
       }
-      mediaRecorderRef.current = null;
     }
   };
   
   const handleRecordButtonClick = () => {
     if (isRecording) {
-      stopCurrentRecording();
+      stopCurrentActivities(); // Will also stop recorder
     } else {
       startRecording();
     }
   };
 
   const handleGenerateAIAudio = () => {
-    if (playingAudioId && audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        setPlayingAudioId(null);
-    }
+    stopCurrentActivities();
     toast({
       title: "AI Audio Generation Not Implemented",
       description: "This feature will be available in a future update. Generated audio will appear in the 'Stored Audio' list.",
@@ -248,7 +242,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     setStoredAudios(prev => prev.filter(item => item.id !== idToDelete));
     if (selectedAudioId === idToDelete) {
       setSelectedAudioId(null);
-      onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Reset to default if selected was deleted
+      onAudioPrepared(DEFAULT_AUDIO_DATA_URI);
     }
     toast({ title: "Audio Item Deleted", description: "The audio item has been removed from the list." });
   };
@@ -272,7 +266,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
   const handleSelectAudioItem = (item: StoredAudioItem) => {
     setSelectedAudioId(item.id);
-    onAudioPrepared(item.dataUri); // Keep for now
+    onAudioPrepared(item.dataUri);
   };
 
   const handlePlayPauseAudio = (item: StoredAudioItem) => {
@@ -291,10 +285,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       audioPlayerRef.current.pause();
       setPlayingAudioId(null);
     } else {
-      if (playingAudioId) { // If another item is playing, pause it
+      if (playingAudioId && audioPlayerRef.current) { 
         audioPlayerRef.current.pause();
       }
       audioPlayerRef.current.src = item.dataUri;
+      audioPlayerRef.current.load(); // Explicitly load the new source
       audioPlayerRef.current.play()
         .then(() => {
           setPlayingAudioId(item.id);
@@ -302,9 +297,13 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         .catch(err => {
           console.error(`Error playing audio ${item.name}:`, err);
           setPlayingAudioId(null);
+          let playErrorMessage = "Could not play the audio.";
+          if (err instanceof Error) {
+            playErrorMessage = err.message;
+          }
           toast({
             title: "Playback Error",
-            description: `Could not play "${item.name}". Format might be unsupported or file corrupted.`,
+            description: `Could not play "${item.name}". ${playErrorMessage}`,
             variant: "destructive",
           });
         });
@@ -324,7 +323,12 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       const genreText = result.genres.join(', ');
       
       setStoredAudios(prev => prev.map(item => 
-        item.id === selectedAudioId ? { ...item, identifiedGenres: genreText } : item
+        item.id === selectedAudioId ? { 
+            ...item, 
+            identifiedGenres: genreText,
+            analysisReasoning: result.reasoning,
+            analysisConfidence: result.confidence 
+        } : item
       ));
 
       toast({
@@ -355,10 +359,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
 
   const handleOnlineSearch = () => {
-    if (playingAudioId && audioPlayerRef.current) {
-        audioPlayerRef.current.pause();
-        setPlayingAudioId(null);
-    }
+    stopCurrentActivities();
     if (!onlineSearchQuery.trim()) {
       toast({ title: "Empty Search Query", description: "Please enter a search term.", variant: "default" });
       return;
@@ -371,15 +372,15 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   };
 
   useEffect(() => {
-    // Stop recording if component unmounts
     return () => {
-      stopCurrentRecording();
+      stopCurrentActivities();
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
-        audioPlayerRef.current.src = '';
+        audioPlayerRef.current.removeAttribute('src');
+        audioPlayerRef.current.load(); // Reset on unmount
       }
     };
-  }, [stopCurrentRecording]);
+  }, [stopCurrentActivities]);
 
   let micStatusMessage = "Recording requires microphone permission.";
   if (hasMicPermission === true) micStatusMessage = "Microphone access: Granted.";
@@ -392,7 +393,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><FileAudio className="text-primary" /> Audio Input</CardTitle>
         <CardDescription>
-          Upload, record, or search for audio. Manage your audio sources below. Select an audio to enable genre identification.
+          Upload, record, or search for audio. Manage your audio sources below. Select an audio to enable genre identification or playback.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -466,10 +467,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                          {selectedAudioId === item.id ? <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> : null}
                          Select
                       </Button>
-                       <Button variant="ghost" size="icon" onClick={() => handleRenameAudioItem(item.id)} className="h-8 w-8 text-blue-600 hover:bg-blue-600/10">
+                       <Button variant="ghost" size="icon" onClick={() => handleRenameAudioItem(item.id)} className="h-8 w-8 text-blue-600 hover:bg-blue-600/10" title="Rename">
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAudioItem(item.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAudioItem(item.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Delete">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -484,16 +485,24 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         
         <div>
             {currentSelectedAudio && (
-                 <p className="text-sm text-muted-foreground mb-2">
-                    Selected for analysis: <strong className="text-primary">{currentSelectedAudio.name}</strong>
-                    {currentSelectedAudio.identifiedGenres && ` (Identified Genres: ${currentSelectedAudio.identifiedGenres})`}
-                </p>
+                 <div className="text-sm text-muted-foreground mb-2 space-y-1">
+                    <p>Selected for analysis: <strong className="text-primary">{currentSelectedAudio.name}</strong></p>
+                    {currentSelectedAudio.identifiedGenres && (
+                        <p className="text-xs">Identified Genres: <Badge variant="outline">{currentSelectedAudio.identifiedGenres}</Badge></p>
+                    )}
+                     {currentSelectedAudio.analysisConfidence && (
+                        <p className="text-xs">Confidence: {(currentSelectedAudio.analysisConfidence * 100).toFixed(0)}%</p>
+                    )}
+                    {currentSelectedAudio.analysisReasoning && (
+                        <p className="text-xs italic">Reasoning: {currentSelectedAudio.analysisReasoning}</p>
+                    )}
+                </div>
             )}
           <Button
             onClick={handleIdentifyGenre}
             variant="secondary"
             className="w-full"
-            disabled={isIdentifyingGenre || !selectedAudioId}
+            disabled={isIdentifyingGenre || !selectedAudioId || storedAudios.find(item => item.id === selectedAudioId)?.dataUri === DEFAULT_AUDIO_DATA_URI}
           >
             {isIdentifyingGenre ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tags className="mr-2 h-4 w-4" />}
             Identify Genre from Selected Audio
@@ -504,13 +513,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       <CardFooter className="pt-4 border-t flex-col items-start text-xs text-muted-foreground space-y-1">
         <p>{micStatusMessage}</p>
         <p>Note: AI Genre identification is experimental. Online search & AI generation are future features.</p>
-        <p>Playback functionality uses your browser's built-in audio capabilities.</p>
+        <p>Playback uses your browser's built-in audio capabilities. Ensure your device volume is up.</p>
       </CardFooter>
     </Card>
   );
 };
 
 export default AudioInputHandler;
-    
-
     
