@@ -57,12 +57,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const stopCurrentActivities = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+    if (isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop(); 
-    } else if (mediaStreamRef.current) { 
+    } else if (!isRecording && mediaStreamRef.current) { 
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
-        if (isRecording) setIsRecording(false); 
     }
     
     if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
@@ -122,13 +121,13 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         audioPlayerRef.current.removeEventListener('ended', handleEnded);
         audioPlayerRef.current.removeEventListener('error', handleError);
         audioPlayerRef.current.pause();
-        if (audioPlayerRef.current.src) { // Only try to remove if src was set
+        if (audioPlayerRef.current.src) { 
           audioPlayerRef.current.removeAttribute('src'); 
         }
         audioPlayerRef.current.load(); 
       }
     };
-  }, [toast, storedAudios, playingAudioId]); // Dependencies managed for stable listeners referencing current state.
+  }, [toast, storedAudios, playingAudioId]);
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     stopCurrentActivities();
@@ -181,15 +180,30 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream; 
+      mediaStreamRef.current = stream;
       setHasMicPermission(true);
+
+      if (!stream.active) {
+        console.error("[AudioInputHandler] Acquired media stream is not active. Aborting recording start.");
+        toast({ title: "Stream Error", description: "Microphone stream is not active. Please check microphone connection and permissions.", variant: "destructive", duration: 7000 });
+        stream.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+        setHasMicPermission(false);
+        return;
+      }
+      console.log("[AudioInputHandler] Acquired media stream. Active:", stream.active);
+      stream.getTracks().forEach(track => {
+        console.log(`[AudioInputHandler] Track state: ${track.readyState}, enabled: ${track.enabled}, muted: ${track.muted}`);
+        track.onended = () => console.warn("[AudioInputHandler] A media track unexpectedly ended.");
+        track.onmute = () => console.warn("[AudioInputHandler] A media track was muted.");
+        track.onunmute = () => console.log("[AudioInputHandler] A media track was unmuted.");
+      });
       
       const mimeTypesToTry = [
         'audio/webm;codecs=opus',
         'audio/ogg;codecs=opus',
         'audio/webm', 
         'audio/ogg', 
-        // Add more general types or leave empty for browser default if specific ones fail
       ];
       let supportedMimeType: string | undefined = undefined;
       for (const mimeType of mimeTypesToTry) {
@@ -216,7 +230,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         
         console.log('[AudioInputHandler] Recorded Audio Blob size:', audioBlob.size, 'type:', audioBlob.type);
 
-        if (audioBlob.size < 1024) { // Increased threshold to 1KB
+        if (audioBlob.size < 1024) { 
           if (audioChunksRef.current.length === 0) {
             toast({
                 title: "Recording Issue: No Data Captured",
@@ -237,8 +251,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             mediaStreamRef.current = null;
           }
           setIsRecording(false);
-          onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Reset to default
-          return; // Stop further processing for empty/tiny blob
+          onAudioPrepared(DEFAULT_AUDIO_DATA_URI); 
+          return; 
         }
         
         const reader = new FileReader();
@@ -283,12 +297,18 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       };
       
       recorder.onerror = (event) => {
-        console.error("[AudioInputHandler] MediaRecorder error:", event);
-        let errorName = (event as any)?.error?.name || "UnknownRecorderError";
+        const error = (event as MediaRecorderErrorEvent).error;
+        console.error("!!! [AudioInputHandler] MediaRecorder ONERROR event:", event);
+        console.error("!!! [AudioInputHandler] MediaRecorder DOMException details:", error);
+        
+        let errorName = error?.name || "UnknownRecorderError";
+        let errorMessageDetails = error?.message || "No specific error message from recorder.";
+
         toast({
-          title: "Recording Error",
-          description: `An error occurred during recording: ${errorName}. Please try again.`,
+          title: "MediaRecorder Error",
+          description: `Recording failed. Error: ${errorName}. Details: ${errorMessageDetails}. Please ensure microphone is working & not in use by another app.`,
           variant: "destructive",
+          duration: 10000,
         });
         if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
@@ -297,11 +317,12 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         setIsRecording(false);
       };
 
+      console.log("[AudioInputHandler] Attempting to start MediaRecorder with options:", options);
       recorder.start();
       setIsRecording(true);
       toast({ title: "Recording Started", description: "Speak into your microphone." });
     } catch (err) {
-      console.error("[AudioInputHandler] Error accessing microphone:", err);
+      console.error("[AudioInputHandler] Error accessing microphone or starting recording:", err);
       setHasMicPermission(false);
       let message = "Could not access microphone. Please ensure permission is granted.";
        if (err instanceof Error) {
@@ -309,10 +330,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           message = "Microphone permission denied. Please enable it in your browser settings and refresh.";
         } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
           message = "No microphone found. Please connect a microphone and try again.";
-        } else if (err.name === "NotReadableError" || err.name === "OverconstrainedError") { 
-            message = "Microphone is already in use, a hardware error occurred, or the requested settings (e.g. sample rate) are not supported.";
+        } else if (err.name === "NotReadableError" || err.name === "OverconstrainedError" || err.name === "TrackStartError") { 
+            message = "Microphone is already in use, a hardware error occurred, or the requested settings (e.g. sample rate) are not supported by your microphone.";
         } else {
-          message = `Microphone access error: ${err.message}`;
+          message = `Microphone access error: ${err.name} - ${err.message}`;
         }
       }
       toast({ title: "Microphone Error", description: message, variant: "destructive", duration: 7000 });
@@ -410,7 +431,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       audioPlayerRef.current.load();
 
       audioPlayerRef.current.src = currentItemVersion.dataUri;
-      // audioPlayerRef.current.load(); // Load is called implicitly by setting src usually
       const playPromise = audioPlayerRef.current.play();
 
       if (playPromise !== undefined) {
@@ -480,7 +500,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       
       if (errorMessage.includes("model is overloaded") || errorMessage.includes("503")) errorMessage = "The AI model for genre analysis is currently busy. Please try again later.";
       else if (errorMessage.includes("API key") || errorMessage.includes("auth")) errorMessage = "AI service configuration error for genre analysis.";
-      else if (errorMessage.includes("Meaningful audio data") || errorMessage.includes("data seems too short")) errorMessage = "The audio data is too short or invalid for analysis. Try recording for a longer duration or ensure the selected audio has content.";
+      else if (errorMessage.includes("Meaningful audio data") || errorMessage.includes("data seems too short")) errorMessage = "The audio data is too short or invalid for analysis. Record for a longer duration or ensure the selected audio has content.";
 
       toast({ title: "Genre Analysis Failed", description: errorMessage, variant: "destructive" });
     } finally {
