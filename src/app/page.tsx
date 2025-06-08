@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, type FC, useEffect, Suspense } from 'react';
+import React, { useState, type FC, useEffect, Suspense, useCallback } from 'react';
 import AppHeader from '@/components/layout/AppHeader';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from '@/components/ui/separator';
@@ -47,26 +47,26 @@ const LaMusiquePage: FC = () => {
     setIsClient(true); // Component has mounted on the client
   }, []);
 
-  const handleSongLoaded = (loadedLyrics: string, loadedMelody: GenerateMelodyOutput | null, songName: string) => {
+  const handleSongLoaded = useCallback((loadedLyrics: string, loadedMelody: GenerateMelodyOutput | null, songName: string) => {
     setLyrics(loadedLyrics);
     setMelody(loadedMelody);
     setCurrentSongNameForExport(songName);
-  };
+  }, []); // setX functions from useState are stable
 
-  const handleLyricsGenerated = (newLyrics: string) => {
+  const handleLyricsGenerated = useCallback((newLyrics: string) => {
     setLyrics(newLyrics);
     setCurrentSongNameForExport(null); 
-  };
+  }, []); // setX functions from useState are stable
 
-  const handleMelodyGenerated = (newMelody: GenerateMelodyOutput) => {
+  const handleMelodyGenerated = useCallback((newMelody: GenerateMelodyOutput) => {
     setMelody(newMelody);
-  };
+  }, []); // setX functions from useState are stable
 
-  const handleLyricsEdited = (editedLyrics: string) => {
+  const handleLyricsEdited = useCallback((editedLyrics: string) => {
     setLyrics(editedLyrics);
-  };
+  }, []); // setX functions from useState are stable
 
-  const handleSaveCurrentSong = () => {
+  const handleSaveCurrentSong = useCallback(() => {
     if (!isClient) { 
       toast({ title: "Error", description: "Cannot save song at this moment.", variant: "destructive" });
       return;
@@ -113,7 +113,7 @@ const LaMusiquePage: FC = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [isClient, toast, lyrics, melody, setCurrentSongNameForExport]);
   
   return (
     <div className="flex flex-col min-h-screen bg-background">
