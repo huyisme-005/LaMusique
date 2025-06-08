@@ -88,7 +88,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         audioPlayerRef.current.load(); 
       }
     };
-  }, [playingAudioId, toast, storedAudios]); // Added storedAudios
+  }, [playingAudioId, toast, storedAudios]);
 
   const stopCurrentActivities = useCallback(() => {
     // Stop recording
@@ -179,10 +179,9 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         const mimeTypeToUse = mediaRecorderRef.current?.mimeType || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeTypeToUse });
         
-        // DIAGNOSTIC LOG: Output Blob size and type
         console.log('Recorded Audio Blob size:', audioBlob.size, 'type:', audioBlob.type);
 
-        if (audioBlob.size < 1000 && audioChunksRef.current.length === 0) { // Heuristic: if blob is very small
+        if (audioBlob.size < 1000 && audioChunksRef.current.length === 0) { 
             toast({
                 title: "Recording Issue",
                 description: "No audio data seems to have been captured. Please check your microphone input and permissions.",
@@ -243,7 +242,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           message = "Microphone permission denied. Please enable it in your browser settings and refresh.";
         } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
           message = "No microphone found. Please connect a microphone and try again.";
-        } else if (err.name === "NotReadableError") { // Often hardware error or mic in use by another app
+        } else if (err.name === "NotReadableError") { 
             message = "Microphone is already in use or a hardware error occurred.";
         } else {
           message = `Microphone access error: ${err.message}`;
@@ -545,7 +544,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                  <div className="text-sm text-muted-foreground mb-2 space-y-1">
                     <p>Selected for analysis: <strong className="text-primary">{currentSelectedAudio.name}</strong></p>
                     {currentSelectedAudio.identifiedGenres && (
-                        <p className="text-xs">Identified Genres: <Badge variant="outline">{currentSelectedAudio.identifiedGenres}</Badge></p>
+                        <div className="text-xs">Identified Genres: <Badge variant="outline">{currentSelectedAudio.identifiedGenres}</Badge></div>
                     )}
                      {currentSelectedAudio.analysisConfidence && (
                         <p className="text-xs">Confidence: {(currentSelectedAudio.analysisConfidence * 100).toFixed(0)}%</p>
@@ -577,6 +576,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 };
 
 export default AudioInputHandler;
+    
+
     
 
     
