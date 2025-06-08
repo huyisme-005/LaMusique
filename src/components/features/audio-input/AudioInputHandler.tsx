@@ -60,10 +60,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     // Stop recording
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop(); 
-    } else if (mediaStreamRef.current) { // Ensure stream is stopped if recording didn't start but stream was acquired
+    } else if (mediaStreamRef.current) { 
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
-        if (isRecording) setIsRecording(false); // Reset recording state if it was prematurely true
+        if (isRecording) setIsRecording(false); 
     }
     
     // Stop playback
@@ -75,11 +75,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     if (playingAudioId) {
         setPlayingAudioId(null);
     }
-  }, [playingAudioId, isRecording]); // Added isRecording
+  }, [playingAudioId, isRecording]); 
 
   // Initialize Audio Player and its event listeners
   useEffect(() => {
-    if (!audioPlayerRef.current) { // Create player only once
+    if (!audioPlayerRef.current) { 
       const player = new Audio();
       player.volume = 1;
 
@@ -95,14 +95,14 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                 case MediaError.MEDIA_ERR_ABORTED: errorMessage = 'Playback aborted by the user.'; break;
                 case MediaError.MEDIA_ERR_NETWORK: errorMessage = 'A network error caused playback to fail.'; break;
                 case MediaError.MEDIA_ERR_DECODE: errorMessage = 'The audio could not be decoded. The format might be corrupted or unsupported.'; break;
-                case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED: errorMessage = 'The audio format is not supported, or the audio data is invalid/empty.'; break;
+                case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED: errorMessage = 'The audio format is not supported, or the audio data is invalid/empty. This can also happen if no source is set.'; break;
                 default: errorMessage = `An unknown playback error occurred (Code: ${mediaError.code}).`;
             }
         } else if ((e as ErrorEvent).message) { 
           errorMessage = (e as ErrorEvent).message;
         }
         
-        const currentPlayingItem = storedAudios.find(item => item.id === playingAudioId); // Access from component scope
+        const currentPlayingItem = storedAudios.find(item => item.id === playingAudioId); 
         toast({
           title: "Playback Error",
           description: `Could not play "${currentPlayingItem?.name || 'selected audio'}". ${errorMessage}`,
@@ -116,7 +116,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       player.addEventListener('error', handleError);
       audioPlayerRef.current = player;
 
-      return () => { // Cleanup on component unmount
+      return () => { 
         if (audioPlayerRef.current) {
           audioPlayerRef.current.removeEventListener('ended', handleEnded);
           audioPlayerRef.current.removeEventListener('error', handleError);
@@ -142,7 +142,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        if (result && result.length > 200 && result !== DEFAULT_AUDIO_DATA_URI) { // Basic check for valid data URI
+        if (result && result.length > 200 && result !== DEFAULT_AUDIO_DATA_URI) { 
             const newAudioItem: StoredAudioItem = {
               id: crypto.randomUUID(),
               name: file.name,
@@ -181,13 +181,11 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       mediaStreamRef.current = stream; 
       setHasMicPermission(true);
       
-      // Try to find a supported MIME type
       const mimeTypesToTry = [
         'audio/webm;codecs=opus',
         'audio/ogg;codecs=opus',
         'audio/webm',
         'audio/ogg',
-        // Add other types if needed, e.g., 'audio/mp4' if AAC is desired and supported
       ];
       let supportedMimeType: string | undefined = undefined;
       for (const mimeType of mimeTypesToTry) {
@@ -196,7 +194,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           break;
         }
       }
-      console.log("Using MIME type for recording:", supportedMimeType || "browser default");
+      console.log("[AudioInputHandler] Using MIME type for recording:", supportedMimeType || "browser default");
 
       const options = supportedMimeType ? { mimeType: supportedMimeType } : {};
       const recorder = new MediaRecorder(stream, options);
@@ -212,7 +210,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         const actualMimeType = mediaRecorderRef.current?.mimeType || audioChunksRef.current[0]?.type || 'audio/webm';
         const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
         
-        console.log('Recorded Audio Blob size:', audioBlob.size, 'type:', audioBlob.type);
+        console.log('[AudioInputHandler] Recorded Audio Blob size:', audioBlob.size, 'type:', audioBlob.type);
 
         if (audioBlob.size < 1000 && audioChunksRef.current.length === 0) { 
             toast({
@@ -233,8 +231,16 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64Audio = reader.result as string;
-          console.log('Recorded base64Audio length:', base64Audio.length, 'starts with:', base64Audio.substring(0, 100));
-          if (base64Audio && base64Audio.length > 200 && base64Audio !== DEFAULT_AUDIO_DATA_URI) { // Check if base64Audio is valid
+          
+          console.log('[AudioInputHandler] FileReader onloadend:');
+          console.log('[AudioInputHandler] typeof reader.result:', typeof reader.result);
+          console.log('[AudioInputHandler] reader.result (first 250 chars):', base64Audio ? base64Audio.substring(0, 250) : 'reader.result is null/undefined');
+          console.log('[AudioInputHandler] base64Audio.length:', base64Audio ? base64Audio.length : 'N/A');
+          console.log('[AudioInputHandler] base64Audio === DEFAULT_AUDIO_DATA_URI:', base64Audio === DEFAULT_AUDIO_DATA_URI);
+          console.log('[AudioInputHandler] Condition (base64Audio && base64Audio.length > 200 && base64Audio !== DEFAULT_AUDIO_DATA_URI):', (base64Audio && base64Audio.length > 200 && base64Audio !== DEFAULT_AUDIO_DATA_URI));
+
+
+          if (base64Audio && base64Audio.length > 200 && base64Audio !== DEFAULT_AUDIO_DATA_URI) { 
               const recordingName = `Recording ${new Date().toLocaleString()}`;
               const newAudioItem: StoredAudioItem = {
                 id: crypto.randomUUID(),
@@ -244,10 +250,12 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
               };
               setStoredAudios(prev => [newAudioItem, ...prev]);
               setSelectedAudioId(newAudioItem.id);
-              onAudioPrepared(base64Audio); 
+              if (base64Audio && base64Audio !== DEFAULT_AUDIO_DATA_URI && base64Audio.length > 200) {
+                onAudioPrepared(base64Audio); 
+              }
               toast({ title: "Recording Complete", description: `"${recordingName}" added to stored audio.` });
           } else {
-              toast({ title: "Recording Processing Error", description: "Could not process the recorded audio data.", variant: "destructive"});
+              toast({ title: "Recording Processing Error", description: "Could not process the recorded audio data. The data URI was invalid or too short.", variant: "destructive"});
           }
         };
         reader.onerror = () => {
@@ -263,7 +271,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       };
       
       recorder.onerror = (event) => {
-        console.error("MediaRecorder error:", event);
+        console.error("[AudioInputHandler] MediaRecorder error:", event);
         let errorName = (event as any)?.error?.name || "UnknownRecorderError";
         toast({
           title: "Recording Error",
@@ -281,7 +289,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       setIsRecording(true);
       toast({ title: "Recording Started", description: "Speak into your microphone." });
     } catch (err) {
-      console.error("Error accessing microphone:", err);
+      console.error("[AudioInputHandler] Error accessing microphone:", err);
       setHasMicPermission(false);
       let message = "Could not access microphone. Please ensure permission is granted.";
        if (err instanceof Error) {
@@ -321,16 +329,6 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       description: "This feature will be available in a future update. Generated audio will appear in the 'Stored Audio' list.",
       variant: "default",
     });
-    // Example of how to add an AI audio (placeholder):
-    // const newAIAudio: StoredAudioItem = {
-    //   id: crypto.randomUUID(),
-    //   name: "AI Generated Sample",
-    //   type: 'ai',
-    //   dataUri: DEFAULT_AUDIO_DATA_URI, // Replace with actual AI audio data URI
-    // };
-    // setStoredAudios(prev => [newAIAudio, ...prev]);
-    // setSelectedAudioId(newAIAudio.id);
-    // onAudioPrepared(newAIAudio.dataUri);
   };
 
   const handleDeleteAudioItem = (idToDelete: string) => {
@@ -367,17 +365,21 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
 
   const handleSelectAudioItem = (item: StoredAudioItem) => {
     setSelectedAudioId(item.id);
-    onAudioPrepared(item.dataUri); 
+    if (item.dataUri && item.dataUri !== DEFAULT_AUDIO_DATA_URI && item.dataUri.length > 200) {
+      onAudioPrepared(item.dataUri); 
+    } else {
+      onAudioPrepared(DEFAULT_AUDIO_DATA_URI); // Send default if selected item is invalid
+    }
   };
 
   const handlePlayPauseAudio = (item: StoredAudioItem) => {
     if (!audioPlayerRef.current) return;
-
-    const currentItemVersion = storedAudios.find(i => i.id === item.id); // Get latest version from state
+  
+    const currentItemVersion = storedAudios.find(i => i.id === item.id); 
     if (!currentItemVersion || !currentItemVersion.dataUri || currentItemVersion.dataUri === DEFAULT_AUDIO_DATA_URI || currentItemVersion.dataUri.length < 200) {
       toast({
           title: "Cannot Play Audio",
-          description: "This audio item is a placeholder, empty, or invalid and cannot be played.",
+          description: `Audio item "${item.name}" is a placeholder, empty, or invalid and cannot be played.`,
           variant: "default"
       });
       return;
@@ -390,9 +392,8 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       if (playingAudioId && audioPlayerRef.current && !audioPlayerRef.current.paused) { 
         audioPlayerRef.current.pause();
       }
-      console.log(`Attempting to play: ${currentItemVersion.name}, URI starts with: ${currentItemVersion.dataUri.substring(0,100)}`);
+      console.log(`[AudioInputHandler] Attempting to play: ${currentItemVersion.name}, URI starts with: ${currentItemVersion.dataUri.substring(0,100)}`);
       
-      // Reset src and load before setting new source
       audioPlayerRef.current.src = '';
       audioPlayerRef.current.load();
 
@@ -405,7 +406,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
           setPlayingAudioId(item.id);
         })
         .catch(err => {
-          console.error(`Error playing audio ${item.name}:`, err);
+          console.error(`[AudioInputHandler] Error playing audio ${item.name}:`, err);
           setPlayingAudioId(null);
           let playErrorMessage = "Could not play the audio.";
           if (err instanceof Error) {
@@ -430,7 +431,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
   const handleIdentifyGenre = async () => {
     const audioToAnalyze = storedAudios.find(item => item.id === selectedAudioId);
     if (!audioToAnalyze || !audioToAnalyze.dataUri || audioToAnalyze.dataUri === DEFAULT_AUDIO_DATA_URI || audioToAnalyze.dataUri.length < 200) {
-      toast({ title: "No Valid Audio Selected", description: "Please select a valid audio item from the list to analyze.", variant: "default" });
+      toast({ title: "No Valid Audio Selected", description: "Please select a valid audio item from the list to analyze. Upload or record audio first.", variant: "default" });
       return;
     }
 
@@ -460,7 +461,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         duration: 10000, 
       });
     } catch (error) {
-      console.error("Error identifying audio genre:", error);
+      console.error("[AudioInputHandler] Error identifying audio genre:", error);
       let errorMessage = "An unknown error occurred during genre analysis.";
       if (error instanceof Error) errorMessage = error.message;
       else if (typeof error === 'string') errorMessage = error;
@@ -488,11 +489,10 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
     });
   };
 
-  // Main cleanup effect
   useEffect(() => {
     return () => {
       stopCurrentActivities(); 
-       if (mediaStreamRef.current) { // Additional cleanup for mediaStream
+       if (mediaStreamRef.current) { 
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
       }
@@ -516,7 +516,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <Label htmlFor="audio-upload" className="flex items-center gap-1"><UploadCloud size={16} /> Upload Audio File</Label>
-          <Input id="audio-upload" type="file" accept="audio/*" onChange={handleFileChange} ref={fileInputRef} disabled={isRecording} />
+          <Input id="audio-upload" type="file" accept="audio/*" onChange={handleFileChange} ref={fileInputRef} disabled={isRecording || isIdentifyingGenre} />
         </div>
         
         <div className="space-y-2">
@@ -564,7 +564,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                           size="icon"
                           onClick={() => handlePlayPauseAudio(item)}
                           className={`h-7 w-7 flex-shrink-0 ${playingAudioId === item.id ? 'text-red-500 hover:bg-red-500/10' : 'text-green-600 hover:bg-green-600/10'}`}
-                          disabled={item.dataUri === DEFAULT_AUDIO_DATA_URI || item.dataUri.length < 200 || isRecording}
+                          disabled={item.dataUri === DEFAULT_AUDIO_DATA_URI || item.dataUri.length < 200 || isRecording || isIdentifyingGenre}
                           title={playingAudioId === item.id ? "Pause" : "Play"}
                         >
                           {playingAudioId === item.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -580,15 +580,15 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
                         size="sm" 
                         onClick={() => handleSelectAudioItem(item)}
                         className="h-8 px-2 text-xs"
-                        disabled={isRecording}
+                        disabled={isRecording || isIdentifyingGenre}
                       >
                          {selectedAudioId === item.id ? <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> : null}
                          Select
                       </Button>
-                       <Button variant="ghost" size="icon" onClick={() => handleRenameAudioItem(item.id)} className="h-8 w-8 text-blue-600 hover:bg-blue-600/10" title="Rename" disabled={isRecording}>
+                       <Button variant="ghost" size="icon" onClick={() => handleRenameAudioItem(item.id)} className="h-8 w-8 text-blue-600 hover:bg-blue-600/10" title="Rename" disabled={isRecording || isIdentifyingGenre}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAudioItem(item.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Delete" disabled={isRecording}>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAudioItem(item.id)} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Delete" disabled={isRecording || isIdentifyingGenre}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -602,7 +602,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
         <Separator />
         
         <div>
-            {currentSelectedAudio && currentSelectedAudio.dataUri !== DEFAULT_AUDIO_DATA_URI && currentSelectedAudio.dataUri.length > 200 && (
+            {currentSelectedAudio && (currentSelectedAudio.dataUri !== DEFAULT_AUDIO_DATA_URI && currentSelectedAudio.dataUri.length > 200) && (
                  <div className="text-sm text-muted-foreground mb-2 space-y-1">
                     <p>Selected for analysis: <strong className="text-primary">{currentSelectedAudio.name}</strong></p>
                     {currentSelectedAudio.identifiedGenres && (
@@ -620,7 +620,7 @@ const AudioInputHandler: FC<AudioInputHandlerProps> = ({ onAudioPrepared }) => {
             onClick={handleIdentifyGenre}
             variant="secondary"
             className="w-full"
-            disabled={isIdentifyingGenre || !selectedAudioId || storedAudios.find(item => item.id === selectedAudioId)?.dataUri === DEFAULT_AUDIO_DATA_URI || (storedAudios.find(item => item.id === selectedAudioId)?.dataUri.length || 0) < 200 || isRecording}
+            disabled={isIdentifyingGenre || !selectedAudioId || (storedAudios.find(item => item.id === selectedAudioId)?.dataUri === DEFAULT_AUDIO_DATA_URI) || ((storedAudios.find(item => item.id === selectedAudioId)?.dataUri.length || 0) < 200) || isRecording}
           >
             {isIdentifyingGenre ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tags className="mr-2 h-4 w-4" />}
             Identify Genre from Selected Audio
