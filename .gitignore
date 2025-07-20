@@ -10,6 +10,7 @@
 !.yarn/releases
 !.yarn/versions
 
+
 # testing
 /coverage
 
@@ -44,3 +45,4 @@ next-env.d.ts
 firebase-debug.log
 firestore-debug.log
 .env
+src/ai/backend/__pycache__/
