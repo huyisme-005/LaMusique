@@ -150,7 +150,7 @@ const LaMusiquePage: FC = () => {
           </div>
           
           <ScrollArea className="flex-1 h-full">
-            <div className="min-w-max p-4 md:p-6 space-y-8">
+            <div className="p-4 md:p-6 space-y-8">
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-primary">Generate & Edit Lyrics / Compose Melody</h3>
                 <div className="space-y-6">
@@ -187,7 +187,7 @@ const LaMusiquePage: FC = () => {
         </div>
 
         <ScrollArea className="bg-card text-card-foreground rounded-xl shadow-xl">
-          <div className="min-w-max p-4 md:p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-6">
             <SongOutputDisplay lyrics={lyrics} melody={melody} />
             <Separator />
             <MusicVideoControls />
